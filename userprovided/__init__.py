@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from userprovided import cloud
-from userprovided import url
+from userprovided import date
 from userprovided import mail
+from userprovided import url
+
 
 name = "userprovided"
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 __author__ = "Rüdiger Voigt"

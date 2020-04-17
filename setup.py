@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="userprovided",
-    version="0.5.0",
+    version="0.5.1",
     author="Rüdiger Voigt",
     author_email="projects@ruediger-voigt.eu",
     description="A library to check user input.",
