@@ -5,9 +5,10 @@ from userprovided import cloud
 from userprovided import date
 from userprovided import hash
 from userprovided import mail
+from userprovided import port
 from userprovided import url
 
 
 name = "userprovided"
-__version__ = "0.5.2"
+__version__ = "0.5.3"
 __author__ = "Rüdiger Voigt"

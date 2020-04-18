@@ -146,6 +146,12 @@ class BotTest(unittest.TestCase):
                           userprovided.date.date_en_long_to_iso,
                           'February 30, 2020')
 
+    def test_port_in_range(self):
+        self.assertFalse(userprovided.port.port_in_range(65537))
+        self.assertFalse(userprovided.port.port_in_range(-1))
+        self.assertRaises(ValueError, userprovided.port.port_in_range, 'foo')
+        self.assertRaises(ValueError, userprovided.port.port_in_range, None)
+
 
 if __name__ == "__main__":
     unittest.main()

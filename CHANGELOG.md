@@ -1,5 +1,9 @@
 # Changelog / History
 
+## version 0.5.3 beta (2019-04-18)
+
+* Add function to check whether a port is within the valid range.
+
 ## version 0.5.2 beta (2019-04-18)
 
 * Add function to check for hash method availability, that raises ValueError for md5 and sha1.
