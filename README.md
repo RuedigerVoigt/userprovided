@@ -4,7 +4,7 @@ The package "userprovided" checks input for plausibility. For example it can che
 
 There are plenty of validators out there. The reasons to write another one:
 * It's sister-project [exoskeleton](https://github.com/RuedigerVoigt/exoskeleton "GitHub Repository of exoskeleton") needs some special features. This would be for example not only to check whether a string is an URL, but to also check whether the scheme is http or https.
-* Extensive testing (unittests and automatic test generation with the hypothesis package)
+* Extensive testing (100% test coverage / unit tests / automatic test generation with the hypothesis package)
 * Modularity
 
 ## Installation and Use
@@ -47,5 +47,14 @@ print(userprovided.url.is_url('https://www.example.com'))
 
 print(userprovided.url.is_url('https://www.example.com', ('ftp')))
 # => False (Schema does not match permitted)
+
+
+### Hashes ###
+
+print(userprovided.hash.hash_available('md5'))
+# => ValueError because md5 is deprecated
+
+print(userprovided.hash.hash_available('sha256'))
+# => True on almost any system
 
 ```

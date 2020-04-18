@@ -12,6 +12,16 @@ import userprovided
 
 class BotTest(unittest.TestCase):
 
+    def test_hash_available(self):
+        self.assertRaises(ValueError,
+                          userprovided.hash.hash_available, 'md5', True)
+        self.assertRaises(ValueError,
+                          userprovided.hash.hash_available, 'sha1', True)
+        self.assertTrue(userprovided.hash.hash_available('sha224'))
+        self.assertTrue(userprovided.hash.hash_available('sha256'))
+        self.assertTrue(userprovided.hash.hash_available('sha512'))
+        self.assertFalse(userprovided.hash.hash_available('NonExistentHash'))
+
     def test_mail_is_email(self):
         self.assertTrue(userprovided.mail.is_email('test@example.com'))
         self.assertTrue(userprovided.mail.is_email('test@example-example.com'))
