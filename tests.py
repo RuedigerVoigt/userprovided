@@ -145,8 +145,23 @@ class BotTest(unittest.TestCase):
         self.assertRaises(ValueError,
                           userprovided.date.date_en_long_to_iso,
                           'February 30, 2020')
+        # misspelled month:
+        self.assertRaises(KeyError,
+                          userprovided.date.date_en_long_to_iso,
+                          'abcd 30, 2020')
+        # incomplete dates (missing elements)
+        self.assertRaises(AttributeError,
+                          userprovided.date.date_en_long_to_iso,
+                          'February, 2020')
+        self.assertRaises(AttributeError,
+                          userprovided.date.date_en_long_to_iso,
+                          '30, 2020')
+        self.assertRaises(AttributeError,
+                          userprovided.date.date_en_long_to_iso,
+                          'February 30')
 
     def test_port_in_range(self):
+        self.assertTrue(userprovided.port.port_in_range(443))
         self.assertFalse(userprovided.port.port_in_range(65537))
         self.assertFalse(userprovided.port.port_in_range(-1))
         self.assertRaises(ValueError, userprovided.port.port_in_range, 'foo')
