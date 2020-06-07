@@ -1,5 +1,11 @@
 # Changelog / History
 
+## version 0.5.4 beta (2020-06-07)
+
+* Improved error handling for date conversion.
+* More tests.
+* Clarify Update and Deprecation Policy
+
 ## version 0.5.3 beta (2019-04-18)
 
 * Add function to check whether a port is within the valid range.

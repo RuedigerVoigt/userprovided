@@ -10,5 +10,5 @@ from userprovided import url
 
 
 name = "userprovided"
-__version__ = "0.5.3"
+__version__ = "0.5.4"
 __author__ = "Rüdiger Voigt"
