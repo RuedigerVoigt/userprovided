@@ -3,7 +3,7 @@
 The package "userprovided" checks input for plausibility. For example it can check whether a string is a valid email address or an URL.
 
 There are plenty of validators out there. The reasons to write another one:
-* It's sister-project [exoskeleton](https://github.com/RuedigerVoigt/exoskeleton "GitHub Repository of exoskeleton") needs some special features. This would be for example not only to check whether a string is an URL, but to also check whether the scheme is http or https.
+* Its sister-project [exoskeleton](https://github.com/RuedigerVoigt/exoskeleton "GitHub Repository of exoskeleton") needs some special features.
 * Extensive testing (100% test coverage / unit tests / automatic test generation with the hypothesis package)
 * Modularity
 
@@ -58,3 +58,11 @@ print(userprovided.hash.hash_available('sha256'))
 # => True on almost any system
 
 ```
+
+## Update and Deprecation Policy
+
+It makes no sense to duplicate functionality already available in the Python Standard Library.
+
+For example: `userprovided` does not contain methods to check IP addresses as the library [`ipaddress`](https://docs.python.org/3/library/ipaddress.html "documentation for the ipaddress library") is (since Python 3.3.) part of the standard.
+
+If this package contains functionality that becomes superseded by the Standard Library, it will start to log a depreciation warning. The functionality itself is planned to stay available for at least a major version of `userprovided`.
