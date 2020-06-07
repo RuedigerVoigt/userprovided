@@ -4,7 +4,7 @@
 import logging
 
 
-def port_in_range(port_number: int) -> int:
+def port_in_range(port_number: int) -> bool:
     u"""Checks if the port is within the valid range
         from 0 to 65536."""
 
