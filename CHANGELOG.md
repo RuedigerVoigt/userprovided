@@ -1,5 +1,9 @@
 # Changelog / History
 
+## version 0.5.5 beta (2020-06-15)
+
+* Signal compatibility with [PEP 561](https://www.python.org/dev/peps/pep-0561/): If you type-check code that imports this package, tools like mypy now know that `userprovided` has type-hints and extend their checks to calls of these functions.
+
 ## version 0.5.4 beta (2020-06-07)
 
 * Improved error handling for date conversion.

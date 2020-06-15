@@ -8,6 +8,7 @@ The package "userprovided" checks input for plausibility. For example it can che
 There are plenty of validators out there. The reasons to write another one:
 * Its sister-project [exoskeleton](https://github.com/RuedigerVoigt/exoskeleton "GitHub Repository of exoskeleton") needs some special features.
 * Extensive testing (100% test coverage / unit tests / automatic test generation with the hypothesis package)
+* the code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/))
 * Modularity
 
 ## Installation and Use

@@ -8,13 +8,14 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="userprovided",
-    version="0.5.4",
+    version="0.5.5",
     author="Rüdiger Voigt",
     author_email="projects@ruediger-voigt.eu",
     description="A library to check user input.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/RuedigerVoigt/userprovided",
+    package_data={"userprovided": ["py.typed"]},
     packages=setuptools.find_packages(),
     python_requires=">=3.6",
     install_requires=[],
