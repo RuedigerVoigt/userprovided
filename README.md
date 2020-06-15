@@ -1,5 +1,8 @@
 # userprovided
 
+![Supported Python Versions](https://img.shields.io/pypi/pyversions/userprovided)
+![Downloads per Month](https://img.shields.io/pypi/dm/userprovided)
+
 The package "userprovided" checks input for plausibility. For example it can check whether a string is a valid email address or an URL.
 
 There are plenty of validators out there. The reasons to write another one:
