@@ -72,11 +72,12 @@ def validate_dict_keys(dict_to_check: dict,
     logging.debug('No unknown keys found.')
 
     # Check if all necessary keys are present:
-    for key in necessary_keys:
-        if key not in found_keys:
-            msg = f"Necessary key {key} missing in {dict_name}!"
-            logging.exception(msg)
-            raise ValueError(msg)
-    logging.debug('All necessary keys found.')
+    if necessary_keys:
+        for key in necessary_keys:
+            if key not in found_keys:
+                msg = f"Necessary key {key} missing in {dict_name}!"
+                logging.exception(msg)
+                raise ValueError(msg)
+        logging.debug('All necessary keys found.')
 
     return True
