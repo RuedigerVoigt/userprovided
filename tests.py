@@ -167,6 +167,44 @@ class BotTest(unittest.TestCase):
         self.assertRaises(ValueError, userprovided.port.port_in_range, 'foo')
         self.assertRaises(ValueError, userprovided.port.port_in_range, None)
 
+    def test_convert_to_set(self):
+        # single string with multiple characters
+        # (wrong would be making each character into an element)
+        self.assertEqual(userprovided.parameters.convert_to_set('abc'), {'abc'})
+        # list with duplicates to set
+        self.assertEqual(userprovided.parameters.convert_to_set(
+                         ['a', 'a', 'b', 'c']),
+                         {'a', 'b', 'c'})
+        # tuple with duplicates
+        self.assertEqual(userprovided.parameters.convert_to_set(
+                         ('a', 'a', 'b', 'c')),
+                         {'a', 'b', 'c'})
+        # set should return unchanged
+        self.assertEqual(userprovided.parameters.convert_to_set(
+                         {'a', 'b', 'c'}),
+                         {'a', 'b', 'c'})
+        # unsupported data type integer
+        self.assertRaises(TypeError, userprovided.parameters.convert_to_set, 3)
+
+    def test_validate_dict_keys(self):
+        # unknown key in dictionary, but no necessary keys
+        self.assertRaises(ValueError,
+                          userprovided.parameters.validate_dict_keys,
+                          {'a': 1, 'b': 2, 'c': 3},
+                          {'a', 'b'})
+        # missing a necessary key in dictionary to test
+        self.assertRaises(ValueError,
+                          userprovided.parameters.validate_dict_keys,
+                          {'a': 1, 'b': 2},
+                          {'a', 'b', 'c'},
+                          {'b', 'c'})
+        # necessary_keys contains a key missing in allowed_keys
+        self.assertRaises(ValueError,
+                          userprovided.parameters.validate_dict_keys,
+                          {'a': 1, 'b': 2, 'c': 3},
+                          {'a', 'b', 'c'},
+                          {'b', 'c', 'd'})
+
 
 if __name__ == "__main__":
     unittest.main()

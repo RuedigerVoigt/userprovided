@@ -1,5 +1,10 @@
 # Changelog / History
 
+## version 0.6.0 beta (2020-06-22)
+
+* New function `parameters.convert_to_set`, which converts lists, strings, and tuples into sets. Moved here from the `exoskeleton` sister-project.
+* New function `parameters.validate_dict_keys`, which checks if a dictionary contains only keys that are in a set of allowed / known keys. Furthermore it can check if a set of necessary keys is present.
+
 ## version 0.5.5 beta (2020-06-15)
 
 * Signal compatibility with [PEP 561](https://www.python.org/dev/peps/pep-0561/): If you type-check code that imports this package, tools like mypy now know that `userprovided` has type-hints and extend their checks to calls of these functions.
