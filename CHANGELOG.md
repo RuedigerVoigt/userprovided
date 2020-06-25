@@ -1,5 +1,10 @@
 # Changelog / History
 
+## version 0.7.0 beta (2020-06-25)
+
+* New function `hash.calculate_file_hash` which calculates SHA224, SHA256, or SHA256 hashes for files.
+* Extended documentation.
+
 ## version 0.6.0 beta (2020-06-22)
 
 * New function `parameters.convert_to_set`, which converts lists, strings, and tuples into sets. Moved here from the `exoskeleton` sister-project.
