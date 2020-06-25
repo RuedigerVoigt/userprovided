@@ -7,6 +7,9 @@ from hypothesis import Verbosity
 from hypothesis.strategies import emails
 from hypothesis.strategies import dates
 import unittest
+import unittest.mock as mock
+import pathlib
+
 import userprovided
 
 
@@ -21,6 +24,34 @@ class BotTest(unittest.TestCase):
         self.assertTrue(userprovided.hash.hash_available('sha256'))
         self.assertTrue(userprovided.hash.hash_available('sha512'))
         self.assertFalse(userprovided.hash.hash_available('NonExistentHash'))
+
+    def test_calculate_file_hash(self):
+        # Path is not a pathlib object:
+        self.assertRaises(ValueError,
+                          userprovided.hash.calculate_file_hash,
+                          'some/random/string', 'sha256')
+        # Deprecated hash methods:
+        self.assertRaises(NotImplementedError,
+                          userprovided.hash.calculate_file_hash,
+                          pathlib.Path('.'), 'md5')
+        self.assertRaises(NotImplementedError,
+                          userprovided.hash.calculate_file_hash,
+                          pathlib.Path('.'), 'sha1')
+        # Non Existent hash method:
+        self.assertRaises(ValueError,
+                          userprovided.hash.calculate_file_hash,
+                          pathlib.Path('.'), 'non-existent-hash')
+        # Not supported hash method (available, but not an option):
+        self.assertRaises(ValueError,
+                          userprovided.hash.calculate_file_hash,
+                          pathlib.Path('.'), 'sha384')
+
+        # TO DO: mock file, for now works fine in manual test
+#        self.assertEqual(
+#            userprovided.hash.calculate_file_hash(
+#                pathlib.Path('mocked-file.txt')),
+#                '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'
+#        )
 
     def test_mail_is_email(self):
         self.assertTrue(userprovided.mail.is_email('test@example.com'))
