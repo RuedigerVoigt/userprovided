@@ -11,7 +11,7 @@ setuptools.setup(
     version="0.7.0",
     author="Rüdiger Voigt",
     author_email="projects@ruediger-voigt.eu",
-    description="A library to check user input.",
+    description="A library to check user input for validity and / or plausibility",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/RuedigerVoigt/userprovided",
