@@ -4,6 +4,7 @@
 ![Downloads per Month](https://img.shields.io/pypi/dm/userprovided)
 
 ![pypi version](https://img.shields.io/pypi/v/userprovided)
+![Last commit](https://img.shields.io/github/last-commit/RuedigerVoigt/userprovided)
 
 The package "userprovided" checks input for validity and / or plausibility. For example it can check whether a string is a valid email address or an URL. It can do more complicated tasks like checking a dictionary for valid and needed keys. It also contains some functionalities to convert input into a more rigid format (like the string 'October 3, 1990' into '1990-10-03').
 
