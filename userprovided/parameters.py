@@ -81,3 +81,57 @@ def validate_dict_keys(dict_to_check: dict,
         logging.debug('All necessary keys found.')
 
     return True
+
+
+def numeric_in_range(parameter_name: str,
+                     given_value: Union[int, float],
+                     minimum_value: Union[int, float],
+                     maximum_value: Union[int, float],
+                     fallback_value: Union[int, float]
+                     ) -> Union[int, float]:
+    u"""Checks if a numeric value is within a specified range.
+        If not this returns the fallback value and logs a warning."""
+    if not parameter_name:
+        parameter_name = ''
+
+    for param in {given_value, minimum_value, maximum_value, fallback_value}:
+        if not isinstance(param, (int, float)):
+            raise ValueError('Value must be numeric.')
+
+    if minimum_value > maximum_value:
+        raise ValueError("Minimum must not be larger than maximum value.")
+
+    if fallback_value < minimum_value or fallback_value > maximum_value:
+        raise ValueError("Fallback value outside the allowed range.")
+
+    if given_value < minimum_value:
+        msg = (f"Value of {parameter_name} is below the minimum allowed." +
+               f"Falling back to {fallback_value}.")
+        logging.warning(msg)
+        return fallback_value
+
+    if given_value > maximum_value:
+        msg = (f"Value of {parameter_name} is above the maximum allowed." +
+               f"Falling back to {fallback_value}.")
+        logging.warning(msg)
+        return fallback_value
+
+    # passed all checks:
+    return given_value
+
+
+def int_in_range(parameter_name: str,
+                 given_value: int,
+                 minimum_value: int,
+                 maximum_value: int,
+                 fallback_value: int) -> int:
+    u"""Special case of numeric_in_range: check if given integer is
+        within a specified range of possible values."""
+    for param in {given_value, minimum_value, maximum_value, fallback_value}:
+        if type(param) != int:
+            raise ValueError('Value must be an integer.')
+    return int(numeric_in_range(parameter_name,
+                                given_value,
+                                minimum_value,
+                                maximum_value,
+                                fallback_value))
