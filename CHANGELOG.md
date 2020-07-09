@@ -2,8 +2,8 @@
 
 ## version 0.7.2 beta (2020-07-09)
 
-* New function `parameters.numeric_in_range`: cheks if a given number is between a minimum and a maximum value. If not it returns a fallback value.
-* New function `parmeters.int_in_range`as a special case of `parameters.numeric_in_range`
+* New function `parameters.numeric_in_range`: checks if a given number is between a minimum and a maximum value. If not it returns a fallback value.
+* New function `parmeters.int_in_range` as a special case of `parameters.numeric_in_range`
 
 ## version 0.7.1 beta (2020-07-09)
 
