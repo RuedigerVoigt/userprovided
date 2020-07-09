@@ -121,6 +121,29 @@ class BotTest(unittest.TestCase):
         self.assertTrue(
             userprovided.url.is_url('https://example.com/index.php?id=42'))
 
+    def test_determine_file_extension(self):
+        # URL hint matches server header
+        self.assertEqual(userprovided.url.determine_file_extension(
+            'https://www.example.com/example.pdf',
+            'application/pdf'), '.pdf')
+        # URL does not provide a hint, but the HTTP header does
+        self.assertEqual(userprovided.url.determine_file_extension(
+            'https://www.example.com/',
+            'text/html'), '.html')
+        # no server header, but hint in URL
+        self.assertEqual(userprovided.url.determine_file_extension(
+            'https://www.example.com/example.pdf', ''), '.pdf')
+        # no hint at all
+        self.assertEqual(userprovided.url.determine_file_extension(
+            'https://www.example.com/', ''), '.unknown')
+        # malformed server header and no hint in the URL
+        self.assertEqual(userprovided.url.determine_file_extension(
+            'https://www.example.com/', 'malformed/nonexist'), '.unknown')
+        # text/plain
+        self.assertEqual(userprovided.url.determine_file_extension(
+            'https://www.example.com/test.txt', 'text/plain'), '.txt')
+
+
     @settings(print_blob=True,
               verbosity=Verbosity.normal)
     @given(x=dates())

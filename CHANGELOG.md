@@ -1,5 +1,9 @@
 # Changelog / History
 
+## version 0.7.1 beta (2020-07-09)
+
+* New function `url.determine_file_extension()` (moved here from the `exoskeleton` sister project): determine the appropiate file extension either based on the URL and / or the mime type provided by the server.
+
 ## version 0.7.0 beta (2020-06-25)
 
 * New function `hash.calculate_file_hash` which calculates SHA224, SHA256, or SHA256 hashes for files.
