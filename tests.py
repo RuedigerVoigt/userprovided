@@ -259,6 +259,131 @@ class BotTest(unittest.TestCase):
                           {'a', 'b', 'c'},
                           {'b', 'c', 'd'})
 
+    def test_numeric_in_range(self):
+        # Minimum value larger than maximum value
+        self.assertRaises(ValueError,
+                          userprovided.parameters.numeric_in_range,
+                          'example',
+                          101,
+                          100,
+                          1.0,
+                          50)
+
+        # Fallback value outside the allowed range
+        self.assertRaises(ValueError,
+                          userprovided.parameters.numeric_in_range,
+                          'example',
+                          101,
+                          100,
+                          1.0,
+                          5000)
+
+        # given value within range
+        self.assertEqual(
+            userprovided.parameters.numeric_in_range(
+                'example', 10.0, 1, 100, 50
+            ),
+            10.0
+            )
+
+        # given value too large => fallback
+        self.assertEqual(
+            userprovided.parameters.numeric_in_range(
+                'example', 101, 1, 100, 50
+            ),
+            50
+            )
+
+        # given value to small => fallback
+        self.assertEqual(
+            userprovided.parameters.numeric_in_range(
+                'example', 3, 10, 100, 50
+            ),
+            50
+            )
+
+    def test_int_in_range(self):
+        # parmeter is not integer
+        self.assertRaises(ValueError,
+                          userprovided.parameters.int_in_range,
+                          'example',
+                          10,
+                          1,
+                          100.0,
+                          50)
+        # parameter is string
+        self.assertRaises(ValueError,
+                          userprovided.parameters.int_in_range,
+                          'example',
+                          10,
+                          1,
+                          'foo',
+                          50)
+        # given value within range
+        self.assertEqual(
+            userprovided.parameters.int_in_range(
+                'example', 10, 1, 100, 50
+            ),
+            10
+            )
+        # given value to small => fallback
+        self.assertEqual(
+            userprovided.parameters.int_in_range(
+                'example', 3, 10, 100, 50
+            ),
+            50
+            )
+
+    def test_string_in_range(self):
+        # string within range
+        self.assertTrue(
+            userprovided.parameters.string_in_range(
+                'foo', 1, 5
+                ))
+
+        # default is to apply strip() to the string
+        self.assertTrue(
+            userprovided.parameters.string_in_range(
+                '     foo      ', 3, 3
+                ))
+
+        # switch off strip()
+        self.assertFalse(
+            userprovided.parameters.string_in_range(
+                '     foo      ', 3, 3, False
+                ))
+
+        # string too long
+        self.assertFalse(
+            userprovided.parameters.string_in_range(
+                '     foo      ', 1, 2
+                ))
+
+        # string to short
+        self.assertFalse(
+            userprovided.parameters.string_in_range(
+                '     foo      ', 5, 10
+                ))
+
+        # parameters contradict each other
+        self.assertRaises(ValueError,
+                          userprovided.parameters.string_in_range,
+                          'example', 10, 5)
+
+    def test_enforce_boolean(self):
+        # string instead of boolean
+        self.assertRaises(ValueError,
+                          userprovided.parameters.enforce_boolean,
+                          'True')
+        # numeric instead of boolean
+        self.assertRaises(ValueError,
+                          userprovided.parameters.enforce_boolean,
+                          1)
+        # set parameter_name
+        self.assertRaises(ValueError,
+                          userprovided.parameters.enforce_boolean,
+                          1, 'example')
+
 
 if __name__ == "__main__":
     unittest.main()

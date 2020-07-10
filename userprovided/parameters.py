@@ -135,3 +135,36 @@ def int_in_range(parameter_name: str,
                                 minimum_value,
                                 maximum_value,
                                 fallback_value))
+
+
+def string_in_range(string_to_check: str,
+                    minimum_length: int,
+                    maximum_lenght: int,
+                    strip_string: bool = True) -> bool:
+    u"""Strips whitespace from both ends of a string and then checks
+        if the length of that string falls in those limits.
+        The strip() can be turned off. """
+
+    if minimum_length > maximum_lenght:
+        raise ValueError("Minimum must not be larger than maximum value.")
+    enforce_boolean(strip_string)
+
+    if strip_string:
+        string_to_check = string_to_check.strip()
+    if len(string_to_check) < minimum_length:
+        logging.info("String length below minimum length.")
+        return False
+    if len(string_to_check) > maximum_lenght:
+        logging.info("String longer than maximum.")
+        return False
+    return True
+
+
+def enforce_boolean(parameter_value: bool,
+                    parameter_name: Optional[str] = None):
+    u"""Raise a ValueError if the parameter is not of type bool."""
+    if type(parameter_value) != bool:
+        parameter_name = 'parameter' if parameter_name else ''
+        raise ValueError(f"Value of {parameter_name} must be boolean," +
+                         f"i.e True / False (without quotation marks).")
+

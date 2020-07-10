@@ -1,9 +1,14 @@
 # Changelog / History
 
+## version 0.7.3 beta (2020-07-10)
+
+* New function `parameters.string_in_range`: Strips whitespace from both ends of a string and then checks if the length of that string falls in given limits.
+* New function `parameters.enforce_boolean`: Raises a ValueError if the parameter is not of type bool.
+
 ## version 0.7.2 beta (2020-07-09)
 
 * New function `parameters.numeric_in_range`: checks if a given number is between a minimum and a maximum value. If not it returns a fallback value.
-* New function `parmeters.int_in_range` as a special case of `parameters.numeric_in_range`
+* New function `parameters.int_in_range` as a special case of `parameters.numeric_in_range`
 
 ## version 0.7.1 beta (2020-07-09)
 
