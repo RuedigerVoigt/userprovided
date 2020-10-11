@@ -1,5 +1,9 @@
 # Changelog / History
 
+## version 0.7.4 beta (2020-10-11)
+
+* All tests are now also run with Python 3.9.
+
 ## version 0.7.3 beta (2020-07-10)
 
 * New function `parameters.string_in_range`: Strips whitespace from both ends of a string and then checks if the length of that string falls in given limits.
