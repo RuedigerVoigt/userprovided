@@ -6,7 +6,7 @@ import re
 
 
 def is_aws_s3_bucket_name(bucket_name: str) -> bool:
-    u"""returns True if bucket name is well-formed for AWS S3 buckets
+    """returns True if bucket name is well-formed for AWS S3 buckets
 
     Applying the rules set here:
     https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
