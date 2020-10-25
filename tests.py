@@ -121,6 +121,20 @@ class BotTest(unittest.TestCase):
         self.assertTrue(
             userprovided.url.is_url('https://example.com/index.php?id=42'))
 
+    def test_normalize_url(self):
+        # remove whitespace around the URL
+        self.assertEqual(userprovided.url.normalize_url(
+            ' https://www.example.com/ '),
+            'https://www.example.com/')
+        # remove fragment when query is not present
+        self.assertEqual(userprovided.url.normalize_url(
+            ' https://www.example.com/index.html#test '),
+            'https://www.example.com/index.html')
+        # remove fragment when query is present
+        self.assertEqual(userprovided.url.normalize_url(
+            ' https://www.example.com/index.php?name=foo#test '),
+            'https://www.example.com/index.php?name=foo')
+
     def test_determine_file_extension(self):
         # URL hint matches server header
         self.assertEqual(userprovided.url.determine_file_extension(
@@ -142,7 +156,6 @@ class BotTest(unittest.TestCase):
         # text/plain
         self.assertEqual(userprovided.url.determine_file_extension(
             'https://www.example.com/test.txt', 'text/plain'), '.txt')
-
 
     @settings(print_blob=True,
               verbosity=Verbosity.normal)
@@ -224,7 +237,8 @@ class BotTest(unittest.TestCase):
     def test_convert_to_set(self):
         # single string with multiple characters
         # (wrong would be making each character into an element)
-        self.assertEqual(userprovided.parameters.convert_to_set('abc'), {'abc'})
+        self.assertEqual(userprovided.parameters.convert_to_set('abc'),
+                         {'abc'})
         # list with duplicates to set
         self.assertEqual(userprovided.parameters.convert_to_set(
                          ['a', 'a', 'b', 'c']),

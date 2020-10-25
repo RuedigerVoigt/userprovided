@@ -5,14 +5,14 @@
 import logging
 import mimetypes
 from typing import Optional, Union
-from urllib.parse import urlparse
+import urllib.parse
 
 
 def is_url(url: str,
            require_specific_schemes: Union[tuple, None] = None) -> bool:
-    u"""Very basic check if the URL fulfills basic conditions
-        ("LGTM"). Will not try to connect."""
-    parsed = urlparse(url)
+    """Very basic check if the URL fulfills basic conditions
+       ("LGTM"). Will not try to connect."""
+    parsed = urllib.parse.urlparse(url)
 
     if parsed.scheme == '':
         logging.error('The URL has no scheme (like http or https)')
@@ -29,9 +29,22 @@ def is_url(url: str,
     return True
 
 
+def normalize_url(url: str) -> str:
+    """Remove whitespace around the URL, fragments (like #foo) """
+    url = url.strip()
+
+    if not is_url(url):
+        raise ValueError('Malformed URL')
+
+    # Remove fragments (https://www.example.com#foo -> https://www.example.com)
+    url, _ = urllib.parse.urldefrag(url)
+
+    return url
+
+
 def determine_file_extension(url: str,
                              provided_mime_type: Optional[str] = None) -> str:
-    u"""Guess the correct filename extension from an URL and / or
+    """Guess the correct filename extension from an URL and / or
     the mime-type returned by the server.
     Sometimes a valid URL does not contain a file extension
     (like https://www.example.com/), or it is ambiguous.
