@@ -10,8 +10,8 @@ import urllib.parse
 
 def is_url(url: str,
            require_specific_schemes: Union[tuple, None] = None) -> bool:
-    """Very basic check if the URL fulfills basic conditions
-       ("LGTM"). Will not try to connect."""
+    """Very basic check if the URL fulfills basic conditions ("LGTM").
+       Will not try to connect."""
     parsed = urllib.parse.urlparse(url)
 
     if parsed.scheme == '':
@@ -29,8 +29,44 @@ def is_url(url: str,
     return True
 
 
+def normalize_query_part(query: str) -> str:
+    """Normalize the query part (for example '?foo=1&example=2') of an URL:
+       * remove every chunk that has no value assigned,
+       * sort the remaining chunks alphabetically."""
+    chunks = query.split('&')
+    keep = dict()
+    for chunk in chunks:
+        if chunk != '':
+            split_chunk = chunk.split('=')
+            key = split_chunk[0]
+            value = split_chunk[1]
+            if key != '' and value != '':
+                if key in keep:
+                    if keep[key] != value:
+                        raise ValueError('Duplicate key in URL query with ' +
+                                         'conflicting values')
+                    else:
+                        logging.debug('URL query part contained duplicate ' +
+                                      'key but no conflicting value.')
+                else:
+                    keep[key] = value
+    ordered = list()
+    if keep:
+        for key in sorted(keep):
+            ordered.append(f"{key}={keep[key]}")
+
+    return ('&'.join(ordered) if ordered else '')
+
+
 def normalize_url(url: str) -> str:
-    """Remove whitespace around the URL, fragments (like #foo) """
+    """Normalize an URL:
+       * remove whitespace around it,
+       * convert scheme and hostname to lowercase,
+       * remove ports if they are the standard port for the scheme,
+       * remove duplicate slashes from the path,
+       * remove fragments (like #foo),
+       * remove empty elements of the query part,
+       * order the elements in the query part by alphabet,"""
     url = url.strip()
 
     if not is_url(url):
@@ -38,6 +74,39 @@ def normalize_url(url: str) -> str:
 
     # Remove fragments (https://www.example.com#foo -> https://www.example.com)
     url, _ = urllib.parse.urldefrag(url)
+
+    standard_ports = {'http': 80, 'https': 443}
+
+    parsed = urllib.parse.urlparse(url)
+    reassemble = list()
+    reassemble.append(parsed.scheme.lower())
+
+    if not parsed.port:
+        # There is no port to begin with
+        reassemble.append(parsed.hostname)  # is lowercase without port
+    elif (parsed.scheme in standard_ports and
+            parsed.port == standard_ports[parsed.scheme]):
+        print('B')
+        # There is a port and it equals the standard.
+        # That means it is redundant.
+        reassemble.append(parsed.hostname)
+    else:
+        print('C')
+        # There is a port but it is not in the list or not standard
+        reassemble.append(f"{parsed.hostname}:{parsed.port}")
+  
+    # remove common typo (// in path element):
+    reassemble.append(parsed.path.replace('//', '/'))
+
+    # do not change paameters of the path element (!= query)
+    reassemble.append(parsed.params)
+
+    reassemble.append(normalize_query_part(parsed.query))
+
+    # urlunparse expects a fifth element (the already removed fragment)
+    reassemble.append('')
+
+    url = urllib.parse.urlunparse(reassemble)
 
     return url
 
