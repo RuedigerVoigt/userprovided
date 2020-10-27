@@ -5,8 +5,8 @@ import logging
 
 
 def port_in_range(port_number: int) -> bool:
-    u"""Checks if the port is within the valid range
-        from 0 to 65536."""
+    """Checks if the port is within the valid range
+       from 0 to 65536."""
 
     if isinstance(port_number, int):
         if port_number >= 0 and port_number < 65536:

@@ -121,6 +121,56 @@ class BotTest(unittest.TestCase):
         self.assertTrue(
             userprovided.url.is_url('https://example.com/index.php?id=42'))
 
+    def test_normalize_url(self):
+        # remove whitespace around the URL
+        self.assertEqual(userprovided.url.normalize_url(
+            ' https://www.example.com/ '),
+            'https://www.example.com/')
+        # Convert scheme and hostname to lowercase
+        self.assertEqual(userprovided.url.normalize_url(
+            'HTTPS://www.ExAmPlE.com'),
+            'https://www.example.com')
+        # Remove standard port for scheme (http)
+        self.assertEqual(userprovided.url.normalize_url(
+            'http://www.example.com:80'),
+            'http://www.example.com')
+        # Remove standard port for scheme (https)
+        self.assertEqual(userprovided.url.normalize_url(
+            'https://www.example.com:443'),
+            'https://www.example.com')
+        # Keep non-standard port for scheme (http)
+        self.assertEqual(userprovided.url.normalize_url(
+            'https://www.example.com:123'),
+            'https://www.example.com:123')        
+        # Remove duplicate slashes from the path (1)
+        self.assertEqual(userprovided.url.normalize_url(
+            'https://www.example.com//index.html'),
+            'https://www.example.com/index.html')
+        # Remove duplicate slashes from the path (2)
+        self.assertEqual(userprovided.url.normalize_url(
+            'https://www.example.com/en//index.html'),
+            'https://www.example.com/en/index.html')
+        # remove fragment when query is not present
+        self.assertEqual(userprovided.url.normalize_url(
+            ' https://www.example.com/index.html#test '),
+            'https://www.example.com/index.html')
+        # remove fragment when query is present
+        self.assertEqual(userprovided.url.normalize_url(
+            ' https://www.example.com/index.php?name=foo#test '),
+            'https://www.example.com/index.php?name=foo')
+        # Ignore empty query
+        self.assertEqual(userprovided.url.normalize_url(
+            'https://www.example.com/index.php?'),
+            'https://www.example.com/index.php')
+        # remove empty elements of the query part
+        self.assertEqual(userprovided.url.normalize_url(
+            'https://www.example.com/index.php?name=foo&example='),
+            'https://www.example.com/index.php?name=foo')
+        # order the elements in the query part by alphabet
+        self.assertEqual(userprovided.url.normalize_url(
+            'https://www.example.com/index.py?c=3&a=1&b=2'),
+            'https://www.example.com/index.py?a=1&b=2&c=3')
+    
     def test_determine_file_extension(self):
         # URL hint matches server header
         self.assertEqual(userprovided.url.determine_file_extension(
@@ -142,7 +192,6 @@ class BotTest(unittest.TestCase):
         # text/plain
         self.assertEqual(userprovided.url.determine_file_extension(
             'https://www.example.com/test.txt', 'text/plain'), '.txt')
-
 
     @settings(print_blob=True,
               verbosity=Verbosity.normal)
@@ -224,7 +273,8 @@ class BotTest(unittest.TestCase):
     def test_convert_to_set(self):
         # single string with multiple characters
         # (wrong would be making each character into an element)
-        self.assertEqual(userprovided.parameters.convert_to_set('abc'), {'abc'})
+        self.assertEqual(userprovided.parameters.convert_to_set('abc'),
+                         {'abc'})
         # list with duplicates to set
         self.assertEqual(userprovided.parameters.convert_to_set(
                          ['a', 'a', 'b', 'c']),

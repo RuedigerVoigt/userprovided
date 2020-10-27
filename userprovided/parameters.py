@@ -6,8 +6,8 @@ from typing import Optional, Union
 
 
 def convert_to_set(convert_this: Union[list, set, str, tuple]) -> set:
-    u""" Convert a string, a tuple, or a list into a set
-    (i.e. no duplicates, unordered)"""
+    """ Convert a string, a tuple, or a list into a set
+        (i.e. no duplicates, unordered)"""
 
     if isinstance(convert_this, set):
         # functions using this expect a set, so everything
@@ -29,15 +29,14 @@ def validate_dict_keys(dict_to_check: dict,
                        allowed_keys: set,
                        necessary_keys: Optional[set] = None,
                        dict_name: Optional[str] = None) -> bool:
-    u"""If you use dictionaries to pass parameters,
-        there are two common errors:
-        * misspelled keys
-        * necessary keys are missing
-        This functions checks whether all keys are in the set
-        of allowed_keys and raises ValueError if a unknown key
-        is found. It can also check whether all necessary
-        keys are present and raises ValueError if not.
-        dict_name can be used for a better error message."""
+    """If you use dictionaries to pass parameters, there are two common errors:
+       * misspelled keys
+       * necessary keys are missing
+       This functions checks whether all keys are in the set of allowed_keys
+       and raises ValueError if a unknown key is found.
+       It can also check whether all necessary keys are present and 
+       raises ValueError if not.
+       dict_name can be used for a better error message."""
 
     if not dict_name:
         # fallback to neutral
@@ -89,8 +88,8 @@ def numeric_in_range(parameter_name: str,
                      maximum_value: Union[int, float],
                      fallback_value: Union[int, float]
                      ) -> Union[int, float]:
-    u"""Checks if a numeric value is within a specified range.
-        If not this returns the fallback value and logs a warning."""
+    """Checks if a numeric value is within a specified range.
+       If not this returns the fallback value and logs a warning."""
     if not parameter_name:
         parameter_name = ''
 
@@ -125,8 +124,8 @@ def int_in_range(parameter_name: str,
                  minimum_value: int,
                  maximum_value: int,
                  fallback_value: int) -> int:
-    u"""Special case of numeric_in_range: check if given integer is
-        within a specified range of possible values."""
+    """Special case of numeric_in_range: check if given integer is
+       within a specified range of possible values."""
     for param in {given_value, minimum_value, maximum_value, fallback_value}:
         if type(param) != int:
             raise ValueError('Value must be an integer.')
@@ -141,9 +140,9 @@ def string_in_range(string_to_check: str,
                     minimum_length: int,
                     maximum_lenght: int,
                     strip_string: bool = True) -> bool:
-    u"""Strips whitespace from both ends of a string and then checks
-        if the length of that string falls in those limits.
-        The strip() can be turned off. """
+    """Strips whitespace from both ends of a string and then checks
+       if the length of that string falls in those limits.
+       The strip() can be turned off. """
 
     if minimum_length > maximum_lenght:
         raise ValueError("Minimum must not be larger than maximum value.")
@@ -162,9 +161,8 @@ def string_in_range(string_to_check: str,
 
 def enforce_boolean(parameter_value: bool,
                     parameter_name: Optional[str] = None):
-    u"""Raise a ValueError if the parameter is not of type bool."""
+    """Raise a ValueError if the parameter is not of type bool."""
     if type(parameter_value) != bool:
         parameter_name = 'parameter' if parameter_name else ''
         raise ValueError(f"Value of {parameter_name} must be boolean," +
                          f"i.e True / False (without quotation marks).")
-

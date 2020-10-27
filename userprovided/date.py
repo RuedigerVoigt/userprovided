@@ -9,8 +9,8 @@ import re
 def date_exists(year: int,
                 month: int,
                 day: int) -> bool:
-    u"""Check if a date given by three integers is valid
-        i.e exists in the calendar. """
+    """Check if a date given by three integers is valid
+       i.e exists in the calendar. """
     try:
         # int() will convert something like '01' to 1
         year = int(year)
@@ -29,7 +29,7 @@ def date_exists(year: int,
 
 
 def date_en_long_to_iso(date_string: str) -> str:
-    u""" Changes long format English date to short form date. """
+    """ Changes long format English date to short form date. """
     date_string = date_string.strip()
     regex_long_date_en = re.compile("(?P<monthL>[a-zA-Z\.]{3,9})\s+(?P<day>\d{1,2})(th)?,\s*(?P<year>\d\d\d\d)")
     try:

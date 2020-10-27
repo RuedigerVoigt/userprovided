@@ -8,8 +8,8 @@ import logging
 
 def hash_available(hash_method: str,
                    fail_on_deprecated: bool = True) -> bool:
-    u"""Checks if the supplied hashing algorithm is available.
-        Will raise an exception if not available or deprecated."""
+    """Checks if the supplied hashing algorithm is available.
+       Will raise an exception if not available or deprecated."""
 
     if hash_method == '' or hash_method is None:
         raise ValueError('No hash method provided')
@@ -30,8 +30,8 @@ def hash_available(hash_method: str,
 
 def calculate_file_hash(file_path: pathlib.Path,
                         hash_method: str = 'sha256') -> str:
-    u"""Calculate hash value for a file.
-        Supported: SHA224 / SHA256 / SHA512"""
+    """Calculate hash value for a file.
+       Supported: SHA224 / SHA256 / SHA512"""
 
     if not isinstance(file_path, pathlib.PurePath):
         raise ValueError('Supplied path is not a pathlib path object!')
