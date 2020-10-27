@@ -4,7 +4,7 @@
 # python standard library:
 import logging
 import mimetypes
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 import urllib.parse
 
 
@@ -34,7 +34,7 @@ def normalize_query_part(query: str) -> str:
        * remove every chunk that has no value assigned,
        * sort the remaining chunks alphabetically."""
     chunks = query.split('&')
-    keep = dict()
+    keep: Dict[str, str] = dict()
     for chunk in chunks:
         if chunk != '':
             split_chunk = chunk.split('=')
@@ -83,13 +83,14 @@ def normalize_url(url: str) -> str:
 
     if not parsed.port:
         # There is no port to begin with
-        reassemble.append(parsed.hostname)  # is lowercase without port
+        # hostname is lowercase without port
+        reassemble.append(parsed.hostname)  # type: ignore[arg-type]
     elif (parsed.scheme in standard_ports and
             parsed.port == standard_ports[parsed.scheme]):
         print('B')
         # There is a port and it equals the standard.
         # That means it is redundant.
-        reassemble.append(parsed.hostname)
+        reassemble.append(parsed.hostname)  # type: ignore[arg-type]
     else:
         print('C')
         # There is a port but it is not in the list or not standard
