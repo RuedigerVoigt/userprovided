@@ -1,5 +1,16 @@
 # Changelog / History
 
+## version 0.7.5 beta (2020-10-27)
+
+* New function `url.normalize_url` which normalizes an URL:
+    * remove whitespace around it,
+    * convert scheme and hostname to lowercase,
+    * remove ports if they are the standard port for the scheme,
+    * remove duplicate slashes from the path,
+    * remove fragments (like #foo),
+    * remove empty elements of the query part,
+    * order the elements in the query part by alphabet
+
 ## version 0.7.4 beta (2020-10-11)
 
 * All tests are now also run with Python 3.9.
