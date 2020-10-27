@@ -2,11 +2,7 @@
 
 name: Mypy (type checking)
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+on: [push, pull_request]
 
 jobs:
   build:
