@@ -141,7 +141,7 @@ class BotTest(unittest.TestCase):
         # Keep non-standard port for scheme (http)
         self.assertEqual(userprovided.url.normalize_url(
             'https://www.example.com:123'),
-            'https://www.example.com:123')        
+            'https://www.example.com:123')
         # Remove duplicate slashes from the path (1)
         self.assertEqual(userprovided.url.normalize_url(
             'https://www.example.com//index.html'),
@@ -170,7 +170,17 @@ class BotTest(unittest.TestCase):
         self.assertEqual(userprovided.url.normalize_url(
             'https://www.example.com/index.py?c=3&a=1&b=2'),
             'https://www.example.com/index.py?a=1&b=2&c=3')
-    
+        # URL with non standard query part (does not follow key=value syntax).
+        # Mentioned in RFC 3986 as "erroneous" because it mixes query and path.
+        # However still used by some software.
+        self.assertEqual(userprovided.url.normalize_url(
+            'https://www.example.com/forums/forumdisplay.php?example-forum'),
+            'https://www.example.com/forums/forumdisplay.php?example-forum')
+        # Empty query, but '?' indicating one
+        self.assertEqual(userprovided.url.normalize_url(
+            'https://www.example.com/index.php?'),
+            'https://www.example.com/index.php')
+
     def test_determine_file_extension(self):
         # URL hint matches server header
         self.assertEqual(userprovided.url.determine_file_extension(

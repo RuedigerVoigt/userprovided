@@ -31,25 +31,33 @@ def is_url(url: str,
 
 def normalize_query_part(query: str) -> str:
     """Normalize the query part (for example '?foo=1&example=2') of an URL:
-       * remove every chunk that has no value assigned,
-       * sort the remaining chunks alphabetically."""
-    chunks = query.split('&')
-    keep: Dict[str, str] = dict()
-    for chunk in chunks:
-        if chunk != '':
-            split_chunk = chunk.split('=')
-            key = split_chunk[0]
-            value = split_chunk[1]
-            if key != '' and value != '':
-                if key in keep:
-                    if keep[key] != value:
-                        raise ValueError('Duplicate key in URL query with ' +
-                                         'conflicting values')
+       * Remove every chunk that has no value assigned.
+       * Sort the remaining chunks alphabetically.
+       * Do not change queries without key (old implementations)."""
+    if '=' not in query:
+        # RFC 3986 prescribes a key=value syntax, but some old implemtations
+        # do not follow that and generate URLs like:
+        # https://www.example.com/forums/forumdisplay.php?example-forum
+        # In this case the query part is not changed.
+        return query
+    else:
+        chunks = query.split('&')
+        keep: Dict[str, str] = dict()
+        for chunk in chunks:
+            if chunk != '':
+                split_chunk = chunk.split('=')
+                key = split_chunk[0]
+                value = split_chunk[1]
+                if key != '' and value != '':
+                    if key in keep:
+                        if keep[key] != value:
+                            raise ValueError('Duplicate key in URL query with ' +
+                                             'conflicting values')
+                        else:
+                            logging.debug('URL query part contained duplicate ' +
+                                          'key but no conflicting value.')
                     else:
-                        logging.debug('URL query part contained duplicate ' +
-                                      'key but no conflicting value.')
-                else:
-                    keep[key] = value
+                        keep[key] = value
     ordered = list()
     if keep:
         for key in sorted(keep):
@@ -87,19 +95,17 @@ def normalize_url(url: str) -> str:
         reassemble.append(parsed.hostname)  # type: ignore[arg-type]
     elif (parsed.scheme in standard_ports and
             parsed.port == standard_ports[parsed.scheme]):
-        print('B')
         # There is a port and it equals the standard.
         # That means it is redundant.
         reassemble.append(parsed.hostname)  # type: ignore[arg-type]
     else:
-        print('C')
         # There is a port but it is not in the list or not standard
         reassemble.append(f"{parsed.hostname}:{parsed.port}")
-  
+
     # remove common typo (// in path element):
     reassemble.append(parsed.path.replace('//', '/'))
 
-    # do not change paameters of the path element (!= query)
+    # do not change parameters of the path element (!= query)
     reassemble.append(parsed.params)
 
     reassemble.append(normalize_query_part(parsed.query))
