@@ -160,7 +160,7 @@ def string_in_range(string_to_check: str,
 
 
 def enforce_boolean(parameter_value: bool,
-                    parameter_name: Optional[str] = None):
+                    parameter_name: Optional[str] = None) -> None:
     """Raise a ValueError if the parameter is not of type bool."""
     if type(parameter_value) != bool:
         parameter_name = 'parameter' if parameter_name else ''
