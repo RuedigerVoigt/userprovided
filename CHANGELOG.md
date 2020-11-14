@@ -1,5 +1,20 @@
 # Changelog / History
 
+## version 0.8.0 beta (2020-11-15)
+
+* The method `hash.calculate_file_hash` now also accepts a string for the `file_path` parameter instead of only a `pathlib.Path` object as before.
+* The method `url.is_url` does not log an error anymore if the URl is malformed. Other methods use `is_url` for checks and this would pollute the logs. Instead those messages have been downgraded to `debug`. However, if the requirement for a specific scheme is not met, there will be still an error logged.
+* The method `url.normalize_query_part` does raise `ValueError` if it is given a full URL instead of the query part.
+* Currently 98% test coverage.
+
+Bugfixes:
+* The function `url.determine_file_extension` did not handle some edge cases separetly, but instead suggested the extension `.unknown` in both cases. Now:
+    * If neither the URL nor the server provide enough information to determine the file extension, the function will suggest `.unknown`.
+    * If the file extension in the URL and the provided mime-type contradict each other, the file extension suggested by the URL will prevail.
+* The function `url.determine_file_extension` did try to guess a file extension from the URL even if that missed the path part (i.e. `https://www.example.com` instead of soemthing like `https://www.example.com/index.html`). Now it only guesses from the URL if there is a path component. Otherwise only the mime-type suggested by the server will be used.
+* The method `url.normalize_query_part` does not raise an exception anymore, if a chunk of the query part is malformed by missing an equal sign (like `example.com/index.php?missinghere&foo=bar`).
+* Fix `calculate_file_hash` (missing value for check).
+
 ## version 0.7.6 beta (2020-11-03)
 
 Bugfixes:

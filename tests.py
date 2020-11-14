@@ -7,7 +7,7 @@ from hypothesis import Verbosity
 from hypothesis.strategies import emails
 from hypothesis.strategies import dates
 import unittest
-import unittest.mock as mock
+from unittest.mock import patch, mock_open
 import pathlib
 
 import userprovided
@@ -20,16 +20,20 @@ class BotTest(unittest.TestCase):
                           userprovided.hash.hash_available, 'md5', True)
         self.assertRaises(ValueError,
                           userprovided.hash.hash_available, 'sha1', True)
+        self.assertRaises(ValueError,
+                          userprovided.hash.hash_available, None, True)
+        self.assertRaises(ValueError,
+                          userprovided.hash.hash_available, '  ', True)
         self.assertTrue(userprovided.hash.hash_available('sha224'))
         self.assertTrue(userprovided.hash.hash_available('sha256'))
         self.assertTrue(userprovided.hash.hash_available('sha512'))
         self.assertFalse(userprovided.hash.hash_available('NonExistentHash'))
 
     def test_calculate_file_hash(self):
-        # Path is not a pathlib object:
-        self.assertRaises(ValueError,
+        # Path is non-existent:
+        self.assertRaises(FileNotFoundError,
                           userprovided.hash.calculate_file_hash,
-                          'some/random/string', 'sha256')
+                          'some/random/string/qwertzuiopü', 'sha256')
         # Deprecated hash methods:
         self.assertRaises(NotImplementedError,
                           userprovided.hash.calculate_file_hash,
@@ -46,12 +50,21 @@ class BotTest(unittest.TestCase):
                           userprovided.hash.calculate_file_hash,
                           pathlib.Path('.'), 'sha384')
 
-        # TO DO: mock file, for now works fine in manual test
-#        self.assertEqual(
-#            userprovided.hash.calculate_file_hash(
-#                pathlib.Path('mocked-file.txt')),
-#                '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'
-#        )
+        # Default is fallback to SHA256
+        self.assertEqual(
+            userprovided.hash.calculate_file_hash(pathlib.Path('testfile')),
+                '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'
+        )
+        # SHA224
+        self.assertEqual(
+            userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha224'),
+                '0808f64e60d58979fcb676c96ec938270dea42445aeefcd3a4e6f8db'
+        )
+        # SHA512
+        self.assertEqual(
+            userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha512'),
+                'f7fbba6e0636f890e56fbbf3283e524c6fa3204ae298382d624741d0dc6638326e282c41be5e4254d8820772c5518a2c5a8c0c7f7eda19594a7eb539453e1ed7'
+        )
 
     def test_mail_is_email(self):
         self.assertTrue(userprovided.mail.is_email('test@example.com'))
@@ -62,6 +75,9 @@ class BotTest(unittest.TestCase):
         self.assertFalse(userprovided.mail.is_email('@example.com'))
         self.assertFalse(userprovided.mail.is_email('test@@example.com'))
         self.assertFalse(userprovided.mail.is_email('test@example.'))
+        self.assertFalse(userprovided.mail.is_email(None))
+        self.assertFalse(userprovided.mail.is_email(''))
+        self.assertFalse(userprovided.mail.is_email('   '))
 
     @settings(max_examples=1000,
               print_blob=True,
@@ -121,6 +137,24 @@ class BotTest(unittest.TestCase):
         self.assertTrue(
             userprovided.url.is_url('https://example.com/index.php?id=42'))
 
+    def test_normalize_query_part(self):
+        # By mistake a full URL is provided instead of only the query part
+        self.assertRaises(ValueError,
+                          userprovided.url.normalize_query_part,
+                          'https://www.example.com/index.php?foo=foo&foo=bar')
+        # Duplicate key in query part of URL query with conflicting values
+        self.assertRaises(ValueError,
+                          userprovided.url.normalize_query_part,
+                          'foo=foo&foo=bar')
+        # Duplicate key in query part of URL with the same value
+        self.assertEqual(userprovided.url.normalize_query_part(
+                         'foo=bar&foo=bar'), 'foo=bar')
+        # Chunk of query is malformed: the = is missing
+        self.assertEqual(userprovided.url.normalize_query_part(
+                         'missingequalsign&foo=bar'), 'foo=bar')
+        self.assertEqual(userprovided.url.normalize_query_part(
+                         'foo=bar&missingequalsign&'), 'foo=bar')
+
     def test_normalize_url(self):
         # remove whitespace around the URL
         self.assertEqual(userprovided.url.normalize_url(
@@ -158,6 +192,10 @@ class BotTest(unittest.TestCase):
         self.assertEqual(userprovided.url.normalize_url(
             ' https://www.example.com/index.php?name=foo#test '),
             'https://www.example.com/index.php?name=foo')
+        # remove fragment when path is not present
+        self.assertEqual(userprovided.url.normalize_url(
+            ' https://www.example.com/#test '),
+            'https://www.example.com/')
         # Ignore empty query
         self.assertEqual(userprovided.url.normalize_url(
             'https://www.example.com/index.php?'),
@@ -180,6 +218,10 @@ class BotTest(unittest.TestCase):
         self.assertEqual(userprovided.url.normalize_url(
             'https://www.example.com/index.php?'),
             'https://www.example.com/index.php')
+        # input is not an URL
+        self.assertRaises(ValueError,
+                          userprovided.url.normalize_url,
+                          'somestring')
 
     def test_determine_file_extension(self):
         # URL hint matches server header
@@ -190,6 +232,11 @@ class BotTest(unittest.TestCase):
         self.assertEqual(userprovided.url.determine_file_extension(
             'https://www.example.com/',
             'text/html'), '.html')
+        # URL hint and HTTP header contradict each other
+        # Fallback to suggested by URL
+        self.assertEqual(userprovided.url.determine_file_extension(
+            'https://www.example.com/example.pdf',
+            'text/html'), '.pdf')
         # no server header, but hint in URL
         self.assertEqual(userprovided.url.determine_file_extension(
             'https://www.example.com/example.pdf', ''), '.pdf')
@@ -199,15 +246,28 @@ class BotTest(unittest.TestCase):
         # malformed server header and no hint in the URL
         self.assertEqual(userprovided.url.determine_file_extension(
             'https://www.example.com/', 'malformed/nonexist'), '.unknown')
+        # unknown extension in URL and no mime-type by server
+        self.assertEqual(userprovided.url.determine_file_extension(
+            'https://www.example.com/index.foo', None), '.unknown')  
         # text/plain
         self.assertEqual(userprovided.url.determine_file_extension(
             'https://www.example.com/test.txt', 'text/plain'), '.txt')
+        # .htm -> html
+        self.assertEqual(userprovided.url.determine_file_extension(
+            'https://www.example.com/test.htm', 'text/plain'), '.html')
+        self.assertEqual(userprovided.url.determine_file_extension(
+            'https://www.example.com/test.htm', 'doesnotmatter'), '.html')
 
     @settings(print_blob=True,
               verbosity=Verbosity.normal)
     @given(x=dates())
     def test_date_exists(self, x):
         self.assertTrue(userprovided.date.date_exists(x.year, x.month, x.day))
+
+    def test_date_exists_non_numeric(self):
+        self.assertFalse(userprovided.date.date_exists('2021', '01', 'a'))
+        self.assertFalse(userprovided.date.date_exists('2021', 'a', '01'))
+        self.assertFalse(userprovided.date.date_exists('a', '01', '01'))
 
     def test_date_en_long_to_iso(self):
         # valid input:
@@ -301,6 +361,11 @@ class BotTest(unittest.TestCase):
         self.assertRaises(TypeError, userprovided.parameters.convert_to_set, 3)
 
     def test_validate_dict_keys(self):
+        # not a dictionary
+        self.assertRaises(AttributeError,
+                          userprovided.parameters.validate_dict_keys,
+                          {'a', 'b', 'c'},
+                          {'a', 'b'})
         # unknown key in dictionary, but no necessary keys
         self.assertRaises(ValueError,
                           userprovided.parameters.validate_dict_keys,
@@ -318,6 +383,11 @@ class BotTest(unittest.TestCase):
                           {'a': 1, 'b': 2, 'c': 3},
                           {'a', 'b', 'c'},
                           {'b', 'c', 'd'})
+        self.assertTrue(userprovided.parameters.validate_dict_keys(
+            {'a': 1, 'b': 2},
+            {'a', 'b', 'c'},
+            {'a', 'b'},
+            'name'))
 
     def test_numeric_in_range(self):
         # Minimum value larger than maximum value
@@ -335,8 +405,55 @@ class BotTest(unittest.TestCase):
                           'example',
                           101,
                           100,
+                          200,
+                          5000  # fallback larger than maximum
+                          )
+        self.assertRaises(ValueError,
+                          userprovided.parameters.numeric_in_range,
+                          'example',
+                          101,
+                          100,
+                          200,
+                          0  # fallback smaller than minimum
+                          )
+
+        # One of the values not numeric
+        self.assertRaises(ValueError,
+                          userprovided.parameters.numeric_in_range,
+                          'example',
+                          'some string',
+                          100,
                           1.0,
-                          5000)
+                          0)
+        self.assertRaises(ValueError,
+                          userprovided.parameters.numeric_in_range,
+                          'example',
+                          101,
+                          'some string',
+                          1.0,
+                          0)
+        self.assertRaises(ValueError,
+                          userprovided.parameters.numeric_in_range,
+                          'example',
+                          101,
+                          100,
+                          'some string',
+                          0)
+        self.assertRaises(ValueError,
+                          userprovided.parameters.numeric_in_range,
+                          'example',
+                          101,
+                          100,
+                          1.0,
+                          'some string')
+        # no paramter name
+        self.assertRaises(ValueError,
+                          userprovided.parameters.numeric_in_range,
+                          None,
+                          101,
+                          100,
+                          1.0,
+                          'some string')
 
         # given value within range
         self.assertEqual(

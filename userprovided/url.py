@@ -15,7 +15,7 @@ def is_url(url: str,
     parsed = urllib.parse.urlparse(url)
 
     if parsed.scheme == '':
-        logging.error('The URL has no scheme (like http or https)')
+        logging.debug('The URL has no scheme (like http or https)')
         return False
     if require_specific_schemes:
         if parsed.scheme not in require_specific_schemes:
@@ -23,7 +23,7 @@ def is_url(url: str,
             return False
 
     if parsed.netloc == '':
-        logging.error('URL is missing or malformed.')
+        logging.debug('URL is missing or malformed.')
         return False
 
     return True
@@ -34,8 +34,11 @@ def normalize_query_part(query: str) -> str:
        * Remove every chunk that has no value assigned.
        * Sort the remaining chunks alphabetically.
        * Do not change queries without key (old implementations)."""
+    if is_url(query):
+        raise ValueError('Provide only the query part to normalize_query_part')
+
     if '=' not in query:
-        # RFC 3986 prescribes a key=value syntax, but some old implemtations
+        # RFC 3986 prescribes a key=value syntax, but some old implementations
         # do not follow that and generate URLs like:
         # https://www.example.com/forums/forumdisplay.php?example-forum
         # In this case the query part is not changed.
@@ -44,7 +47,7 @@ def normalize_query_part(query: str) -> str:
         chunks = query.split('&')
         keep: Dict[str, str] = dict()
         for chunk in chunks:
-            if chunk != '':
+            if chunk != '' and '=' in chunk:
                 split_chunk = chunk.split('=')
                 key = split_chunk[0]
                 value = split_chunk[1]
@@ -126,37 +129,52 @@ def determine_file_extension(url: str,
     (like https://www.example.com/), or it is ambiguous.
     So the mime type acts as a fallback. In case the correct
     extension cannot be determined at all it is set to 'unknown'."""
+    if provided_mime_type:
+        provided_mime_type = provided_mime_type.strip()
     if provided_mime_type == '':
         provided_mime_type = None
-    type_by_url = mimetypes.guess_type(url)[0]
+
+    type_by_url: str = None
+    parsed_url = urllib.parse.urlparse(url)
+    if parsed_url.path not in ('', '/'):
+        type_by_url = mimetypes.guess_type(parsed_url.path)[0]
+
     if type_by_url is not None and type_by_url == provided_mime_type:
         # Best case: URL and server header suggest the same filetype.
         extension = mimetypes.guess_extension(provided_mime_type)
     elif type_by_url is None and provided_mime_type is not None:
         # The URL does not contain an usable extension, but
-        # the server provides one.
+        # the server provides a mime type.
         extension = mimetypes.guess_extension(provided_mime_type)
+        if extension is None:
+            logging.error('No hint in URL and mime-type malformed for %s', url)
+            return '.unknown'
     elif type_by_url is not None and provided_mime_type is None:
-        # Misconfigured server but the type can be guessed.
+        # There is a usable file extension in the URL, but the misconfigured
+        # server does not provide a mime type.
         extension = mimetypes.guess_extension(type_by_url)
-    else:
-        # Worst case: neither the URL nor the server does hint to the
-        # correct extension
-        logging.error("The mime type (%s) suggested by the URL (%s)" +
-                      "does not match the mime type supplied" +
-                      "by the server (%s).",
-                      (type_by_url, url, provided_mime_type))
-        extension = None
-
-    if extension is not None:
-        if extension == '.bat' and provided_mime_type == 'text/plain':
-            # text/plain is mapped to .bat in python 3.6.
-            # Python 3.8 correctly guesses .txt as extension.
-            return '.txt'
-
-        if extension == '.htm':
-            return '.html'
-
-        return extension
-    else:
+        # Here no code for extension is None, because mimetypes already
+        # guessed a type once we got here and can guess a matching extension.
+    elif type_by_url is None and provided_mime_type is None:
+        # Neither the URL nor the server does hint to a extension
+        logging.error("Neither URL (%s) nor mime-type (%s) suggest " +
+                      "a file extension.", (url, provided_mime_type))
         return '.unknown'
+    elif type_by_url != provided_mime_type:
+        # The suggestions contradict each other
+        logging.error("The mime type (%s) suggested by the URL (%s) does " +
+                      "not match the mime type supplied by the server (%s)." +
+                      " Using the extension suggested by the URL.",
+                      (type_by_url, url, provided_mime_type))
+        extension = mimetypes.guess_extension(type_by_url)
+
+    # Handle errors and irregularities in mimetypes:
+    if extension == '.bat' and provided_mime_type == 'text/plain':
+        # text/plain is mapped to .bat in python 3.6.
+        # Python 3.8 correctly guesses .txt as extension.
+        return '.txt'
+
+    if extension == '.htm':
+        return '.html'
+
+    return extension

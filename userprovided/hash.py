@@ -2,14 +2,19 @@
 # -*- coding: utf-8 -*-
 
 import hashlib
-import pathlib
 import logging
+import pathlib
+from typing import Union
 
 
 def hash_available(hash_method: str,
                    fail_on_deprecated: bool = True) -> bool:
     """Checks if the supplied hashing algorithm is available.
-       Will raise an exception if not available or deprecated."""
+       If fail_on_deprecated is set to True (default) it will raise an
+       exception if the method is deprecated (md5 and sha1)."""
+
+    if hash_method:
+        hash_method = hash_method.strip()
 
     if hash_method == '' or hash_method is None:
         raise ValueError('No hash method provided')
@@ -28,17 +33,14 @@ def hash_available(hash_method: str,
         return False
 
 
-def calculate_file_hash(file_path: pathlib.Path,
+def calculate_file_hash(file_path: Union[pathlib.Path, str],
                         hash_method: str = 'sha256') -> str:
     """Calculate hash value for a file.
        Supported: SHA224 / SHA256 / SHA512"""
 
-    if not isinstance(file_path, pathlib.PurePath):
-        raise ValueError('Supplied path is not a pathlib path object!')
-
     if hash_method in ('md5', 'sha1'):
         raise NotImplementedError('Deprecated hash method not supported')
-    elif hash_available:
+    elif hash_available(hash_method):
         if hash_method == 'sha224':
             h = hashlib.sha224()
         elif hash_method == 'sha256':
@@ -48,10 +50,10 @@ def calculate_file_hash(file_path: pathlib.Path,
         else:
             raise ValueError('Hash method not supported')
     else:
-        raise ValueError(f"Hash method {hash_method} not " +
-                         f"available on this system!")
+        raise ValueError(f"Hash method {hash_method} not available on system.")
+
     try:
-        with open(file_path, 'rb') as file:
+        with open(pathlib.Path(file_path), 'rb') as file:
             content = file.read()
         h.update(content)
         return h.hexdigest()
