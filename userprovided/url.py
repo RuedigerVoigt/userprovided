@@ -133,7 +133,8 @@ def determine_file_extension(url: str,
     if provided_mime_type == '':
         provided_mime_type = None
 
-    type_by_url: str = None
+    extension: Optional[str] = None
+    type_by_url: Optional[str] = None
     parsed_url = urllib.parse.urlparse(url)
     if parsed_url.path not in ('', '/'):
         type_by_url = mimetypes.guess_type(parsed_url.path)[0]
@@ -165,7 +166,7 @@ def determine_file_extension(url: str,
                       "not match the mime type supplied by the server (%s)." +
                       " Using the extension suggested by the URL.",
                       (type_by_url, url, provided_mime_type))
-        extension = mimetypes.guess_extension(type_by_url)
+        extension = mimetypes.guess_extension(type_by_url)  # type: ignore[arg-type]
 
     # Handle errors and irregularities in mimetypes:
     if extension == '.bat' and provided_mime_type == 'text/plain':
@@ -175,5 +176,8 @@ def determine_file_extension(url: str,
 
     if extension == '.htm':
         return '.html'
+
+    if extension is None:
+        return '.unknown'
 
     return extension

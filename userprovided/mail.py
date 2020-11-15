@@ -9,7 +9,7 @@ import re
 def is_email(mailaddress: str) -> bool:
     """Very basic check if the email address has a valid format."""
 
-    if mailaddress is None or mailaddress == '':
+    if not mailaddress or mailaddress == '':
         logging.warning('No mail address supplied.')
         return False
 
