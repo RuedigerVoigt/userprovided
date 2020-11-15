@@ -40,7 +40,8 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
 
     if hash_method in ('md5', 'sha1'):
         raise NotImplementedError('Deprecated hash method not supported')
-    elif hash_available(hash_method):
+
+    if hash_available(hash_method):
         if hash_method == 'sha224':
             h = hashlib.sha224()
         elif hash_method == 'sha256':
@@ -58,8 +59,8 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
         h.update(content)
         return h.hexdigest()
     except FileNotFoundError:
-        logging.error('File not found or path not readable. ' +
-                      'Cannot calculate hash.', exc_info=True)
+        logging.error('Cannot calculate hash: File not found or not readable.',
+                      exc_info=True)
         raise
     except Exception:
         logging.error('Exception while trying to get file hash',

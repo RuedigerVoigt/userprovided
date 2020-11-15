@@ -43,24 +43,23 @@ def normalize_query_part(query: str) -> str:
         # https://www.example.com/forums/forumdisplay.php?example-forum
         # In this case the query part is not changed.
         return query
-    else:
-        chunks = query.split('&')
-        keep: Dict[str, str] = dict()
-        for chunk in chunks:
-            if chunk != '' and '=' in chunk:
-                split_chunk = chunk.split('=')
-                key = split_chunk[0]
-                value = split_chunk[1]
-                if key != '' and value != '':
-                    if key in keep:
-                        if keep[key] != value:
-                            raise ValueError('Duplicate key in URL query with ' +
-                                             'conflicting values')
-                        else:
-                            logging.debug('URL query part contained duplicate ' +
-                                          'key but no conflicting value.')
-                    else:
-                        keep[key] = value
+
+    chunks = query.split('&')
+    keep: Dict[str, str] = dict()
+    for chunk in chunks:
+        if chunk != '' and '=' in chunk:
+            split_chunk = chunk.split('=')
+            key = split_chunk[0]
+            value = split_chunk[1]
+            if key != '' and value != '':
+                if key in keep:
+                    if keep[key] != value:
+                        raise ValueError('Duplicate key in URL query with ' +
+                                            'conflicting values')
+                    logging.debug('URL query part contained duplicate key, ' +
+                                  'but no conflicting value.')
+                else:
+                    keep[key] = value
     ordered = list()
     if keep:
         for key in sorted(keep):

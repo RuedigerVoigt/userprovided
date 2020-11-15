@@ -12,12 +12,12 @@ def is_email(mailaddress: str) -> bool:
     if mailaddress is None or mailaddress == '':
         logging.warning('No mail address supplied.')
         return False
-    else:
-        mailaddress = mailaddress.strip()
-        if not re.match(r"^[^\s@]+@[^\s@]+\.[a-zA-Z]+", mailaddress):
-            logging.error('The supplied mailaddress %s has an unknown ' +
-                          'format.', mailaddress)
-            return False
-        else:
-            logging.debug('%s seems to have a valid format', mailaddress)
-            return True
+
+    mailaddress = mailaddress.strip()
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[a-zA-Z]+", mailaddress):
+        logging.error('The supplied mailaddress %s has an unknown ' +
+                      'format.', mailaddress)
+        return False
+
+    logging.debug('%s seems to have a valid format', mailaddress)
+    return True

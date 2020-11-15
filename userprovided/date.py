@@ -35,9 +35,9 @@ def date_en_long_to_iso(date_string: str) -> str:
     try:
         match = re.search(regex_long_date_en, date_string)
         if match:
-            matchYear = match.group('year')
-            matchMonth = match.group('monthL')
-            matchDay = match.group('day')
+            match_year = match.group('year')
+            match_month = match.group('monthL')
+            match_day = match.group('day')
         else:
             raise AttributeError('No date provided')
     except AttributeError:
@@ -45,8 +45,8 @@ def date_en_long_to_iso(date_string: str) -> str:
         raise
 
     # add a zero to day if <10
-    if(len(matchDay) == 1):
-        matchDay = '0' + matchDay
+    if(len(match_day) == 1):
+        match_day = '0' + match_day
     months = {
         'January': '01',
         'Jan.': '01',
@@ -73,14 +73,14 @@ def date_en_long_to_iso(date_string: str) -> str:
         'Dec.': '12'
         }
     try:
-        matchMonth = months[str(matchMonth).lower().capitalize()]
+        match_month = months[str(match_month).lower().capitalize()]
     except KeyError:
         # String for month matched the regular expression but is no
         # recognized month.
         logging.error('Do not recognize month.')
         raise
 
-    if date_exists(int(matchYear), int(matchMonth), int(matchDay)):
-        return(f"{matchYear}-{matchMonth}-{matchDay}")
-    else:
+    if not date_exists(int(match_year), int(match_month), int(match_day)):
         raise ValueError('Provided date is invalid.')
+
+    return(f"{match_year}-{match_month}-{match_day}")   

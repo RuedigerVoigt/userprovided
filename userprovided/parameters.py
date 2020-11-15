@@ -34,7 +34,7 @@ def validate_dict_keys(dict_to_check: dict,
        * necessary keys are missing
        This functions checks whether all keys are in the set of allowed_keys
        and raises ValueError if a unknown key is found.
-       It can also check whether all necessary keys are present and 
+       It can also check whether all necessary keys are present and
        raises ValueError if not.
        dict_name can be used for a better error message."""
 
@@ -50,8 +50,8 @@ def validate_dict_keys(dict_to_check: dict,
         necessary_keys = convert_to_set(necessary_keys)
         # Are all necessary keys in the allowed key list?
         if len(necessary_keys - allowed_keys) != 0:
-            msg = (f"Contradiction: Not all necessary keys " +
-                   f"are in the allowed keys set!")
+            msg = ("Contradiction: Not all necessary keys " +
+                   "are in the allowed keys set!")
             logging.exception(msg)
             raise ValueError(msg)
 
@@ -165,4 +165,4 @@ def enforce_boolean(parameter_value: bool,
     if type(parameter_value) != bool:
         parameter_name = 'parameter' if parameter_name else ''
         raise ValueError(f"Value of {parameter_name} must be boolean," +
-                         f"i.e True / False (without quotation marks).")
+                         "i.e True / False (without quotation marks).")
