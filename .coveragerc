@@ -1,0 +1,7 @@
+[run]
+branch = False
+cover_pylib = False
+source = userprovided
+
+[html]
+title = Coverage Report for the userprovided Python Package
