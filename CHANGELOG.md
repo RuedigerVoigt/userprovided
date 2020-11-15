@@ -3,15 +3,15 @@
 ## version 0.8.0 beta (2020-11-15)
 
 * The method `hash.calculate_file_hash` now also accepts a string for the `file_path` parameter instead of only a `pathlib.Path` object as before.
-* The method `url.is_url` does not log an error anymore if the URl is malformed. Other methods use `is_url` for checks and this would pollute the logs. Instead those messages have been downgraded to `debug`. However, if the requirement for a specific scheme is not met, there will be still an error logged.
+* The method `url.is_url` does not log an error anymore if the URL is malformed. Other methods use `is_url` for checks and this would pollute the logs. Instead those messages have been downgraded to `debug`. However, if the requirement for a specific scheme is not met, there will be still an error logged.
 * The method `url.normalize_query_part` does raise `ValueError` if it is given a full URL instead of the query part.
-* Currently 98% test coverage.
+* Currently 98% test coverage. See the [coverage report](https://www.ruediger-voigt.eu/coverage/userprovided/index.html)
 
 Bugfixes:
 * The function `url.determine_file_extension` did not handle some edge cases separetly, but instead suggested the extension `.unknown` in both cases. Now:
     * If neither the URL nor the server provide enough information to determine the file extension, the function will suggest `.unknown`.
     * If the file extension in the URL and the provided mime-type contradict each other, the file extension suggested by the URL will prevail.
-* The function `url.determine_file_extension` did try to guess a file extension from the URL even if that missed the path part (i.e. `https://www.example.com` instead of soemthing like `https://www.example.com/index.html`). Now it only guesses from the URL if there is a path component. Otherwise only the mime-type suggested by the server will be used.
+* The function `url.determine_file_extension` did try to guess a file extension from the URL even if that missed the path part (i.e. `https://www.example.com` instead of something like `https://www.example.com/index.html`). Now it only guesses from the URL if there is a path component. Otherwise only the mime-type suggested by the server will be used.
 * The method `url.normalize_query_part` does not raise an exception anymore, if a chunk of the query part is malformed by missing an equal sign (like `example.com/index.php?missinghere&foo=bar`).
 * Fix `calculate_file_hash` (missing value for check).
 
@@ -48,7 +48,7 @@ Bugfixes:
 
 ## version 0.7.1 beta (2020-07-09)
 
-* New function `url.determine_file_extension` (moved here from the `exoskeleton` sister project): determine the appropiate file extension either based on the URL and / or the mime type provided by the server.
+* New function `url.determine_file_extension` (moved here from the `exoskeleton` sister project): determine the appropriate file extension either based on the URL and / or the mime type provided by the server.
 
 ## version 0.7.0 beta (2020-06-25)
 
@@ -76,7 +76,7 @@ Bugfixes:
 
 ## version 0.5.2 beta (2020-04-18)
 
-* Add function to check for hash method availability, that raises ValueError for md5 and sha1.
+* Add function to check for hash method availability, that raises ValueError for md5 and SHA1.
 
 ## version 0.5.1 beta (2020-04-17)
 
@@ -84,4 +84,4 @@ Bugfixes:
 
 ## version 0.5.0 beta (2020-04-17)
 
-* The functions were previously part of the sister project exoskelton. They were spun off, renamed and even more tests were added.
+* The functions were previously part of the sister project exoskeleton. They were spun off, renamed and even more tests were added.
