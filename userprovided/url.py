@@ -55,7 +55,7 @@ def normalize_query_part(query: str) -> str:
                 if key in keep:
                     if keep[key] != value:
                         raise ValueError('Duplicate key in URL query with ' +
-                                            'conflicting values')
+                                         'conflicting values')
                     logging.debug('URL query part contained duplicate key, ' +
                                   'but no conflicting value.')
                 else:
@@ -157,15 +157,17 @@ def determine_file_extension(url: str,
         # guessed a type once we got here and can guess a matching extension.
     elif type_by_url is None and provided_mime_type is None:
         # Neither the URL nor the server does hint to a extension
-        logging.error("Neither URL (%s) nor mime-type (%s) suggest " +
-                      "a file extension.", (url, provided_mime_type))
+        msg = (f"Neither URL ({url}) nor mime-type ({provided_mime_type}) " +
+               "suggests a file extension.")
+        logging.error(msg)
         return '.unknown'
     elif type_by_url != provided_mime_type:
         # The suggestions contradict each other
-        logging.error("The mime type (%s) suggested by the URL (%s) does " +
-                      "not match the mime type supplied by the server (%s)." +
-                      " Using the extension suggested by the URL.",
-                      (type_by_url, url, provided_mime_type))
+        msg = (f"The mime type ({type_by_url}) suggested by the URL ({url}) " +
+               "does not match the mime type supplied by the server " +
+               f"({provided_mime_type}). Using the extension suggested " +
+               "by the URL.")
+        logging.error(msg)
         extension = mimetypes.guess_extension(type_by_url)  # type: ignore[arg-type]
 
     # Handle errors and irregularities in mimetypes:
