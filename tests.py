@@ -93,27 +93,28 @@ def test_hypothesis_mail_is_email(x):
     assert userprovided.mail.is_email(x) is True
 
 
-def test_cloud_is_aws_s3_bucket_name():
-    assert userprovided.cloud.is_aws_s3_bucket_name('abc') is True
+@pytest.mark.parametrize("bucket_name,truth_value", [
+    ('abc', True),
     # perfectly fine at max length:
-    assert userprovided.cloud.is_aws_s3_bucket_name(
-            'iekoht9choofe9eixeeseizoo0iuzos1ibeepae7phee3aeghai7shal9kiepiy') is True
+    ('iekoht9choofe9eixeeseizoo0iuzos1ibeepae7phee3aeghai7shal9kiepiy', True),
     # too short:
-    assert userprovided.cloud.is_aws_s3_bucket_name('ab') is False
+    ('ab', False),
     # too long:
-    assert userprovided.cloud.is_aws_s3_bucket_name(
-        'iekoht9choofe9eixeeseizoo0iuzos1ibeepae7phee3aeghaif7shal9kiepiy') is False
+    ('iekoht9choofe9eixeeseizoo0iuzos1ibeepae7phee3aeghaif7shal9kiepiy', False),
     # IPv4:
-    assert userprovided.cloud.is_aws_s3_bucket_name('127.0.0.1') is False
+    ('127.0.0.1', False),
     # invalid characters:
-    assert userprovided.cloud.is_aws_s3_bucket_name('iekoht9choofe9ei_xeeseizo') is False
-    assert userprovided.cloud.is_aws_s3_bucket_name('iekoh#xeeseizo') is False
-    assert userprovided.cloud.is_aws_s3_bucket_name('ab$$c') is False
-    assert userprovided.cloud.is_aws_s3_bucket_name('ABc') is False
+    ('iekoht9choofe9ei_xeeseizo', False),
+    ('iekoh#xeeseizo', False),
+    ('ab$$c', False),
+    ('ABc', False),
     # bucket name must start with lowercase letter or number:
-    assert userprovided.cloud.is_aws_s3_bucket_name('-abc') is False
+    ('-abc', False),
     # containing dots:
-    assert userprovided.cloud.is_aws_s3_bucket_name('iekoht9choofe.eixeeseizoo0iuzos1ibee.pae7ph') is True
+    ('iekoht9choofe.eixeeseizoo0iuzos1ibee.pae7ph', True)
+])
+def test_cloud_is_aws_s3_bucket_name(bucket_name, truth_value):
+    assert userprovided.cloud.is_aws_s3_bucket_name(bucket_name) is truth_value
 
 
 def test_is_url():
@@ -144,40 +145,53 @@ def test_normalize_query_part():
     assert userprovided.url.normalize_query_part('missingequalsign&foo=bar') == 'foo=bar'
     assert userprovided.url.normalize_query_part('foo=bar&missingequalsign&') == 'foo=bar'
 
-
-def test_normalize_url():
+@pytest.mark.parametrize("test_url,normalized_url", [
     # remove whitespace around the URL:
-    assert userprovided.url.normalize_url(' https://www.example.com/ ') == 'https://www.example.com/'
+    (' https://www.example.com/ ', 'https://www.example.com/'),
     # Convert scheme and hostname to lowercase
-    assert userprovided.url.normalize_url('HTTPS://www.ExAmPlE.com') == 'https://www.example.com'
+    ('HTTPS://www.ExAmPlE.com', 'https://www.example.com'),
     # Remove standard port for scheme (http)
-    assert userprovided.url.normalize_url('http://www.example.com:80') == 'http://www.example.com'
+    ('http://www.example.com:80', 'http://www.example.com'),
     # Remove standard port for scheme (https)
-    assert userprovided.url.normalize_url('https://www.example.com:443') == 'https://www.example.com'
+    ('https://www.example.com:443', 'https://www.example.com'),
     # Keep non-standard port for scheme (http)
-    assert userprovided.url.normalize_url('https://www.example.com:123') =='https://www.example.com:123'
+    ('https://www.example.com:123','https://www.example.com:123'),
     # Remove duplicate slashes from the path (1)
-    assert userprovided.url.normalize_url('https://www.example.com//index.html') == 'https://www.example.com/index.html'
+    ('https://www.example.com//index.html',
+     'https://www.example.com/index.html'),
     # Remove duplicate slashes from the path (2)
-    assert userprovided.url.normalize_url('https://www.example.com/en//index.html') == 'https://www.example.com/en/index.html'
+    ('https://www.example.com/en//index.html',
+     'https://www.example.com/en/index.html'),
     # remove fragment when query is not present
-    assert userprovided.url.normalize_url(' https://www.example.com/index.html#test ') == 'https://www.example.com/index.html'
+    (' https://www.example.com/index.html#test ',
+     'https://www.example.com/index.html'),
     # remove fragment when query is present
-    assert userprovided.url.normalize_url(' https://www.example.com/index.php?name=foo#test ') == 'https://www.example.com/index.php?name=foo'
+    (' https://www.example.com/index.php?name=foo#test ',
+     'https://www.example.com/index.php?name=foo'),
     # remove fragment when path is not present
-    assert userprovided.url.normalize_url(' https://www.example.com/#test ') == 'https://www.example.com/'
+    (' https://www.example.com/#test ', 'https://www.example.com/'),
     # Ignore empty query
-    assert userprovided.url.normalize_url('https://www.example.com/index.php?') == 'https://www.example.com/index.php'
+    ('https://www.example.com/index.php?',
+     'https://www.example.com/index.php'),
     # remove empty elements of the query part
-    assert userprovided.url.normalize_url('https://www.example.com/index.php?name=foo&example=') == 'https://www.example.com/index.php?name=foo'
+    ('https://www.example.com/index.php?name=foo&example=',
+     'https://www.example.com/index.php?name=foo'),
     # order the elements in the query part by alphabet
-    assert userprovided.url.normalize_url('https://www.example.com/index.py?c=3&a=1&b=2') == 'https://www.example.com/index.py?a=1&b=2&c=3'
+    ('https://www.example.com/index.py?c=3&a=1&b=2',
+     'https://www.example.com/index.py?a=1&b=2&c=3'),
     # URL with non standard query part (does not follow key=value syntax).
     # Mentioned in RFC 3986 as "erroneous" because it mixes query and path.
     # However still used by some software.
-    assert userprovided.url.normalize_url('https://www.example.com/forums/forumdisplay.php?example-forum') == 'https://www.example.com/forums/forumdisplay.php?example-forum'
+    ('https://www.example.com/forums/forumdisplay.php?example-forum',
+     'https://www.example.com/forums/forumdisplay.php?example-forum'),
     # Empty query, but '?' indicating one
-    assert userprovided.url.normalize_url('https://www.example.com/index.php?') == 'https://www.example.com/index.php'
+    ('https://www.example.com/index.php?', 'https://www.example.com/index.php')
+])
+def test_normalize_url(test_url, normalized_url):
+    assert userprovided.url.normalize_url(test_url) == normalized_url
+
+
+def test_normalize_url_exceptions():
     # input is not an URL
     with pytest.raises(ValueError):
         userprovided.url.normalize_url('somestring')
@@ -231,25 +245,31 @@ def test_date_exists(x):
     assert userprovided.date.date_exists(x.year, x.month, x.day) is True
 
 
-def test_date_en_long_to_iso():
+@pytest.mark.parametrize("date_string,expected", [
     # valid input:
-    assert userprovided.date.date_en_long_to_iso('Jul. 4, 1776') == '1776-07-04'
-    assert userprovided.date.date_en_long_to_iso('May 8, 1945') == '1945-05-08'
-    assert userprovided.date.date_en_long_to_iso('May 08, 1945') == '1945-05-08'
-    assert userprovided.date.date_en_long_to_iso('October 3, 1990') == '1990-10-03'
-    assert userprovided.date.date_en_long_to_iso('November 03, 2020') == '2020-11-03'
+    ('Jul. 4, 1776', '1776-07-04'),
+    ('May 8, 1945', '1945-05-08'),
+    ('May 08, 1945', '1945-05-08'),
+    ('October 3, 1990', '1990-10-03'),
+    ('November 03, 2020', '2020-11-03'),
     # messed up whitespace:
-    assert userprovided.date.date_en_long_to_iso('Jul. 4,      1776') == '1776-07-04'
-    assert userprovided.date.date_en_long_to_iso('Jul. 4,1776') == '1776-07-04'
-    assert userprovided.date.date_en_long_to_iso('   Jul. 4, 1776  ') == '1776-07-04'
-    assert userprovided.date.date_en_long_to_iso('Jul.    4, 1776') == '1776-07-04'
+    ('Jul. 4,      1776', '1776-07-04'),
+    ('Jul. 4,1776', '1776-07-04'),
+    ('   Jul. 4, 1776  ', '1776-07-04'),
+    ('Jul.    4, 1776', '1776-07-04'),
     # grammatically incorrect, but clear:
-    assert userprovided.date.date_en_long_to_iso('May 8th, 1945') == '1945-05-08'
+    ('May 8th, 1945', '1945-05-08'),
     # upper and lower case:
-    assert userprovided.date.date_en_long_to_iso('jul. 4, 1776') == '1776-07-04'
-    assert userprovided.date.date_en_long_to_iso('JUL. 4, 1776') == '1776-07-04'
+    ('jul. 4, 1776', '1776-07-04'),
+    ('JUL. 4, 1776', '1776-07-04'),
     # leap year:
-    assert userprovided.date.date_en_long_to_iso('February 29, 2020') == '2020-02-29'
+    ('February 29, 2020', '2020-02-29')
+    ])
+def test_date_en_long_to_iso(date_string, expected):
+    assert userprovided.date.date_en_long_to_iso(date_string) == expected
+
+
+def test_date_en_long_to_iso_exceptions():
     # non-existing date:
     with pytest.raises(ValueError):
         userprovided.date.date_en_long_to_iso('February 30, 2020')
@@ -275,16 +295,22 @@ def test_port_in_range():
         userprovided.port.port_in_range(None)
 
 
-def test_convert_to_set():
+@pytest.mark.parametrize("input,expected", [
     # single string with multiple characters
-    # (wrong would be making each character into an element)
-    assert userprovided.parameters.convert_to_set('abc') == {'abc'}
-    # list with duplicates to set
-    assert userprovided.parameters.convert_to_set(['a', 'a', 'b', 'c']) == {'a', 'b', 'c'}
-    # tuple with duplicates
-    assert userprovided.parameters.convert_to_set(('a', 'a', 'b', 'c')) == {'a', 'b', 'c'}
-    # set should return unchanged
-    assert userprovided.parameters.convert_to_set({'a', 'b', 'c'}) == {'a', 'b', 'c'}
+    # (wrong would be turning each character into an element)
+    ('abc', {'abc'}),
+    # list with duplicates to set:
+    (['a', 'a', 'b', 'c'], {'a', 'b', 'c'}),
+    # tuple with duplicates:
+    (('a', 'a', 'b', 'c'), {'a', 'b', 'c'}),
+    # a set should return unchanged:
+    ({'a', 'b', 'c'}, {'a', 'b', 'c'})
+])
+def test_convert_to_set(input, expected):
+    assert userprovided.parameters.convert_to_set(input) == expected
+
+
+def test_convert_to_set_exceptions():
     # unsupported data type integer
     with pytest.raises(TypeError):
         userprovided.parameters.convert_to_set(3)
