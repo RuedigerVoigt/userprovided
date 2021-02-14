@@ -68,14 +68,17 @@ def test_calculate_file_hash():
 
 
 def test_mail_is_email():
+    # valid addresses:
     assert userprovided.mail.is_email('test@example.com') is True
     assert userprovided.mail.is_email('test@example-example.com') is True
     assert userprovided.mail.is_email('test@example.co.uk') is True
     assert userprovided.mail.is_email('  test@example.com  ') is True
     assert userprovided.mail.is_email('test+filter@example.com') is True
+    # invalid addresses:
     assert userprovided.mail.is_email('@example.com') is False
     assert userprovided.mail.is_email('test@@example.com') is False
     assert userprovided.mail.is_email('test@example.') is False
+    # missing input:
     assert userprovided.mail.is_email(None) is False
     assert userprovided.mail.is_email('') is False
     assert userprovided.mail.is_email('   ') is False
@@ -106,7 +109,7 @@ def test_cloud_is_aws_s3_bucket_name():
     assert userprovided.cloud.is_aws_s3_bucket_name('iekoh#xeeseizo') is False
     assert userprovided.cloud.is_aws_s3_bucket_name('ab$$c') is False
     assert userprovided.cloud.is_aws_s3_bucket_name('ABc') is False
-    # starting with lowercase letter or number ?????????????????????????????????????????????????????
+    # bucket name must start with lowercase letter or number:
     assert userprovided.cloud.is_aws_s3_bucket_name('-abc') is False
     # containing dots:
     assert userprovided.cloud.is_aws_s3_bucket_name('iekoht9choofe.eixeeseizoo0iuzos1ibee.pae7ph') is True
