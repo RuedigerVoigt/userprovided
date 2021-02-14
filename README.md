@@ -4,7 +4,7 @@
 ![pypi version](https://img.shields.io/pypi/v/userprovided)
 ![Last commit](https://img.shields.io/github/last-commit/RuedigerVoigt/userprovided)
 [![Downloads](https://pepy.tech/badge/userprovided)](https://pepy.tech/project/userprovided)
-[![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](https://www.ruediger-voigt.eu/coverage/userprovided/index.html)
+[![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](https://www.ruediger-voigt.eu/coverage/userprovided/index.html)
 
 The Python package `userprovided` checks input for validity and / or plausibility. For example it can check whether a string is a valid email address or an URL. It can do more complicated tasks like checking a dictionary for valid and needed keys. It also contains some functionalities to convert input into a more rigid format (like the string 'October 3, 1990' into '1990-10-03').
 

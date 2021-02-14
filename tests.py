@@ -14,6 +14,7 @@ Source: https://github.com/RuedigerVoigt/userprovided
 Released under the Apache License 2.0
 """
 
+from unittest.mock import patch
 import pathlib
 
 from hypothesis import given
@@ -203,6 +204,18 @@ def test_determine_file_extension():
     # .htm -> html
     assert userprovided.url.determine_file_extension('https://www.example.com/test.htm', 'text/plain') == '.html'
     assert userprovided.url.determine_file_extension('https://www.example.com/test.htm', 'doesnotmatter') == '.html'
+
+
+# There are some edge cases in which `mimetypes.guess_extension`
+# (in the python standard library) has different return values
+# depending on the Python version used.
+def test_determine_file_extension_version_inconsistencies():
+    with patch('mimetypes.guess_extension', return_value='.bat'):
+        assert userprovided.url.determine_file_extension('https://www.example.com/test.txt', 'text/plain') == '.txt'
+    with patch('mimetypes.guess_extension', return_value='.htm'):
+        assert userprovided.url.determine_file_extension('https://www.example.com/test.htm', 'text/plain') == '.html'
+    with patch('mimetypes.guess_extension', return_value=None):
+        assert userprovided.url.determine_file_extension('https://www.example.com/test.htm', 'text/plain') == '.unknown'
 
 
 def test_date_exists_non_numeric():
