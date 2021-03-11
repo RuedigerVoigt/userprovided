@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+URL related functions of the userprovided library
+~~~~~~~~~~~~~~~~~~~~~
+Source: https://github.com/RuedigerVoigt/userprovided
+(c) 2020-2021 Rüdiger Voigt
+Released under the Apache License 2.0
+"""
+
+
 # python standard library:
 import logging
 import mimetypes
@@ -65,7 +74,7 @@ def normalize_query_part(query: str) -> str:
         for key in sorted(keep):
             ordered.append(f"{key}={keep[key]}")
 
-    return ('&'.join(ordered) if ordered else '')
+    return '&'.join(ordered) if ordered else ''
 
 
 def normalize_url(url: str) -> str:

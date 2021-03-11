@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Checking bucket names for the userprovided library
+~~~~~~~~~~~~~~~~~~~~~
+Source: https://github.com/RuedigerVoigt/userprovided
+(c) 2020-2021 Rüdiger Voigt
+Released under the Apache License 2.0
+"""
+
 import logging
 import re
 
@@ -15,12 +23,12 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
     # Lengthy code which could be written as a single regular expression.
     # However written in this way to provide useful error messages.
     if len(bucket_name) < 3:
-        logging.error('Any AWS bucket name has to be at least 3 ' +
-                      'characters long.')
+        logging.error(
+            'Any AWS bucket name has to be at least 3 characters long.')
         return False
     if len(bucket_name) > 63:
-        logging.error('The provided bucket name for AWS exceeds the ' +
-                      'maximum length of 63 characters.')
+        logging.error(
+            'The AWS bucket name exceeds the maximum length of 63 characters.')
         return False
     if not re.match(r"^[a-z0-9\-\.]*$", bucket_name):
         logging.error('The AWS bucket name contains invalid characters.')

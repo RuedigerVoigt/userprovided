@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Check Parameters
+~~~~~~~~~~~~~~~~~~~~~
+Source: https://github.com/RuedigerVoigt/userprovided
+(c) 2020-2021 Rüdiger Voigt
+Released under the Apache License 2.0
+"""
+
 import logging
 from typing import Optional, Union
 
@@ -58,9 +66,9 @@ def validate_dict_keys(dict_to_check: dict,
     # Get all keys in the dictionary:
     try:
         found_keys = dict_to_check.keys()
-    except AttributeError:
-        raise AttributeError('Expected a dictionary for ' +
-                             'the dict_to_check parameter!')
+    except AttributeError as no_dict:
+        raise AttributeError('Expected a dictionary for the dict_to_check ' +
+                             'parameter!') from no_dict
 
     # Check for unknown keys:
     for key in found_keys:
@@ -127,7 +135,7 @@ def int_in_range(parameter_name: str,
     """Special case of numeric_in_range: check if given integer is
        within a specified range of possible values."""
     for param in {given_value, minimum_value, maximum_value, fallback_value}:
-        if type(param) != int:
+        if type(param) != int:  # pylint: disable=unidiomatic-typecheck
             raise ValueError('Value must be an integer.')
     return int(numeric_in_range(parameter_name,
                                 given_value,
@@ -162,7 +170,7 @@ def string_in_range(string_to_check: str,
 def enforce_boolean(parameter_value: bool,
                     parameter_name: Optional[str] = None) -> None:
     """Raise a ValueError if the parameter is not of type bool."""
-    if type(parameter_value) != bool:
+    if type(parameter_value) != bool:  # pylint: disable=unidiomatic-typecheck
         parameter_name = 'parameter' if parameter_name else ''
         raise ValueError(f"Value of {parameter_name} must be boolean," +
                          "i.e True / False (without quotation marks).")

@@ -1,1 +1,1 @@
-urllib3
+# no requirements outside the Python 3 standard library

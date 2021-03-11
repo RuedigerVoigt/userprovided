@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Hash functionality for the userprovided library
+~~~~~~~~~~~~~~~~~~~~~
+Source: https://github.com/RuedigerVoigt/userprovided
+(c) 2020-2021 Rüdiger Voigt
+Released under the Apache License 2.0
+"""
+
+
 import hashlib
 import logging
 import pathlib
@@ -29,8 +38,7 @@ def hash_available(hash_method: str,
     if hash_method in hashlib.algorithms_available:
         logging.debug('Hash method %s is available.', hash_method)
         return True
-    else:
-        return False
+    return False
 
 
 def calculate_file_hash(file_path: Union[pathlib.Path, str],
@@ -59,8 +67,12 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
         h.update(content)
         return h.hexdigest()
     except FileNotFoundError:
-        logging.error('Cannot calculate hash: File not found or not readable.',
-                      exc_info=True)
+        logging.exception('Cannot calculate hash: File not found or not readable.',
+                          exc_info=True)
+        raise
+    except PermissionError:
+        logging.exception('Cannot calculate file hash: insufficient permissions.',
+                          exc_info=True)
         raise
     except Exception:
         logging.error('Exception while trying to get file hash',

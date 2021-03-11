@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Checking and normalizing dates for the userprovided library
+~~~~~~~~~~~~~~~~~~~~~
+Source: https://github.com/RuedigerVoigt/userprovided
+(c) 2020-2021 Rüdiger Voigt
+Released under the Apache License 2.0
+"""
+
+
 import datetime
 import logging
 import re
@@ -45,7 +54,7 @@ def date_en_long_to_iso(date_string: str) -> str:
         raise
 
     # add a zero to day if <10
-    if(len(match_day) == 1):
+    if len(match_day) == 1:
         match_day = '0' + match_day
     months = {
         'January': '01',
@@ -83,4 +92,4 @@ def date_en_long_to_iso(date_string: str) -> str:
     if not date_exists(int(match_year), int(match_month), int(match_day)):
         raise ValueError('Provided date is invalid.')
 
-    return(f"{match_year}-{match_month}-{match_day}")   
+    return f"{match_year}-{match_month}-{match_day}"
