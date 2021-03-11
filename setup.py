@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="userprovided",
-    version="0.8.0",
+    version="0.8.1",
     author="Rüdiger Voigt",
     author_email="projects@ruediger-voigt.eu",
     description="A library to check user input for validity and / or plausibility",
@@ -27,7 +27,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Science/Research",
         "Intended Audience :: Developers",
         "Topic :: Security",
