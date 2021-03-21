@@ -68,21 +68,24 @@ def test_calculate_file_hash():
     assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha512') == 'f7fbba6e0636f890e56fbbf3283e524c6fa3204ae298382d624741d0dc6638326e282c41be5e4254d8820772c5518a2c5a8c0c7f7eda19594a7eb539453e1ed7'
 
 
-def test_mail_is_email():
+@pytest.mark.parametrize("mail_address,truth_value", [
     # valid addresses:
-    assert userprovided.mail.is_email('test@example.com') is True
-    assert userprovided.mail.is_email('test@example-example.com') is True
-    assert userprovided.mail.is_email('test@example.co.uk') is True
-    assert userprovided.mail.is_email('  test@example.com  ') is True
-    assert userprovided.mail.is_email('test+filter@example.com') is True
+    ('test@example.com', True),
+    ('test@example-example.com', True),
+    ('test@example.co.uk', True),
+    ('  test@example.com  ', True),
+    ('test+filter@example.com', True),
     # invalid addresses:
-    assert userprovided.mail.is_email('@example.com') is False
-    assert userprovided.mail.is_email('test@@example.com') is False
-    assert userprovided.mail.is_email('test@example.') is False
+    ('@example.com', False),
+    ('test@@example.com', False),
+    ('test@example.', False),
     # missing input:
-    assert userprovided.mail.is_email(None) is False
-    assert userprovided.mail.is_email('') is False
-    assert userprovided.mail.is_email('   ') is False
+    (None, False),
+    ('', False),
+    ('   ', False)
+])
+def test_mail_is_email(mail_address, truth_value):
+    assert userprovided.mail.is_email(mail_address) is truth_value
 
 
 @settings(max_examples=1000,
@@ -145,6 +148,7 @@ def test_normalize_query_part():
     assert userprovided.url.normalize_query_part('missingequalsign&foo=bar') == 'foo=bar'
     assert userprovided.url.normalize_query_part('foo=bar&missingequalsign&') == 'foo=bar'
 
+
 @pytest.mark.parametrize("test_url,normalized_url", [
     # remove whitespace around the URL:
     (' https://www.example.com/ ', 'https://www.example.com/'),
@@ -155,7 +159,7 @@ def test_normalize_query_part():
     # Remove standard port for scheme (https)
     ('https://www.example.com:443', 'https://www.example.com'),
     # Keep non-standard port for scheme (http)
-    ('https://www.example.com:123','https://www.example.com:123'),
+    ('https://www.example.com:123', 'https://www.example.com:123'),
     # Remove duplicate slashes from the path (1)
     ('https://www.example.com//index.html',
      'https://www.example.com/index.html'),
