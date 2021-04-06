@@ -289,6 +289,43 @@ def test_date_en_long_to_iso_exceptions():
         userprovided.date.date_en_long_to_iso('February 30')
 
 
+@pytest.mark.parametrize("date_string,expected", [
+    # valid input:
+    ('4. Jul. 1776', '1776-07-04'),
+    ('8. Mai 1945', '1945-05-08'),
+    ('3. Oktober 1990', '1990-10-03'),
+    ('03. November 2020', '2020-11-03'),
+    # messed up whitespace:
+    ('4. Jul.      1776', '1776-07-04'),
+    ('4. Juli 1776', '1776-07-04'),
+    ('   4. Juli 1776  ', '1776-07-04'),
+    ('4.         Juli 1776', '1776-07-04'),
+    # upper and lower case:
+    ('4. julI 1776', '1776-07-04'),
+    ('4. JUL. 1776', '1776-07-04'),
+    # leap year:
+    ('29. Februar 2020', '2020-02-29')
+    ])
+def test_date_de_long_to_iso(date_string, expected):
+    assert userprovided.date.date_de_long_to_iso(date_string) == expected
+
+
+def test_date_de_long_to_iso_exceptions():
+    # non-existing date:
+    with pytest.raises(ValueError):
+        userprovided.date.date_de_long_to_iso('30. Februar 2020')
+    # misspelled month:
+    with pytest.raises(KeyError):
+        userprovided.date.date_de_long_to_iso('30. abcd 2020')
+    # incomplete dates (missing elements):
+    with pytest.raises(AttributeError):
+        userprovided.date.date_de_long_to_iso('Februar 2020')
+    with pytest.raises(AttributeError):
+        userprovided.date.date_de_long_to_iso('30 2020')
+    with pytest.raises(AttributeError):
+        userprovided.date.date_de_long_to_iso('Februar 30')
+
+
 def test_port_in_range():
     assert userprovided.port.port_in_range(443) is True
     assert userprovided.port.port_in_range(65537) is False
