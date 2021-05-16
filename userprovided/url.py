@@ -38,11 +38,14 @@ def is_url(url: str,
     return True
 
 
-def normalize_query_part(query: str) -> str:
+def normalize_query_part(query: str,
+                         drop_keys: Union[list, tuple, set, None] = None) -> str:
     """Normalize the query part (for example '?foo=1&example=2') of an URL:
        * Remove every chunk that has no value assigned.
        * Sort the remaining chunks alphabetically.
-       * Do not change queries without key (old implementations)."""
+       * Do not change queries without key (old implementations).
+        The optional drop_keys allows you to remove specific keys
+        (for example trackers)."""
     if is_url(query):
         raise ValueError('Provide only the query part to normalize_query_part')
 
@@ -62,11 +65,15 @@ def normalize_query_part(query: str) -> str:
             value = split_chunk[1]
             if key != '' and value != '':
                 if key in keep:
+                    # i.e. we already processed the same key
                     if keep[key] != value:
                         raise ValueError('Duplicate key in URL query with ' +
                                          'conflicting values')
                     logging.debug('URL query part contained duplicate key, ' +
                                   'but no conflicting value.')
+                elif drop_keys and key in drop_keys:
+                    # i.e. the key is in the list of keys to drop
+                    pass
                 else:
                     keep[key] = value
     ordered = list()
@@ -77,7 +84,8 @@ def normalize_query_part(query: str) -> str:
     return '&'.join(ordered) if ordered else ''
 
 
-def normalize_url(url: str) -> str:
+def normalize_url(url: str,
+                  drop_keys: Union[list, tuple, set, None] = None) -> str:
     """Normalize an URL:
        * remove whitespace around it,
        * convert scheme and hostname to lowercase,
@@ -85,7 +93,9 @@ def normalize_url(url: str) -> str:
        * remove duplicate slashes from the path,
        * remove fragments (like #foo),
        * remove empty elements of the query part,
-       * order the elements in the query part by alphabet,"""
+       * order the elements in the query part by alphabet,
+       The optional drop_keys allows you to remove specific keys
+       (for example trackers)."""
     url = url.strip()
 
     if not is_url(url):
@@ -119,7 +129,7 @@ def normalize_url(url: str) -> str:
     # do not change parameters of the path element (!= query)
     reassemble.append(parsed.params)
 
-    reassemble.append(normalize_query_part(parsed.query))
+    reassemble.append(normalize_query_part(parsed.query, drop_keys))
 
     # urlunparse expects a fifth element (the already removed fragment)
     reassemble.append('')

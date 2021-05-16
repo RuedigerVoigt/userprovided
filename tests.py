@@ -14,6 +14,9 @@ Source: https://github.com/RuedigerVoigt/userprovided
 Released under the Apache License 2.0
 """
 
+# flake8: noqa
+
+
 from unittest.mock import patch
 import pathlib
 
@@ -147,6 +150,15 @@ def test_normalize_query_part():
     # Chunk of query is malformed: the = is missing:
     assert userprovided.url.normalize_query_part('missingequalsign&foo=bar') == 'foo=bar'
     assert userprovided.url.normalize_query_part('foo=bar&missingequalsign&') == 'foo=bar'
+    # Drop specific key (with tuple, list and set):
+    assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys=('bar')) == 'foo=1'
+    assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys=['bar']) == 'foo=1'
+    assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys={'bar'}) == 'foo=1'
+    # Try to drop non-existent key:
+    assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys=['not_in_url']) == 'bar=2&foo=1'
+    # drop_key is set, but empty or None:
+    assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys=[]) == 'bar=2&foo=1'
+    assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys=None) == 'bar=2&foo=1'
 
 
 @pytest.mark.parametrize("test_url,normalized_url", [
@@ -199,6 +211,15 @@ def test_normalize_url_exceptions():
     # input is not an URL
     with pytest.raises(ValueError):
         userprovided.url.normalize_url('somestring')
+
+
+def test_normalize_url_removing_keys():
+    # The function just hands over drop_keys to normalize_query_part, so
+    # more cases are tested in test_normalize_query_part() above and this
+    # just ensures the parameter is passed on.
+    assert userprovided.url.normalize_url(
+        'https://www.example.com/index.py?c=3&a=1&b=2',
+        drop_keys=['c']) == 'https://www.example.com/index.py?a=1&b=2'
 
 
 def test_determine_file_extension():

@@ -8,11 +8,7 @@
 
 The Python package `userprovided` checks input for validity and / or plausibility. For example it can check whether a string is a valid email address or an URL. It can do more complicated tasks like checking a dictionary for valid and needed keys. It also contains some functionalities to convert input into a more rigid format (like the string 'October 3, 1990' into '1990-10-03').
 
-There are similar projects out there. The reasons to write another library:
-* Extensive testing.
-* The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/)).
-* Its sister-projects like [exoskeleton](https://github.com/RuedigerVoigt/exoskeleton "a crawler framework") and [salted](https://github.com/RuedigerVoigt/salted "a smart and very fast linkchecker") need some special features. This reduces the dependency on a third party to apply patches or to keep up with development.
-* Modularity
+The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/)).
 
 
 ## Update and Deprecation Policy
@@ -61,10 +57,14 @@ Normalize an URL means:
   * remove empty elements of the query part,
   * order the elements in the query part by alphabet
 
+The optional parameter `drop_keys` allows you to remove specific keys, like session ids or trackers, from the query part of the URL.
+
 ```python
 url = ' https://www.Example.com:443//index.py?c=3&a=1&b=2&d='
 userprovided.url.normalize_url(url)
 # returns: https://www.example.com/index.py?a=1&b=2&c=3
+userprovided.url.normalize_url(url, drop_keys=['c'])
+# returns: https://www.example.com/index.py?a=1&b=2
 ```
 
 ### Check Email-Addresses

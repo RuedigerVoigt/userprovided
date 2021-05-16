@@ -1,5 +1,10 @@
 # Changelog / History
 
+## Upcoming
+
+* New function `date_de_long_to_iso`
+* The functions `url.normalize_url()` and `url.normalize_query_part()` now have the optional parameter `drop_key` which accepts a list of keys, that are then removed from the query part of the URL. This allows you for example to remove session ids or trackers.
+
 ## Version 0.8.1 (2021-03-11)
 
 * Set PyPI development status to `stable`.
