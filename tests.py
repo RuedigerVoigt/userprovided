@@ -347,14 +347,14 @@ def test_date_de_long_to_iso_exceptions():
         userprovided.date.date_de_long_to_iso('Februar 30')
 
 
-def test_port_in_range():
-    assert userprovided.port.port_in_range(443) is True
-    assert userprovided.port.port_in_range(65537) is False
-    assert userprovided.port.port_in_range(-1) is False
+def test_parameters_is_port():
+    assert userprovided.parameters.is_port(443) is True
+    assert userprovided.parameters.is_port(65536) is False
+    assert userprovided.parameters.is_port(-1) is False
     with pytest.raises(ValueError):
-        userprovided.port.port_in_range('foo')
+        userprovided.parameters.is_port('foo')
     with pytest.raises(ValueError):
-        userprovided.port.port_in_range(None)
+        userprovided.parameters.is_port(None)
 
 
 @pytest.mark.parametrize("input,expected", [

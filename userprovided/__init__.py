@@ -14,7 +14,6 @@ from userprovided import date
 from userprovided import hash
 from userprovided import mail
 from userprovided import parameters
-from userprovided import port
 from userprovided import url
 
 

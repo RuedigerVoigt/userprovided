@@ -144,7 +144,7 @@ userprovided.parameters.convert_to_set(list)
 
 ### Ports ###
 
-userprovided.port.port_in_range(int)
+userprovided.parameters.is_port(int)
 # Checks if the port is integer and within the
-# valid range from 0 to 65536.
+# valid range from 0 to 65535.
 ```

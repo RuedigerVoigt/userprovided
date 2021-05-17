@@ -1,9 +1,11 @@
 # Changelog / History
 
-## Upcoming
+## Version 0.9.0 (2021-05-17)
 
 * New function `date_de_long_to_iso`
 * The functions `url.normalize_url()` and `url.normalize_query_part()` now have the optional parameter `drop_key` which accepts a list of keys, that are then removed from the query part of the URL. This allows you for example to remove session ids or trackers.
+* **Breaking Changes**:
+    * The function `port.port_in_range()` is replaced by `parameters.is_port()`.
 
 ## Version 0.8.1 (2021-03-11)
 
