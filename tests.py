@@ -45,6 +45,9 @@ def test_hash_available():
     assert userprovided.hash.hash_available('sha512', True) is True
     assert userprovided.hash.hash_available('NonExistentHash', True) is False
 
+testfile_sha224 = '0808f64e60d58979fcb676c96ec938270dea42445aeefcd3a4e6f8db'
+testfile_sha256 = '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'
+testfile_sha512 = 'f7fbba6e0636f890e56fbbf3283e524c6fa3204ae298382d624741d0dc6638326e282c41be5e4254d8820772c5518a2c5a8c0c7f7eda19594a7eb539453e1ed7'
 
 def test_calculate_file_hash():
     # Path is non-existent:
@@ -64,11 +67,20 @@ def test_calculate_file_hash():
     with pytest.raises(ValueError):
         userprovided.hash.calculate_file_hash(pathlib.Path('.'), 'sha384')
     # Default is fallback to SHA256
-    assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile')) == '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'
+    assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile')) == testfile_sha256
+    assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha256') == testfile_sha256
     # SHA224
-    assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha224') == '0808f64e60d58979fcb676c96ec938270dea42445aeefcd3a4e6f8db'
+    assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha224') == testfile_sha224
     # SHA512
-    assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha512') == 'f7fbba6e0636f890e56fbbf3283e524c6fa3204ae298382d624741d0dc6638326e282c41be5e4254d8820772c5518a2c5a8c0c7f7eda19594a7eb539453e1ed7'
+    assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha512') == testfile_sha512
+
+
+def test_calculate_file_hash_with_expected_value():
+    # expected and calculated hash match:
+    assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha512', testfile_sha512) == testfile_sha512
+    # expected and calculated hash DO NOT match:
+    with pytest.raises(ValueError):
+        assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha512', 'foo') == testfile_sha512
 
 
 @pytest.mark.parametrize("mail_address,truth_value", [

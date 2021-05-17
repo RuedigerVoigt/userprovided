@@ -13,7 +13,7 @@ Released under the Apache License 2.0
 import hashlib
 import logging
 import pathlib
-from typing import Union
+from typing import Optional, Union
 
 
 def hash_available(hash_method: str,
@@ -42,9 +42,13 @@ def hash_available(hash_method: str,
 
 
 def calculate_file_hash(file_path: Union[pathlib.Path, str],
-                        hash_method: str = 'sha256') -> str:
+                        hash_method: str = 'sha256',
+                        expected_hash: Optional[str] = None) -> str:
     """Calculate hash value for a file.
-       Supported: SHA224 / SHA256 / SHA512"""
+       Supported: SHA224 / SHA256 / SHA512
+       If you provide expected_hash this will raise a ValueError exception
+       in case this does not match the calculated hash. This allows you to
+       detect changes or tampering."""
 
     if hash_method in ('md5', 'sha1'):
         raise NotImplementedError('Deprecated hash method not supported')
@@ -65,7 +69,13 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
         with open(pathlib.Path(file_path), 'rb') as file:
             content = file.read()
         h.update(content)
-        return h.hexdigest()
+        calculated_hash = h.hexdigest()
+        if expected_hash and expected_hash != calculated_hash:
+            mismatch_message = ("Mismatch between calculated and expected " +
+                                f"{hash_method} hash for {file_path}")
+            logging.exception(mismatch_message)
+            raise ValueError(mismatch_message)
+        return calculated_hash
     except FileNotFoundError:
         logging.exception('Cannot calculate hash: File not found or not readable.',
                           exc_info=True)

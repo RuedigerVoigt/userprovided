@@ -4,6 +4,7 @@
 
 * The new function `date.date_de_long_to_iso` takes a long format German date (like '3. Oktober 1990') and returns a standardized date string (i.e. YYYY-MM-DD).
 * The functions `url.normalize_url()` and `url.normalize_query_part()` now have the optional parameter `drop_key` which accepts a list of keys, that are then removed from the query part of the URL. This allows you (for example) to remove session-ids or trackers.
+* The function `hash.calculate_file_hash()` now has the optional parameter `expected_hash` which allows you to compare the calculated file hash to the hash value you expect in order to detect changes or tampering.
 * **Breaking Changes**:
     * The function `port.port_in_range()` is replaced by `parameters.is_port()`.
     * The function `cloud.is_aws_s3_bucket_name()` is replaced by `parameters.is_aws_s3_bucket_name()`.
