@@ -8,18 +8,20 @@
 
 *"Never trust user input!"* is also true outside the security context: You cannot be sure users always provide you with valid and well formatted data.
 
-*The Python package `userprovided` checks input for validity and / or plausibility. Besides that it contains some methods to convert into standardized formats.*
+*The Python package `userprovided` checks input for validity and / or plausibility. Besides that it contains some methods to convert input into standardized formats.*
+
+The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/)) and aims to provide useful log and error messages.
 
 Userprovided has functionality for the following inputs:
 * [parameters](handle-parameters): [Check a dictionary](check-a-parameter-dictionary) for valid, needed, and unknown keys / convert lists, strings and tuples into a set / check if an integer or string is in a specific range / ...
 * [url](handle-urls): [Normalize an URL](normalize-urls) and drop specific keys from the query part of it / Check if a string is an URL / [Determine a file extension]() from an URL and the Mime-type sent by the server.
-* [hash](file-hashes): is the hash method available? / calculate a file hash.
+* [hash](file-hashes): is the hash method available? / calculate a file hash and optionally compare it to an expected value.
 * [date](handle-calendar-dates): Does a given date exist? / Convert English and German long format dates to ISO strings
 * [mail](check-email-addresses): Check if a string is a valid email address
 
 
 
-The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/)).
+
 
 
 ## Installation
@@ -157,6 +159,16 @@ You can calculate hash sums for files. If you do not provide the method, this de
 ```python
 # returns the hash of the file as a string:
 userprovided.hash.calculate_file_hash(pathlib.Path('./foo.txt'))
+```
+
+If you provide an expected value for the hash you can check for file changes or tampering. In the case the provided value and the calculated hash do *not* match, a ValueError exception is raised.
+
+```python
+userprovided.hash.calculate_file_hash(
+    file_path = pathlib.Path('./foo.txt'),
+    hash_method = 'sha512',
+    expected_hash = 'not_the_right_value')
+# => raises an exception
 ```
 
 ## Handle Calendar Dates
