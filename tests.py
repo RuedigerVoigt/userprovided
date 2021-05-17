@@ -120,7 +120,7 @@ def test_hypothesis_mail_is_email(x):
     ('iekoht9choofe.eixeeseizoo0iuzos1ibee.pae7ph', True)
 ])
 def test_cloud_is_aws_s3_bucket_name(bucket_name, truth_value):
-    assert userprovided.cloud.is_aws_s3_bucket_name(bucket_name) is truth_value
+    assert userprovided.parameters.is_aws_s3_bucket_name(bucket_name) is truth_value
 
 
 def test_is_url():

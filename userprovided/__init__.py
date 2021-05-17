@@ -10,7 +10,6 @@ Released under the Apache License 2.0
 """
 
 from userprovided import _version
-from userprovided import cloud
 from userprovided import date
 from userprovided import hash
 from userprovided import mail

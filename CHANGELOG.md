@@ -2,15 +2,16 @@
 
 ## Version 0.9.0 (2021-05-17)
 
-* New function `date_de_long_to_iso`
-* The functions `url.normalize_url()` and `url.normalize_query_part()` now have the optional parameter `drop_key` which accepts a list of keys, that are then removed from the query part of the URL. This allows you for example to remove session ids or trackers.
+* The new function `date.date_de_long_to_iso` takes a long format German date (like '3. Oktober 1990') and returns a standardized date string (i.e. YYYY-MM-DD).
+* The functions `url.normalize_url()` and `url.normalize_query_part()` now have the optional parameter `drop_key` which accepts a list of keys, that are then removed from the query part of the URL. This allows you (for example) to remove session-ids or trackers.
 * **Breaking Changes**:
     * The function `port.port_in_range()` is replaced by `parameters.is_port()`.
+    * The function `cloud.is_aws_s3_bucket_name()` is replaced by `parameters.is_aws_s3_bucket_name()`.
 
 ## Version 0.8.1 (2021-03-11)
 
 * Set PyPI development status to `stable`.
-* Switched from `unittest`to `pytest` and improved test coverage.
+* Switched from `unittest` to `pytest` and improved test coverage.
 * No functional changes.
 * Improved documentation.
 
