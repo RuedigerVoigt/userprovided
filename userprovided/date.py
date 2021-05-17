@@ -41,7 +41,8 @@ def date_en_long_to_iso(date_string: str) -> str:
     """ Take a long format English date and return a standardized date string
        (i.e. YYYY-MM-DD). """
     date_string = date_string.strip()
-    regex_long_date_en = re.compile("(?P<monthL>[a-zA-Z\.]{3,9})\s+(?P<day>\d{1,2})(th)?,\s*(?P<year>\d\d\d\d)")
+    regex_long_date_en = re.compile(
+        r"(?P<monthL>[a-zA-Z\.]{3,9})\s+(?P<day>\d{1,2})(th)?,\s*(?P<year>\d\d\d\d)")
     try:
         match = re.search(regex_long_date_en, date_string)
         if match:
