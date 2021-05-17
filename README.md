@@ -6,19 +6,23 @@
 [![Downloads](https://pepy.tech/badge/userprovided)](https://pepy.tech/project/userprovided)
 [![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](https://www.ruediger-voigt.eu/coverage/userprovided/index.html)
 
-The Python package `userprovided` checks input for validity and / or plausibility. For example it can check whether a string is a valid email address or an URL. It can do more complicated tasks like checking a dictionary for valid and needed keys. It also contains some functionalities to convert input into a more rigid format (like the string 'October 3, 1990' into '1990-10-03').
+*"Never trust user input!"* is also true outside the security context: You cannot be sure users always provide you with valid and well formatted data.
+
+*The Python package `userprovided` checks input for validity and / or plausibility. Besides that it contains some methods to convert into standardized formats.*
+
+Userprovided has functionality for the following inputs:
+* [parameters](handle-parameters): [Check a dictionary](check-a-parameter-dictionary) for valid, needed, and unknown keys / convert lists, strings and tuples into a set / check if an integer or string is in a specific range / ...
+* [url](handle-urls): [Normalize an URL](normalize-urls) and drop specific keys from the query part of it / Check if a string is an URL / [Determine a file extension]() from an URL and the Mime-type sent by the server.
+* [hash](file-hashes): is the hash method available? / calculate a file hash.
+* [date](handle-calendar-dates): Does a given date exist? / Convert English and German long format dates to ISO strings
+* [mail](check-email-addresses): Check if a string is a valid email address
+
+
 
 The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/)).
 
 
-## Update and Deprecation Policy
-
-* No breaking changes in micro-versions.
-* It makes no sense to duplicate functionality already available in the Python Standard Library. Therefore, if this package contains functionality that becomes superseded by the Standard Library, it will start to log a depreciation warning. The functionality itself is planned to stay available for at least a major version of `userprovided` and as long as Python versions not containing this functionality are supported.
-
-## Documentation
-
-### Installation
+## Installation
 
 Install exoskeleton using `pip` or `pip3`. For example:
 
@@ -34,6 +38,8 @@ To upgrade to the latest version accordingly:
 sudo pip install userprovided --upgrade
 ```
 
+## Handle Parameters
+
 ### Check a Parameter Dictionary
 
 If your application accepts parameters in the form of a dictionary, you have to test if all needed parameters are provided and if there are any unknown keys (maybe due to typos). There is a method for that:
@@ -45,6 +51,39 @@ userprovided.parameters.validate_dict_keys(
     necessary_keys = {'b', 'c'})
 ```
 Returns `True` if the dictionary `dict_to_check` contains only allowed keys and all necessary keys are present.
+
+### Convert into a set
+
+Convert a string, a tuple, or a list into a set (i.e. no duplicates, unordered):
+
+```python
+userprovided.parameters.convert_to_set(list)
+```
+
+### Check Range of Numbers and Strings
+
+
+```python
+def numeric_in_range(parameter_name,
+                     given_value,
+                     minimum_value,
+                     maximum_value,
+                     fallback_value) -> Union[int, float]
+
+
+
+def string_in_range(string_to_check,
+                    minimum_length,
+                    maximum_lenght,
+                    strip_string: bool = True) -> bool
+
+userprovided.parameters.is_port(int)
+# Checks if the port is integer and within the
+# valid range from 0 to 65535.
+```
+
+
+## Handle URLs
 
 ### Normalize URLs
 
@@ -67,15 +106,6 @@ userprovided.url.normalize_url(url, drop_keys=['c'])
 # returns: https://www.example.com/index.py?a=1&b=2
 ```
 
-### Check Email-Addresses
-
-```python
-userprovided.mail.is_email(None)
-# => False
-
-userprovided.mail.is_email('example@example.com')
-# => True
-```
 
 ### Check URLs
 
@@ -98,7 +128,19 @@ userprovided.url.is_url('ftp://www.example.com', ('ftp'))
 # => True
 ```
 
-### File Hashes
+
+## Check Email Addresses
+
+```python
+userprovided.mail.is_email(None)
+# => False
+
+userprovided.mail.is_email('example@example.com')
+# => True
+```
+
+
+## File Hashes
 
 You can check whether a specific hash method is available. This will raise a ValueError for `MD5` and `SHA1` *even if they are available*, because they are deprecated.
 
@@ -117,34 +159,27 @@ You can calculate hash sums for files. If you do not provide the method, this de
 userprovided.hash.calculate_file_hash(pathlib.Path('./foo.txt'))
 ```
 
-### Check and Normalize Dates
+## Handle Calendar Dates
+
+Does a specific date exist?
 
 ```python
 userprovided.date.date_exists(2020, 2, 31)
 # => False
+```
 
+Normalize German or English long form dates :
+
+```python
 userprovided.date.date_en_long_to_iso('October 3, 1990')
+# => '1990-10-03'
+
+userprovided.date.date_de_long_to_iso('3. Oktober 1990')
 # => '1990-10-03'
 ```
 
 
-### Other Functionality
+## Update and Deprecation Policy
 
-```python
-### Cloud ###
-
-userprovided.cloud.is_aws_s3_bucket_name('foobar')
-# => True
-
-### Parameters ###
-
-userprovided.parameters.convert_to_set(list)
-# => Convert a string, a tuple, or a list into a set
-# (i.e. no duplicates, unordered)
-
-### Ports ###
-
-userprovided.parameters.is_port(int)
-# Checks if the port is integer and within the
-# valid range from 0 to 65535.
-```
+* No breaking changes in micro-versions.
+* It makes no sense to duplicate functionality already available in the Python Standard Library. Therefore, if this package contains functionality that becomes superseded by the Standard Library, it will start to log a depreciation warning. The functionality itself is planned to stay available for at least a major version of `userprovided` and as long as Python versions not containing this functionality are supported.
