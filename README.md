@@ -26,7 +26,7 @@ Install exoskeleton using `pip` or `pip3`. For example:
 sudo pip3 install userprovided
 ```
 
-You may consider using a [virtualenv](https://virtualenv.pypa.io/en/latest/userguide/ "Documentation").
+You may consider using a [virtualenv](https://virtualenv.pypa.io/en/latest/ "Documentation").
 
 To upgrade to the latest version accordingly:
 
