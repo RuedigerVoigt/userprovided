@@ -9,6 +9,7 @@ Source: https://github.com/RuedigerVoigt/userprovided
 Released under the Apache License 2.0
 """
 
+from userprovided import _version
 from userprovided import cloud
 from userprovided import date
 from userprovided import hash
@@ -18,5 +19,5 @@ from userprovided import url
 
 
 name = "userprovided"
-__version__ = "0.8.0"
+__version__ = _version.__version__
 __author__ = "Rüdiger Voigt"

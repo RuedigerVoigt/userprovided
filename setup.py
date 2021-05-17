@@ -3,12 +3,14 @@
 
 import setuptools
 
+from userprovided import _version
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="userprovided",
-    version="0.8.1",
+    version=f"{_version.__version__}",
     author="Rüdiger Voigt",
     author_email="projects@ruediger-voigt.eu",
     description="A library to check user input for validity and / or plausibility",
