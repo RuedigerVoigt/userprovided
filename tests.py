@@ -83,7 +83,7 @@ def test_calculate_file_hash_with_expected_value():
 
 # mock a PermissionError exception
 # see: https://stackoverflow.com/questions/1289894/#answer-34677735
-def test_calculate_file_hash_mocked_permission(mocker):
+def test_calculate_file_hash_mocked_permission():
     with patch('builtins.open', side_effect=PermissionError):
         with pytest.raises(PermissionError) as excinfo:
             userprovided.hash.calculate_file_hash('testfile')
