@@ -67,10 +67,10 @@ def normalize_query_part(query: str,
                 if key in keep:
                     # i.e. we already processed the same key
                     if keep[key] != value:
-                        raise ValueError('Duplicate key in URL query with ' +
-                                         'conflicting values')
-                    logging.debug('URL query part contained duplicate key, ' +
-                                  'but no conflicting value.')
+                        raise ValueError(
+                            'Duplicate URL query key with conflicting values')
+                    logging.debug(
+                        'Duplicate key in URL query part, but no conflict.')
                 elif drop_keys and key in drop_keys:
                     # i.e. the key is in the list of keys to drop
                     pass
