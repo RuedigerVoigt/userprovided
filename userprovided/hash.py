@@ -77,12 +77,14 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
             raise ValueError(mismatch_message)
         return calculated_hash
     except FileNotFoundError:
-        logging.exception('Cannot calculate hash: File not found or not readable.',
-                          exc_info=True)
+        logging.exception(
+            'Cannot calculate hash: File not found or not readable.',
+            exc_info=True)
         raise
     except PermissionError:
-        logging.exception('Cannot calculate file hash: insufficient permissions.',
-                          exc_info=True)
+        logging.exception(
+            'Cannot calculate file hash: insufficient permissions.',
+            exc_info=True)
         raise
     except Exception:
         logging.error('Exception while trying to get file hash',
