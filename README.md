@@ -54,6 +54,20 @@ userprovided.parameters.validate_dict_keys(
 ```
 Returns `True` if the dictionary `dict_to_check` contains only allowed keys and all necessary keys are present.
 
+### Avoid Keys without Value in a Dictionary
+
+Check if all keys in a dictionary have a value. Return `False` if the value for any key is empty. Works for strings (including whitespace only), dictionary, list, tuple, and set.
+
+```python
+# returns True:
+parameters.keys_neither_none_nor_empty({'a': 123, 'b': 'example'})
+
+#returns False:
+parameters.keys_neither_none_nor_empty({'a': '   ', 'b': 'example'})
+parameters.keys_neither_none_nor_empty({'a': None, 'b': 'example'})
+parameters.keys_neither_none_nor_empty({'a': list(), 'b': 'example'})
+```
+
 ### Convert into a set
 
 Convert a string, a tuple, or a list into a set (i.e. no duplicates, unordered):

@@ -1,5 +1,9 @@
 # Changelog / History
 
+## Version 0.9.1 (2021-06-15)
+
+* New method `parameters.keys_neither_none_nor_empty` takes a dictionary and returns False if the value of any key is None, an empty string, or an empty iterable (dict/list/set/str/tuple/).
+
 ## Version 0.9.0 (2021-05-17)
 
 * The new function `date.date_de_long_to_iso` takes a long format German date (like '3. Oktober 1990') and returns a standardized date string (i.e. YYYY-MM-DD).

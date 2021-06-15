@@ -421,6 +421,37 @@ def test_validate_dict_keys():
             'name') is True
 
 
+@pytest.mark.parametrize("dict_to_check,truth_value", [
+    # valid input:
+    ({'a': 'foo', 'b': 'example', 'c': 'foo'}, True),
+    ({'a': 'foo', 'b': 'example', 'c': {'foo': 'foo'}}, True),
+    ({'a': 'foo', 'b': 'example', 'c': [1, 2, 3]}, True),
+    ({'a': 'foo', 'b': 'example', 'c': (1, 2, 3)}, True),
+    ({'a': 'foo', 'b': 'example', 'c': {1, 2, 3}}, True),
+    ({'a': 1, 'b': 2, 'c': 3}, True),
+    # Some key is None:
+    ({'a': 1, 'b': 2, 'c': None}, False),
+    # Keys with empty value:
+    ({'a': 1, 'b': 2, 'c': ''}, False),
+    ({'a': 1, 'b': 2, 'c': '      '}, False),
+    ({'a': 1, 'b': 2, 'c': '\t'}, False),
+    ({'a': 1, 'b': 2, 'c': str()}, False),
+    ({'a': 1, 'b': 2, 'c': list()}, False),
+    ({'a': 1, 'b': 2, 'c': tuple()}, False),
+    ({'a': 1, 'b': 2, 'c': dict()}, False)
+    ])
+def test_keys_neither_none_nor_empty(
+    dict_to_check: dict, truth_value: bool):
+    assert userprovided.parameters.keys_neither_none_nor_empty(dict_to_check) is truth_value
+
+def test_keys_neither_none_nor_empty_false_input():
+    # not a dictionary
+    with pytest.raises(ValueError):
+        userprovided.parameters.keys_neither_none_nor_empty('foo')
+    # empty dictionary
+    with pytest.raises(ValueError):
+        userprovided.parameters.keys_neither_none_nor_empty(dict())
+
 def test_numeric_in_range():
     # Minimum value larger than maximum value
     with pytest.raises(ValueError):

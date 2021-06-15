@@ -91,6 +91,40 @@ def validate_dict_keys(dict_to_check: dict,
     return True
 
 
+def keys_neither_none_nor_empty(dict_to_check: dict) -> bool:
+    """Checks if all keys in the provided dictionary are neither None, nor
+       have an empty value (like an empty string (including whitespace only)
+       or a dict/list/set/tuple without elements).
+
+       Does ignore value types other than dict/list/set/str/tuple.
+
+       Raises Value Error if you provide something else than a dictionary,
+       or if its is completly empty."""
+
+    if not isinstance(dict_to_check, dict):
+        raise ValueError('This is not a dictionary')
+    if len(dict_to_check) == 0:
+        raise ValueError('This dictionary is empty')
+
+    def error_found() -> None:
+        logging.error("Dictionary contains key that is either empty or None!")
+
+    for _, value in dict_to_check.items():
+        if value is None:
+            error_found()
+            return False
+        if isinstance(value, str):
+            if len(value.strip()) == 0:
+                error_found()
+                return False
+        if isinstance(value, (dict, list, set, tuple)):
+            if len(value) == 0:
+                error_found()
+                return False
+
+    return True
+
+
 def numeric_in_range(parameter_name: str,
                      given_value: Union[int, float],
                      minimum_value: Union[int, float],
