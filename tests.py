@@ -16,7 +16,6 @@ Released under the Apache License 2.0
 
 # flake8: noqa
 
-
 from unittest.mock import patch
 import pathlib
 
@@ -81,6 +80,14 @@ def test_calculate_file_hash_with_expected_value():
     # expected and calculated hash DO NOT match:
     with pytest.raises(ValueError):
         assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha512', 'foo') == testfile_sha512
+
+# mock a PermissionError exception
+# see: https://stackoverflow.com/questions/1289894/#answer-34677735
+def test_calculate_file_hash_mocked_permission(mocker):
+    with patch('builtins.open', side_effect=PermissionError):
+        with pytest.raises(PermissionError) as excinfo:
+            userprovided.hash.calculate_file_hash('testfile')
+            assert "insufficient permissions" in str(excinfo.value)
 
 
 @pytest.mark.parametrize("mail_address,truth_value", [
