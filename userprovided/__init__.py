@@ -11,6 +11,7 @@ Released under the Apache License 2.0
 
 from userprovided import _version
 from userprovided import date
+from userprovided import hash  # Deprecated / logs warning until v 1.0
 from userprovided import hashing
 from userprovided import mail
 from userprovided import parameters

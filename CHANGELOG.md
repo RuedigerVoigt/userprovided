@@ -2,7 +2,9 @@
 
 ## Version 0.9.1 (2021-06-15)
 
-* New method `parameters.keys_neither_none_nor_empty` takes a dictionary and returns False if the value of any key is None, an empty string, or an empty iterable (dict/list/set/str/tuple/).
+* New method `parameters.keys_neither_none_nor_empty` takes a dictionary and returns `False` if the value of any key is None, an empty string, or an empty iterable (of the kind dict/list/set/str/tuple).
+* Reached 100% test coverage.
+* **Methods in `userprovided.hash` have been moved to `userprovided.hashing`** in order to avoid redefining the builtin `hash` object. *The old paths will work until version 1.0.0 of userprovided!* However, they will yield a deprecation warning from now on.
 
 ## Version 0.9.0 (2021-05-17)
 
