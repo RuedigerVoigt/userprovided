@@ -13,11 +13,23 @@
 The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/)) and aims to provide useful log and error messages.
 
 Userprovided has functionality for the following inputs:
-* [parameters](handle-parameters): [Check a dictionary](check-a-parameter-dictionary) for valid, needed, and unknown keys / convert lists, strings and tuples into a set / check if an integer or string is in a specific range / ...
-* [url](handle-urls): [Normalize an URL](normalize-urls) and drop specific keys from the query part of it / Check if a string is an URL / [Determine a file extension]() from an URL and the Mime-type sent by the server.
-* [hash](file-hashes): is the hash method available? / calculate a file hash and optionally compare it to an expected value.
-* [date](handle-calendar-dates): Does a given date exist? / Convert English and German long format dates to ISO strings
-* [mail](check-email-addresses): Check if a string is a valid email address
+* [parameters](handle-parameters):
+  * [Check a dictionary](check-a-parameter-dictionary) for valid, needed, and unknown keys.
+  * Convert lists, strings and tuples into a set
+  * Check if an integer or string is in a specific range.
+  * ...
+* [url](handle-urls):
+  * [Normalize an URL](normalize-urls) and drop specific keys from the query part of it.
+  * Check if a string is an URL.
+  * [Determine a file extension]() from an URL and the Mime-type sent by the server.
+* [hash](file-hashes):
+  * Is the hash method available?
+  * Calculate a file hash and (optionally) compare it to an expected value.
+* [date](handle-calendar-dates):
+  * Does a given date exist?
+  * Convert English and German long format dates to ISO strings.
+* [mail](check-email-addresses):
+  * Check if a string is a valid email address.
 
 
 
