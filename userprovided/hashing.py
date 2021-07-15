@@ -15,6 +15,8 @@ import logging
 import pathlib
 from typing import Optional, Union
 
+from userprovided import err
+
 
 def hash_available(hash_method: str,
                    fail_on_deprecated: bool = True) -> bool:
@@ -33,7 +35,7 @@ def hash_available(hash_method: str,
 
     if fail_on_deprecated:
         if hash_method in ('md5', 'sha1'):
-            raise ValueError('The supplied hash method %s is deprecated!')
+            raise err.DeprecatedHashAlgorithm('The supplied hash method %s is deprecated!')
 
     if hash_method in hashlib.algorithms_available:
         logging.debug('Hash method %s is available.', hash_method)
@@ -51,7 +53,8 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
        detect changes or tampering."""
 
     if hash_method in ('md5', 'sha1'):
-        raise NotImplementedError('Deprecated hash method not supported')
+        raise err.DeprecatedHashAlgorithm(
+            'Deprecated hash method not supported')
 
     if hash_available(hash_method):
         if hash_method == 'sha224':

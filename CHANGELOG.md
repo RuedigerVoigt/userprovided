@@ -1,5 +1,12 @@
 # Changelog / History
 
+## Version 0.9.2 (2021-07-15)
+
+* Introduced custom exceptions to allow precise handling:
+  * `userprovided.err.QueryKeyConflict` is thrown by `url.normalize_query_part` if there is a duplicate key in the query part with a different value. As some sites (like `nytimes.com`) use multiple keys with the same name, the method got an extra parameter `do_not_change_query_part` (default: False) to keep the query part unchanged if so needed.
+  * `userprovided.err.DeprecatedHashAlgorithm` is thrown, if the user tries to use the `MD5` or `SHA1` hashing algorithm.
+  * `userprovided.err.ContradictoryParameters` is thrown if a user calls a method with settings that contradict each other.
+
 ## Version 0.9.1 (2021-06-15)
 
 * New method `parameters.keys_neither_none_nor_empty` takes a dictionary and returns `False` if the value of any key is None, an empty string, or an empty iterable (of the kind dict/list/set/str/tuple).

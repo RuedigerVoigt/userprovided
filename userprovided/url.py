@@ -16,6 +16,8 @@ import mimetypes
 from typing import Dict, Optional, Union
 import urllib.parse
 
+from userprovided import err
+
 
 def is_url(url: str,
            require_specific_schemes: Union[tuple, None] = None) -> bool:
@@ -67,7 +69,7 @@ def normalize_query_part(query: str,
                 if key in keep:
                     # i.e. we already processed the same key
                     if keep[key] != value:
-                        raise ValueError(
+                        raise err.QueryKeyConflict(
                             'Duplicate URL query key with conflicting values')
                     logging.debug(
                         'Duplicate key in URL query part, but no conflict.')
@@ -85,7 +87,8 @@ def normalize_query_part(query: str,
 
 
 def normalize_url(url: str,
-                  drop_keys: Union[list, tuple, set, None] = None) -> str:
+                  drop_keys: Union[list, tuple, set, None] = None,
+                  do_not_change_query_part: bool = False) -> str:
     """Normalize an URL:
        * remove whitespace around it,
        * convert scheme and hostname to lowercase,
@@ -95,11 +98,19 @@ def normalize_url(url: str,
        * remove empty elements of the query part,
        * order the elements in the query part by alphabet,
        The optional drop_keys allows you to remove specific keys
-       (for example trackers)."""
+       (for example trackers).
+       
+        The option do_not_change_query_part is there, because some content
+        management systems use duplicate keys with different values. Sometimes
+        that must not raise an exception."""
     url = url.strip()
 
     if not is_url(url):
         raise ValueError('Malformed URL')
+
+    if drop_keys and do_not_change_query_part:
+        raise err.ContradictoryParameters(
+            'Cannot drop keys AND leave the query part unchanged.')
 
     # Remove fragments (https://www.example.com#foo -> https://www.example.com)
     url, _ = urllib.parse.urldefrag(url)
@@ -129,7 +140,10 @@ def normalize_url(url: str,
     # do not change parameters of the path element (!= query)
     reassemble.append(parsed.params)
 
-    reassemble.append(normalize_query_part(parsed.query, drop_keys))
+    if do_not_change_query_part:
+        reassemble.append(parsed.query)
+    else:
+        reassemble.append(normalize_query_part(parsed.query, drop_keys))
 
     # urlunparse expects a fifth element (the already removed fragment)
     reassemble.append('')

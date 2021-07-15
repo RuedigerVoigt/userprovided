@@ -13,6 +13,8 @@ import logging
 import re
 from typing import Optional, Union
 
+from userprovided import err
+
 
 def convert_to_set(convert_this: Union[list, set, str, tuple]) -> set:
     """ Convert a string, a tuple, or a list into a set
@@ -99,7 +101,7 @@ def keys_neither_none_nor_empty(dict_to_check: dict) -> bool:
        Does ignore value types other than dict/list/set/str/tuple.
 
        Raises Value Error if you provide something else than a dictionary,
-       or if its is completly empty."""
+       or if its is completely empty."""
 
     if not isinstance(dict_to_check, dict):
         raise ValueError('This is not a dictionary')
@@ -141,10 +143,12 @@ def numeric_in_range(parameter_name: str,
             raise ValueError('Value must be numeric.')
 
     if minimum_value > maximum_value:
-        raise ValueError("Minimum must not be larger than maximum value.")
+        raise err.ContradictoryParameters(
+            "Minimum must not be larger than maximum value.")
 
     if fallback_value < minimum_value or fallback_value > maximum_value:
-        raise ValueError("Fallback value outside the allowed range.")
+        raise err.ContradictoryParameters(
+            "Fallback value outside the allowed range.")
 
     if given_value < minimum_value:
         msg = (f"Value of {parameter_name} is below the minimum allowed." +
@@ -202,7 +206,7 @@ def string_in_range(string_to_check: str,
        The strip() can be turned off. """
 
     if minimum_length > maximum_lenght:
-        raise ValueError("Minimum must not be larger than maximum value.")
+        raise err.ContradictoryParameters("Minimum must not be larger than maximum value.")
     enforce_boolean(strip_string)
 
     if strip_string:
@@ -214,8 +218,6 @@ def string_in_range(string_to_check: str,
         logging.info("String longer than maximum.")
         return False
     return True
-
-
 
 
 def is_aws_s3_bucket_name(bucket_name: str) -> bool:

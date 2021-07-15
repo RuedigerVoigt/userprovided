@@ -31,9 +31,9 @@ import userprovided
 
 
 def test_hash_available():
-    with pytest.raises(ValueError):
+    with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
         userprovided.hash.hash_available('md5', True)
-    with pytest.raises(ValueError):
+    with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
         userprovided.hash.hash_available('sha1', True)
     with pytest.raises(ValueError):
         userprovided.hash.hash_available(None, True)
@@ -54,9 +54,9 @@ def test_calculate_file_hash():
         userprovided.hash.calculate_file_hash('some/random/string/qwertzuiopü',
                                               'sha256')
     # Deprecated hash methods:
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
         userprovided.hash.calculate_file_hash(pathlib.Path('.'), 'md5')
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
         userprovided.hash.calculate_file_hash(pathlib.Path('.'), 'sha1')
     # Non Existent hash method:
     with pytest.raises(ValueError):
@@ -162,7 +162,7 @@ def test_normalize_query_part():
     with pytest.raises(ValueError):
         userprovided.url.normalize_query_part('https://www.example.com/index.php?foo=foo&foo=bar')
     # Duplicate key in query part of URL query with conflicting values:
-    with pytest.raises(ValueError):
+    with pytest.raises(userprovided.err.QueryKeyConflict):
         userprovided.url.normalize_query_part('foo=foo&foo=bar')
     # Duplicate key in query part of URL with the same value:
     assert userprovided.url.normalize_query_part('foo=bar&foo=bar') == 'foo=bar'
@@ -230,6 +230,12 @@ def test_normalize_url_exceptions():
     # input is not an URL
     with pytest.raises(ValueError):
         userprovided.url.normalize_url('somestring')
+    # Contradiction: drop keys, but query part shall be unchanged
+    with pytest.raises(userprovided.err.ContradictoryParameters):
+        userprovided.url.normalize_url(
+            'https://www.example.com/index.php?id=1',
+            ['id'],
+            do_not_change_query_part = True)
 
 
 def test_normalize_url_removing_keys():
@@ -239,6 +245,14 @@ def test_normalize_url_removing_keys():
     assert userprovided.url.normalize_url(
         'https://www.example.com/index.py?c=3&a=1&b=2',
         drop_keys=['c']) == 'https://www.example.com/index.py?a=1&b=2'
+
+
+def test_normalize_url_unchanged_query():
+    assert userprovided.url.normalize_url(
+        '  https://www.example.com/index.php?foo=1&foo=2',
+        [],
+        do_not_change_query_part = True
+    ) == 'https://www.example.com/index.php?foo=1&foo=2'
 
 
 def test_determine_file_extension():
@@ -461,7 +475,7 @@ def test_keys_neither_none_nor_empty_false_input():
 
 def test_numeric_in_range():
     # Minimum value larger than maximum value
-    with pytest.raises(ValueError):
+    with pytest.raises(userprovided.err.ContradictoryParameters):
         userprovided.parameters.numeric_in_range(
             'example',
             101,
@@ -470,7 +484,7 @@ def test_numeric_in_range():
             50)
 
     # Fallback value outside the allowed range
-    with pytest.raises(ValueError):
+    with pytest.raises(userprovided.err.ContradictoryParameters):
         userprovided.parameters.numeric_in_range(
             'example',
             101,
@@ -478,7 +492,7 @@ def test_numeric_in_range():
             200,
             5000  # fallback larger than maximum
             )
-    with pytest.raises(ValueError):
+    with pytest.raises(userprovided.err.ContradictoryParameters):
         userprovided.parameters.numeric_in_range(
             'example',
             101,
@@ -570,7 +584,7 @@ def test_string_in_range():
     # string to short
     assert userprovided.parameters.string_in_range('     foo      ', 5, 10) is False
     # parameters contradict each other
-    with pytest.raises(ValueError):
+    with pytest.raises(userprovided.err.ContradictoryParameters):
         userprovided.parameters.string_in_range('example', 10, 5)
 
 
