@@ -99,10 +99,10 @@ def normalize_url(url: str,
        * order the elements in the query part by alphabet,
        The optional drop_keys allows you to remove specific keys
        (for example trackers).
-       
-        The option do_not_change_query_part is there, because some content
-        management systems use duplicate keys with different values. Sometimes
-        that must not raise an exception."""
+
+       The option do_not_change_query_part is there, because some content
+       management systems use duplicate keys with different values. Sometimes
+       that must not raise an exception."""
     url = url.strip()
 
     if not is_url(url):
