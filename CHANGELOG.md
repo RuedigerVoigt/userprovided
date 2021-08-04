@@ -1,5 +1,9 @@
 # Changelog / History
 
+## Upcoming
+
+* Signal compatibility with Python 3.10 as tests with release candidate 1 run flawlessly.
+
 ## Version 0.9.2 (2021-07-15)
 
 * Introduced custom exceptions to allow precise handling:
