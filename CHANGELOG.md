@@ -1,8 +1,8 @@
 # Changelog / History
 
-## Upcoming
+## Version 0.9.3 (2021-08-05)
 
-* Signal compatibility with Python 3.10 as tests with release candidate 1 run flawlessly.
+* Marked as compatible with Python 3.10 as tests with release candidate 1 run flawlessly on Linux, MacOS, and Windows.
 
 ## Version 0.9.2 (2021-07-15)
 
