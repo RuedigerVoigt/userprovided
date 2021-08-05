@@ -13,22 +13,22 @@
 The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/)) and aims to provide useful log and error messages.
 
 Userprovided has functionality for the following inputs:
-* [parameters](handle-parameters):
-  * [Check a dictionary](check-a-parameter-dictionary) for valid, needed, and unknown keys.
+* [parameters](#handle-parameters):
+  * [Check a dictionary](#check-a-parameter-dictionary) for valid, needed, and unknown keys.
   * Convert lists, strings and tuples into a set
   * Check if an integer or string is in a specific range.
   * ...
-* [url](handle-urls):
-  * [Normalize an URL](normalize-urls) and drop specific keys from the query part of it.
-  * Check if a string is an URL.
-  * [Determine a file extension]() from an URL and the Mime-type sent by the server.
-* [hash](file-hashes):
+* [url](#handle-urls):
+  * [Normalize an URL](#normalize-urls) and drop specific keys from the query part of it.
+  * [Check](#check-urls) if a string is an URL.
+  * [Determine a file extension](#determine-a-file-extension) from an URL and the Mime-type sent by the server.
+* [hash](#file-hashes):
   * Is the hash method available?
   * Calculate a file hash and (optionally) compare it to an expected value.
-* [date](handle-calendar-dates):
+* [date](#handle-calendar-dates):
   * Does a given date exist?
   * Convert English and German long format dates to ISO strings.
-* [mail](check-email-addresses):
+* [mail](#check-email-addresses):
   * Check if a string is a valid email address.
 
 
@@ -74,7 +74,7 @@ Check if all keys in a dictionary have a value. Return `False` if the value for 
 # returns True:
 parameters.keys_neither_none_nor_empty({'a': 123, 'b': 'example'})
 
-#returns False:
+# returns False:
 parameters.keys_neither_none_nor_empty({'a': '   ', 'b': 'example'})
 parameters.keys_neither_none_nor_empty({'a': None, 'b': 'example'})
 parameters.keys_neither_none_nor_empty({'a': list(), 'b': 'example'})
@@ -156,6 +156,25 @@ userprovided.url.is_url('ftp://www.example.com', ('ftp'))
 # => True
 ```
 
+### Determine a File Extension
+
+Guess the correct filename extension from an URL and / or the mime-type returned by the server.
+Sometimes a valid URL does not contain a file extension (like `https://www.example.com/`), or it is ambiguous.
+So the mime type acts as a fallback. In case the correct extension cannot be determined at all, it is set to 'unknown'.
+
+```python
+# retuns '.html'
+userprovided.url.determine_file_extension(
+    url='https://www.example.com',
+    provided_mime_type='text/html'
+)
+
+# retuns '.pdf'
+userprovided.url.determine_file_extension(
+    'https://www.example.com/example.pdf',
+    None
+)
+```
 
 ## Check Email Addresses
 
