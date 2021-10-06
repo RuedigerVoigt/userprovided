@@ -1,5 +1,10 @@
 # Changelog / History
 
+
+## Version 0.9.4 (2021-10-06)
+
+* Test now run with Python 3.10.
+
 ## Version 0.9.3 (2021-08-05)
 
 * Marked as compatible with Python 3.10 as tests with release candidate 1 run flawlessly on Linux, MacOS, and Windows.
