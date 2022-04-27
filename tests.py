@@ -32,17 +32,17 @@ import userprovided
 
 def test_hash_available():
     with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
-        userprovided.hash.hash_available('md5', True)
+        userprovided.hashing.hash_available('md5', True)
     with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
-        userprovided.hash.hash_available('sha1', True)
+        userprovided.hashing.hash_available('sha1', True)
     with pytest.raises(ValueError):
-        userprovided.hash.hash_available(None, True)
+        userprovided.hashing.hash_available(None, True)
     with pytest.raises(ValueError):
-        userprovided.hash.hash_available('  ', True)
-    assert userprovided.hash.hash_available('sha224', True) is True
-    assert userprovided.hash.hash_available('sha256', True) is True
-    assert userprovided.hash.hash_available('sha512', True) is True
-    assert userprovided.hash.hash_available('NonExistentHash', True) is False
+        userprovided.hashing.hash_available('  ', True)
+    assert userprovided.hashing.hash_available('sha224', True) is True
+    assert userprovided.hashing.hash_available('sha256', True) is True
+    assert userprovided.hashing.hash_available('sha512', True) is True
+    assert userprovided.hashing.hash_available('NonExistentHash', True) is False
 
 testfile_sha224 = '0808f64e60d58979fcb676c96ec938270dea42445aeefcd3a4e6f8db'
 testfile_sha256 = '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'
@@ -51,42 +51,42 @@ testfile_sha512 = 'f7fbba6e0636f890e56fbbf3283e524c6fa3204ae298382d624741d0dc663
 def test_calculate_file_hash():
     # Path is non-existent:
     with pytest.raises(FileNotFoundError):
-        userprovided.hash.calculate_file_hash('some/random/string/qwertzuiopü',
+        userprovided.hashing.calculate_file_hash('some/random/string/qwertzuiopü',
                                               'sha256')
     # Deprecated hash methods:
     with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
-        userprovided.hash.calculate_file_hash(pathlib.Path('.'), 'md5')
+        userprovided.hashing.calculate_file_hash(pathlib.Path('.'), 'md5')
     with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
-        userprovided.hash.calculate_file_hash(pathlib.Path('.'), 'sha1')
+        userprovided.hashing.calculate_file_hash(pathlib.Path('.'), 'sha1')
     # Non Existent hash method:
     with pytest.raises(ValueError):
-        userprovided.hash.calculate_file_hash(pathlib.Path('.'),
+        userprovided.hashing.calculate_file_hash(pathlib.Path('.'),
                                               'non-existent-hash')
     # Not supported hash method (available, but not an option):
     with pytest.raises(ValueError):
-        userprovided.hash.calculate_file_hash(pathlib.Path('.'), 'sha384')
+        userprovided.hashing.calculate_file_hash(pathlib.Path('.'), 'sha384')
     # Default is fallback to SHA256
-    assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile')) == testfile_sha256
-    assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha256') == testfile_sha256
+    assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile')) == testfile_sha256
+    assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha256') == testfile_sha256
     # SHA224
-    assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha224') == testfile_sha224
+    assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha224') == testfile_sha224
     # SHA512
-    assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha512') == testfile_sha512
+    assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha512') == testfile_sha512
 
 
 def test_calculate_file_hash_with_expected_value():
     # expected and calculated hash match:
-    assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha512', testfile_sha512) == testfile_sha512
+    assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha512', testfile_sha512) == testfile_sha512
     # expected and calculated hash DO NOT match:
     with pytest.raises(ValueError):
-        assert userprovided.hash.calculate_file_hash(pathlib.Path('testfile'), 'sha512', 'foo') == testfile_sha512
+        assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha512', 'foo') == testfile_sha512
 
 # mock a PermissionError exception
 # see: https://stackoverflow.com/questions/1289894/#answer-34677735
 def test_calculate_file_hash_mocked_permission():
     with patch('builtins.open', side_effect=PermissionError):
         with pytest.raises(PermissionError) as excinfo:
-            userprovided.hash.calculate_file_hash('testfile')
+            userprovided.hashing.calculate_file_hash('testfile')
             assert "insufficient permissions" in str(excinfo.value)
 
 
