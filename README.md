@@ -156,6 +156,9 @@ userprovided.url.is_url('ftp://www.example.com', ('ftp'))
 # => True
 ```
 
+To check the URL with an actual connection attempt, you could use the [salted library](https://github.com/RuedigerVoigt/salted).
+
+
 ### Determine a File Extension
 
 Guess the correct filename extension from an URL and / or the mime-type returned by the server.
@@ -225,7 +228,7 @@ userprovided.date.date_exists(2020, 2, 31)
 # => False
 ```
 
-Normalize German or English long form dates :
+Normalize German or English long form dates:
 
 ```python
 userprovided.date.date_en_long_to_iso('October 3, 1990')
