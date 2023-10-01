@@ -10,7 +10,7 @@ To generate a report afterwards.
 coverage html
 ~~~~~~~~~~~~~~~~~~~~~
 Source: https://github.com/RuedigerVoigt/userprovided
-(c) 2020-2021 Rüdiger Voigt
+(c) 2020-2023 Rüdiger Voigt
 Released under the Apache License 2.0
 """
 
