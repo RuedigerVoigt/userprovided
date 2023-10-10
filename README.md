@@ -4,7 +4,7 @@
 ![pypi version](https://img.shields.io/pypi/v/userprovided)
 ![Last commit](https://img.shields.io/github/last-commit/RuedigerVoigt/userprovided)
 [![Downloads](https://pepy.tech/badge/userprovided)](https://pepy.tech/project/userprovided)
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://www.ruediger-voigt.eu/coverage/userprovided/index.html)
+![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)]
 
 *"Never trust user input!"* is also true outside the security context: You cannot be sure users always provide you with valid and well formatted data.
 

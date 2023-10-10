@@ -50,7 +50,7 @@
 * The method `hash.calculate_file_hash` now also accepts a string for the `file_path` parameter instead of only a `pathlib.Path` object as before.
 * The method `url.is_url` does not log an error anymore if the URL is malformed. Other methods use `is_url` for checks and this would pollute the logs. Instead those messages have been downgraded to `debug`. However, if the requirement for a specific scheme is not met, there will be still an error logged.
 * The method `url.normalize_query_part` does raise `ValueError` if it is given a full URL instead of the query part.
-* Currently 98% test coverage. See the [coverage report](https://www.ruediger-voigt.eu/coverage/userprovided/index.html)
+* Currently 98% test coverage.
 
 Bugfixes:
 * The function `url.determine_file_extension` did not handle some edge cases separetly, but instead suggested the extension `.unknown` in both cases. Now:
