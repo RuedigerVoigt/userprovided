@@ -1,11 +1,12 @@
 # Changelog / History
 
-## Version 1.0.0 (2023-10-03)
+## Version 1.0.0 (2023-10-10)
 
 * Dropped support for Python 3.6 and 3.7 due to EOL of these versions.
-* Added Tests with Python 3.11.
+* Added support and tests for Python 3.11 and the recently released 3.12.
 * Breaking Changes:
-  * Methods in `userprovided.hash` have been moved to `userprovided.hashing` with version 0.9.1. Nowthe mitigation has been removed and calling the old method will fail instead of just raising a deprecation warning.
+  * Methods in `userprovided.hash` have been moved to `userprovided.hashing` with version 0.9.1. Now the mitigation has been removed and calling the old method will fail instead of raising a deprecation warning.
+* No functional changes.
 
 ## Version 0.9.4 (2021-10-06)
 

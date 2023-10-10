@@ -6,4 +6,4 @@
 from datetime import date
 
 __version__ = '1.0.0'
-release_date = date(2023, 10, 3)
+release_date = date(2023, 10, 10)
