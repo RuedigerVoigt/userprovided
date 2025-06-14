@@ -347,6 +347,7 @@ def test_date_en_long_to_iso_exceptions():
     # valid input:
     ('4. Jul. 1776', '1776-07-04'),
     ('8. Mai 1945', '1945-05-08'),
+    ('3. März 2020', '2020-03-03'),
     ('3. Oktober 1990', '1990-10-03'),
     ('03. November 2020', '2020-11-03'),
     # messed up whitespace:
