@@ -1,5 +1,11 @@
 # Changelog / History
 
+## Version 1.1.0 (2025-06-15)
+
+* Added support for Python 3.13.
+* Dropped support for Python 3.8.
+* No functional changes.
+
 ## Version 1.0.0 (2023-10-10)
 
 * Dropped support for Python 3.6 and 3.7 due to EOL of these versions.
