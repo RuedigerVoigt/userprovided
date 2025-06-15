@@ -91,7 +91,7 @@ def date_de_long_to_iso(date_string: str) -> str:
        (i.e. YYYY-MM-DD). """
     date_string = date_string.strip()
     regex_long_date_de = re.compile(
-        r"(?P<day>\d{1,2})\.\s+(?P<monthL>[a-zA-ZÄä\.]{3,9})\s+(?P<year>\d{4})"
+        r"(?P<day>\d{1,2})\.\s+(?P<monthL>[a-zA-ZÄä\.]{3,9})\s+(?P<year>\d{4})")
     try:
         match = re.search(regex_long_date_de, date_string)
         if match:
