@@ -1,5 +1,13 @@
 # Changelog / History
 
+## Upcoming
+
+* Supported Python versions:
+  * Dropped support for Python 3.8 (EOL).
+  * Added support for Python 3.13.
+* Software Agents:
+  * Added [AGENTS.md](./AGENTS.md) file that defines rules and guidelines for software agents.
+
 ## Version 1.0.0 (2023-10-10)
 
 * Dropped support for Python 3.6 and 3.7 due to EOL of these versions.

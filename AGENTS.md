@@ -26,16 +26,17 @@ The Python package userprovided checks input for validity and / or plausibility.
 - Running the tests also requires `pytest` and `hypothesis`
 - Run `pytest -q` for the test suite.
 - Run `flake8` to check style.
+- Run `mypy`.
 
 ## Code Guidelines
 
-- Respect PEP 8 style guidelines
-- The code must run with the lowest supported Python version
-- Write code with type hints (PEP 484)
-- If possible add tests
-- Aim to provide useful log and error messages
+- Respect PEP 8 style guidelines.
+- The code must run with the lowest supported Python version.
+- Write code with type hints (PEP 484).
+- If possible add tests.
+- Aim to provide useful log and error messages.
 
-## Security Guidlines
+## Security Guidelines
 
 - Follow secure coding best practices.
 - The library "userprovided" relies solely on the Python standard library.
