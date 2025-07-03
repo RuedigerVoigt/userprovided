@@ -35,6 +35,16 @@ The Python package userprovided checks input for validity and / or plausibility.
 - If possible add tests
 - Aim to provide useful log and error messages
 
+## Security Guidlines
+
+- Follow secure coding best practices.
+- The library "userprovided" relies solely on the Python standard library.
+- Adding external runtime dependencies is only allowed for the creation of tests.
+- Use secure algorithms from `hashlib` and avoid deprecated ones such as MD5 or SHA1.
+- Run a static security analyzer (e.g. bandit) before submitting a PR.
+- Ensure no secrets are added to the repository.
+
+
 ## Commits and PRs
 - One logical change per commit.
 - If a commit only contains very minor changes like fixing typos in the documentation use the prefix "nit: " for the commit message.
