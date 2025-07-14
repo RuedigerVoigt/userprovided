@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "userprovided"
+version = "1.1.0"
+description = "A library to check user input for validity and / or plausibility"
+authors = ["Rüdiger Voigt <projects@ruediger-voigt.eu>"]
+readme = "README.md"
+license = "Apache-2.0"
+packages = [{include = "userprovided"}]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Topic :: Security",
+    "Topic :: Utilities",
+    "Topic :: Software Development :: Quality Assurance"
+]
+include = ["userprovided/py.typed"]
+
+[tool.poetry.dependencies]
+python = ">=3.9"
+
+[tool.poetry.group.dev.dependencies]
+hypothesis = "*"
+pytest = "*"
+flake8 = "*"
+mypy = "*"
+bandit = "*"
+
+[build-system]
+requires = ["poetry-core>=1.6.0"]
+build-backend = "poetry.core.masonry.api"
