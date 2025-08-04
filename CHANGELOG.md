@@ -4,11 +4,20 @@
 
 * Supported Python versions:
   * Dropped support for Python 3.8 (EOL).
+  * Dropped support for Python 3.9 (EOL upcoming October 2025).
   * Added support for Python 3.13.
 * Contributing Guidelines:
   * Added [AGENTS.md](./AGENTS.md) file that defines rules and guidelines for software agents.
 * Packaging:
   * Replaced `setup.py` with a `pyproject.toml` managed by Poetry.
+* Bugfixes:
+  * `parameters`:
+    * Fix typo in parameter name: `maximum_lenght` → `maximum_length`.
+    * `is_port`: port 0 was incorrectly excluded.
+    * Fix parameter name logic in `enforce_boolean`.
+    * Catch more errors in `is_aws_s3_bucket_name`.
+  * `mail`:
+    * Extend check / RegEx for email validation
 
 ## Version 1.0.0 (2023-10-10)
 
