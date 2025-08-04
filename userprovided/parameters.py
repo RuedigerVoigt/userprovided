@@ -265,6 +265,6 @@ def enforce_boolean(parameter_value: bool,
                     parameter_name: Optional[str] = None) -> None:
     """Raise a ValueError if the parameter is not of type bool."""
     if type(parameter_value) != bool:  # pylint: disable=unidiomatic-typecheck
-        parameter_name = 'parameter' if parameter_name else ''
+        parameter_name = parameter_name or 'parameter'
         raise ValueError(f"Value of {parameter_name} must be boolean," +
                          "i.e True / False (without quotation marks).")
