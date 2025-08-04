@@ -5,7 +5,7 @@
 Check Parameters
 ~~~~~~~~~~~~~~~~~~~~~
 Source: https://github.com/RuedigerVoigt/userprovided
-(c) 2020-2021 Rüdiger Voigt
+(c) 2020-2025 Rüdiger Voigt
 Released under the Apache License 2.0
 """
 
@@ -199,13 +199,13 @@ def is_port(port_number: int) -> bool:
 
 def string_in_range(string_to_check: str,
                     minimum_length: int,
-                    maximum_lenght: int,
+                    maximum_length: int,
                     strip_string: bool = True) -> bool:
     """Strips whitespace from both ends of a string and then checks
        if the length of that string falls in those limits.
        The strip() can be turned off. """
 
-    if minimum_length > maximum_lenght:
+    if minimum_length > maximum_length:
         raise err.ContradictoryParameters("Minimum must not be larger than maximum value.")
     enforce_boolean(strip_string)
 
@@ -214,7 +214,7 @@ def string_in_range(string_to_check: str,
     if len(string_to_check) < minimum_length:
         logging.info("String length below minimum length.")
         return False
-    if len(string_to_check) > maximum_lenght:
+    if len(string_to_check) > maximum_length:
         logging.info("String longer than maximum.")
         return False
     return True
