@@ -157,7 +157,19 @@ def test_hypothesis_mail_is_email(x):
     # bucket name must start with lowercase letter or number:
     ('-abc', False),
     # containing dots:
-    ('iekoht9choofe.eixeeseizoo0iuzos1ibee.pae7ph', True)
+    ('iekoht9choofe.eixeeseizoo0iuzos1ibee.pae7ph', True),
+    # edge cases - cannot start with dot or hyphen:
+    ('.abc', False),
+    ('.test-bucket', False),
+    # edge cases - cannot end with dot or hyphen:
+    ('abc.', False),
+    ('test-bucket.', False),
+    ('valid-bucket-', False),
+    # edge cases - consecutive dots and invalid patterns:
+    ('a..b', False),
+    ('test..bucket', False),
+    ('a.-b', False),
+    ('a-.b', False)
 ])
 def test_cloud_is_aws_s3_bucket_name(bucket_name, truth_value):
     assert userprovided.parameters.is_aws_s3_bucket_name(bucket_name) is truth_value

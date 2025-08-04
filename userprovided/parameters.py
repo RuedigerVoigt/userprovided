@@ -246,6 +246,19 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
         # No need to check IPv6 as the colon is not an allowed character.
         logging.error('An AWS must not resemble an IP address.')
         return False
+    # Check for invalid start/end characters
+    if bucket_name.startswith('.') or bucket_name.startswith('-'):
+        logging.error('AWS bucket name cannot start with dot or hyphen.')
+        return False
+    if bucket_name.endswith('.') or bucket_name.endswith('-'):
+        logging.error('AWS bucket name cannot end with dot or hyphen.')
+        return False
+    
+    # Check for consecutive dots or invalid dot-hyphen patterns
+    if '..' in bucket_name or '.-' in bucket_name or '-.' in bucket_name:
+        logging.error('AWS bucket name cannot contain consecutive dots or dot-hyphen patterns.')
+        return False
+    
     if re.match(r"([a-z0-9][a-z0-9\-]*[a-z0-9]\.)*[a-z0-9][a-z0-9\-]*[a-z0-9]",
                 bucket_name):
         # Must start with a lowercase letter or number
