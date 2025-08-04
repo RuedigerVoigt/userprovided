@@ -211,6 +211,11 @@ def test_normalize_query_part():
     # drop_key is set, but empty or None:
     assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys=[]) == 'bar=2&foo=1'
     assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys=None) == 'bar=2&foo=1'
+    # Multiple = signs in parameter values (preserve full value):
+    assert userprovided.url.normalize_query_part('token=eyJuYW1lIjoiSm9obiJ9==') == 'token=eyJuYW1lIjoiSm9obiJ9=='
+    assert userprovided.url.normalize_query_part('redirect=https://site.com?param=value') == 'redirect=https://site.com?param=value'
+    assert userprovided.url.normalize_query_part('formula=x=2*y+3') == 'formula=x=2*y+3'
+    assert userprovided.url.normalize_query_part('token=abc=def&name=john') == 'name=john&token=abc=def'
 
 
 @pytest.mark.parametrize("test_url,normalized_url", [

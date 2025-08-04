@@ -62,7 +62,7 @@ def normalize_query_part(query: str,
     keep: Dict[str, str] = dict()
     for chunk in chunks:
         if chunk != '' and '=' in chunk:
-            split_chunk = chunk.split('=')
+            split_chunk = chunk.split('=', 1)
             key = split_chunk[0]
             value = split_chunk[1]
             if key != '' and value != '':
