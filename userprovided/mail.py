@@ -5,7 +5,7 @@
 Checking Email for the userprovided library
 ~~~~~~~~~~~~~~~~~~~~~
 Source: https://github.com/RuedigerVoigt/userprovided
-(c) 2020-2021 Rüdiger Voigt
+(c) 2020-2025 Rüdiger Voigt
 Released under the Apache License 2.0
 """
 
@@ -17,6 +17,9 @@ import re
 def is_email(mailaddress: str) -> bool:
     "Very basic check if the email address has a valid format."
 
+    if not isinstance(mailaddress, str):
+        raise TypeError('Email address must be a string')
+    
     if not mailaddress or mailaddress == '':
         logging.warning('No mail address supplied.')
         return False
