@@ -5,7 +5,7 @@
 Hash functionality for the userprovided library
 ~~~~~~~~~~~~~~~~~~~~~
 Source: https://github.com/RuedigerVoigt/userprovided
-(c) 2020-2021 Rüdiger Voigt
+(c) 2020-2025 Rüdiger Voigt
 Released under the Apache License 2.0
 """
 
@@ -31,7 +31,6 @@ def hash_available(hash_method: str,
         raise ValueError('No hash method provided')
 
     # Is the chosen method available and supported?
-    hash_method = hash_method.strip()
 
     if fail_on_deprecated:
         if hash_method in ('md5', 'sha1'):
