@@ -33,8 +33,8 @@ The Python package userprovided checks input for validity and plausibility. It a
 
 ### Supported Python versions:
 
-* The code must run with all supported Python versions from 3.9 to 3.13 (inclusive).
-* Test compatibility with both the minimum (3.9) and maximum (3.13) supported versions.
+* The code must run with all supported Python versions from 3.10 to 3.13 (inclusive).
+* Test compatibility with both the minimum (3.10) and maximum (3.13) supported versions.
 * Testing with intermediate versions (3.10, 3.11, 3.12) is encouraged but not required.
 
 ### Coding Style:

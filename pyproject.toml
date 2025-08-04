@@ -8,7 +8,6 @@ license = "Apache-2.0"
 packages = [{include = "userprovided"}]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -25,7 +24,7 @@ classifiers = [
 include = ["userprovided/py.typed"]
 
 [tool.poetry.dependencies]
-python = ">=3.9"
+python = ">=3.10"
 
 [tool.poetry.group.dev.dependencies]
 hypothesis = "*"
