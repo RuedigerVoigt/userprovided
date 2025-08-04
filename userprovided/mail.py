@@ -25,7 +25,7 @@ def is_email(mailaddress: str) -> bool:
         return False
 
     mailaddress = mailaddress.strip()
-    if not re.match(r"^[^\s@]+@[^\s@]+\.[a-zA-Z]+", mailaddress):
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[a-zA-Z0-9\-]+$", mailaddress):
         logging.error(
             'The supplied mailaddress %s has an unknown format.', mailaddress)
         return False

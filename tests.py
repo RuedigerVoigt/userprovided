@@ -10,7 +10,7 @@ To generate a report afterwards.
 coverage html
 ~~~~~~~~~~~~~~~~~~~~~
 Source: https://github.com/RuedigerVoigt/userprovided
-(c) 2020-2023 Rüdiger Voigt
+(c) 2020-2025 Rüdiger Voigt
 Released under the Apache License 2.0
 """
 
@@ -97,17 +97,38 @@ def test_calculate_file_hash_mocked_permission():
     ('test@example.co.uk', True),
     ('  test@example.com  ', True),
     ('test+filter@example.com', True),
+    # single character domains:
+    ('example@x.com', True),
+    ('test@a.org', True),
     # invalid addresses:
     ('@example.com', False),
     ('test@@example.com', False),
     ('test@example.', False),
+    # multiple @ signs:
+    ('user@domain.com@evil.com', False),
+    ('test@example@malicious.org', False),
+    # extra text after valid email:
+    ('test@example.com extra junk', False),
+    ('valid@domain.com@another.com', False),
     # missing input:
-    (None, False),
     ('', False),
     ('   ', False)
 ])
 def test_mail_is_email(mail_address, truth_value):
     assert userprovided.mail.is_email(mail_address) is truth_value
+
+
+def test_mail_is_email_type_validation():
+    # Test that None raises TypeError
+    with pytest.raises(TypeError, match="Email address must be a string"):
+        userprovided.mail.is_email(None)
+    
+    # Test that non-string types raise TypeError
+    with pytest.raises(TypeError, match="Email address must be a string"):
+        userprovided.mail.is_email(123)
+    
+    with pytest.raises(TypeError, match="Email address must be a string"):
+        userprovided.mail.is_email(['not', 'a', 'string'])
 
 
 @settings(max_examples=1000,
@@ -348,6 +369,7 @@ def test_date_en_long_to_iso_exceptions():
     ('4. Jul. 1776', '1776-07-04'),
     ('8. Mai 1945', '1945-05-08'),
     ('15. März 2021', '2021-03-15'),
+    ('15. MÄRZ 2021', '2021-03-15'),
     ('3. Oktober 1990', '1990-10-03'),
     ('03. November 2020', '2020-11-03'),
     # messed up whitespace:
