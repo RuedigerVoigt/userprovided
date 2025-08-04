@@ -35,7 +35,7 @@ def hash_available(hash_method: str,
 
     if fail_on_deprecated:
         if hash_method in ('md5', 'sha1'):
-            raise err.DeprecatedHashAlgorithm('The supplied hash method %s is deprecated!')
+            raise err.DeprecatedHashAlgorithm('The supplied hash method %s is deprecated!', hash_method)
 
     if hash_method in hashlib.algorithms_available:
         logging.debug('Hash method %s is available.', hash_method)
