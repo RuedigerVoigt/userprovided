@@ -20,9 +20,25 @@ from userprovided import err
 
 def hash_available(hash_method: str,
                    fail_on_deprecated: bool = True) -> bool:
-    """Checks if the supplied hashing algorithm is available.
-       If fail_on_deprecated is set to True (default) it will raise an
-       exception if the method is deprecated (md5 and sha1)."""
+    """Checks if a hashing algorithm is available on the system.
+
+    Validates whether the specified hash algorithm is supported by the
+    system's hashlib implementation. Can optionally reject deprecated
+    algorithms for security reasons.
+
+    Args:
+        hash_method: Name of the hash algorithm to check (e.g., 'sha256').
+        fail_on_deprecated: If True, raises exception for deprecated algorithms
+            like MD5 and SHA1. Defaults to True.
+
+    Returns:
+        True if the hash method is available and allowed, False otherwise.
+
+    Raises:
+        ValueError: If no hash method is provided or empty string given.
+        DeprecatedHashAlgorithm: If hash_method is deprecated and
+            fail_on_deprecated is True.
+    """
 
     if hash_method:
         hash_method = hash_method.strip()
@@ -45,11 +61,30 @@ def hash_available(hash_method: str,
 def calculate_file_hash(file_path: Union[pathlib.Path, str],
                         hash_method: str = 'sha256',
                         expected_hash: Optional[str] = None) -> str:
-    """Calculate hash value for a file.
-       Supported: SHA224 / SHA256 / SHA512
-       If you provide expected_hash this will raise a ValueError exception
-       in case this does not match the calculated hash. This allows you to
-       detect changes or tampering."""
+    """Calculates cryptographic hash of a file.
+
+    Computes the hash digest of a file using the specified algorithm.
+    Optionally verifies the calculated hash against an expected value
+    to detect file modifications or corruption.
+
+    Args:
+        file_path: Path to the file to hash. Can be string or Path object.
+        hash_method: Hash algorithm to use. Supported: 'sha224', 'sha256',
+            'sha512'. Defaults to 'sha256'.
+        expected_hash: Expected hash value for verification. If provided
+            and doesn't match calculated hash, raises ValueError.
+            Defaults to None.
+
+    Returns:
+        Hexadecimal string representation of the file's hash digest.
+
+    Raises:
+        DeprecatedHashAlgorithm: If hash_method is MD5 or SHA1.
+        ValueError: If hash method is not supported or calculated hash
+            doesn't match expected_hash.
+        FileNotFoundError: If the specified file doesn't exist.
+        PermissionError: If insufficient permissions to read the file.
+    """
 
     if hash_method in ('md5', 'sha1'):
         raise err.DeprecatedHashAlgorithm(

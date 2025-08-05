@@ -18,8 +18,19 @@ import re
 def date_exists(year: int,
                 month: int,
                 day: int) -> bool:
-    """Check if a date given by three integers is valid
-       i.e exists in the calendar. """
+    """Validates if a date exists in the calendar.
+
+    Checks whether the given year, month, and day combination represents
+    a valid date, including leap year considerations.
+
+    Args:
+        year: The year as an integer.
+        month: The month as an integer (1-12).
+        day: The day as an integer (1-31).
+
+    Returns:
+        True if the date exists in the calendar, False otherwise.
+    """
     try:
         # int() will convert something like '01' to 1
         year = int(year)
@@ -38,8 +49,22 @@ def date_exists(year: int,
 
 
 def date_en_long_to_iso(date_string: str) -> str:
-    """ Take a long format English date and return a standardized date string
-       (i.e. YYYY-MM-DD). """
+    """Converts long-format English dates to ISO format (YYYY-MM-DD).
+
+    Parses English date strings in formats like "July 4, 1776" or
+    "May 8th, 1945" and converts them to ISO 8601 date format.
+
+    Args:
+        date_string: English date string to convert.
+
+    Returns:
+        Date string in ISO format (YYYY-MM-DD).
+
+    Raises:
+        AttributeError: If the date string format is not recognized.
+        KeyError: If the month name is not recognized.
+        ValueError: If the parsed date is invalid (e.g., February 30).
+    """
     date_string = date_string.strip()
     regex_long_date_en = re.compile(
         r"(?P<monthL>[a-zA-Z\.]{3,9})\s+(?P<day>\d{1,2})(th)?,\s*(?P<year>\d\d\d\d)")
@@ -87,8 +112,22 @@ def date_en_long_to_iso(date_string: str) -> str:
 
 
 def date_de_long_to_iso(date_string: str) -> str:
-    """Take a long format German date and return a standardized date string
-       (i.e. YYYY-MM-DD). """
+    """Converts long-format German dates to ISO format (YYYY-MM-DD).
+
+    Parses German date strings in formats like "3. Oktober 1990" or
+    "15. März 2021" and converts them to ISO 8601 date format.
+
+    Args:
+        date_string: German date string to convert.
+
+    Returns:
+        Date string in ISO format (YYYY-MM-DD).
+
+    Raises:
+        AttributeError: If the date string format is not recognized.
+        KeyError: If the month name is not recognized.
+        ValueError: If the parsed date is invalid (e.g., 30. Februar).
+    """
     date_string = date_string.strip()
     regex_long_date_de = re.compile(
         r"(?P<day>\d{1,2})\.\s+(?P<monthL>[a-zA-ZÄä\.]{3,9})\s+(?P<year>\d{4})")

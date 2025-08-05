@@ -17,8 +17,20 @@ from userprovided import err
 
 
 def convert_to_set(convert_this: Union[list, set, str, tuple]) -> set:
-    """ Convert a string, a tuple, or a list into a set
-        (i.e. no duplicates, unordered)"""
+    """Converts various iterable types to a set.
+
+    Takes a string, tuple, list, or existing set and converts it to a set,
+    removing any duplicates and creating an unordered collection.
+
+    Args:
+        convert_this: The item to convert. Must be a string, tuple, list, or set.
+
+    Returns:
+        A set containing the elements from the input.
+
+    Raises:
+        TypeError: If convert_this is not a supported type.
+    """
 
     if isinstance(convert_this, set):
         # functions using this expect a set, so everything
@@ -40,14 +52,27 @@ def validate_dict_keys(dict_to_check: dict,
                        allowed_keys: set,
                        necessary_keys: Optional[set] = None,
                        dict_name: Optional[str] = None) -> bool:
-    """If you use dictionaries to pass parameters, there are two common errors:
-       * misspelled keys
-       * necessary keys are missing
-       This functions checks whether all keys are in the set of allowed_keys
-       and raises ValueError if a unknown key is found.
-       It can also check whether all necessary keys are present and
-       raises ValueError if not.
-       dict_name can be used for a better error message."""
+    """Validates dictionary keys against allowed and required sets.
+
+    Checks if all keys in a dictionary are permitted and whether all
+    required keys are present. Useful for parameter validation.
+
+    Args:
+        dict_to_check: Dictionary to validate.
+        allowed_keys: Set of keys that are permitted in the dictionary.
+        necessary_keys: Set of keys that must be present. If None,
+            no keys are required. Defaults to None.
+        dict_name: Name of the dictionary for error messages.
+            Defaults to None.
+
+    Returns:
+        True if validation passes.
+
+    Raises:
+        ValueError: If unknown keys are found, necessary keys are missing,
+            or necessary_keys contains keys not in allowed_keys.
+        AttributeError: If dict_to_check is not a dictionary.
+    """
 
     if not dict_name:
         # fallback to neutral
@@ -94,14 +119,21 @@ def validate_dict_keys(dict_to_check: dict,
 
 
 def keys_neither_none_nor_empty(dict_to_check: dict) -> bool:
-    """Checks if all keys in the provided dictionary are neither None, nor
-       have an empty value (like an empty string (including whitespace only)
-       or a dict/list/set/tuple without elements).
+    """Validates that all dictionary values are neither None nor empty.
 
-       Does ignore value types other than dict/list/set/str/tuple.
+    Checks that no dictionary values are None, empty strings (including
+    whitespace-only strings), or empty collections (dict/list/set/tuple).
+    Other value types are ignored.
 
-       Raises Value Error if you provide something else than a dictionary,
-       or if its is completely empty."""
+    Args:
+        dict_to_check: Dictionary to validate.
+
+    Returns:
+        True if all values are non-None and non-empty, False otherwise.
+
+    Raises:
+        ValueError: If dict_to_check is not a dictionary or is completely empty.
+    """
 
     if not isinstance(dict_to_check, dict):
         raise ValueError('This is not a dictionary')
@@ -133,8 +165,26 @@ def numeric_in_range(parameter_name: str,
                      maximum_value: Union[int, float],
                      fallback_value: Union[int, float]
                      ) -> Union[int, float]:
-    """Checks if a numeric value is within a specified range.
-       If not this returns the fallback value and logs a warning."""
+    """Validates numeric value within range, returning fallback if outside.
+
+    Checks if a numeric value falls within the specified range. If not,
+    returns the fallback value and logs a warning message.
+
+    Args:
+        parameter_name: Name of the parameter for logging purposes.
+        given_value: The numeric value to check.
+        minimum_value: Minimum allowed value (inclusive).
+        maximum_value: Maximum allowed value (inclusive).
+        fallback_value: Value to return if given_value is outside range.
+
+    Returns:
+        The given_value if within range, otherwise fallback_value.
+
+    Raises:
+        ValueError: If any parameter is not numeric.
+        ContradictoryParameters: If minimum > maximum or fallback_value
+            is outside the allowed range.
+    """
     if not parameter_name:
         parameter_name = ''
 
@@ -171,8 +221,26 @@ def int_in_range(parameter_name: str,
                  minimum_value: int,
                  maximum_value: int,
                  fallback_value: int) -> int:
-    """Special case of numeric_in_range: check if given integer is
-       within a specified range of possible values."""
+    """Validates integer value within range, returning fallback if outside.
+
+    Integer-specific version of numeric_in_range that ensures all parameters
+    are integers and performs range validation.
+
+    Args:
+        parameter_name: Name of the parameter for logging purposes.
+        given_value: The integer value to check.
+        minimum_value: Minimum allowed value (inclusive).
+        maximum_value: Maximum allowed value (inclusive).
+        fallback_value: Value to return if given_value is outside range.
+
+    Returns:
+        The given_value if within range, otherwise fallback_value.
+
+    Raises:
+        ValueError: If any parameter is not an integer.
+        ContradictoryParameters: If minimum > maximum or fallback_value
+            is outside the allowed range.
+    """
     for param in {given_value, minimum_value, maximum_value, fallback_value}:
         if type(param) != int:  # pylint: disable=unidiomatic-typecheck
             raise ValueError('Value must be an integer.')
@@ -184,8 +252,20 @@ def int_in_range(parameter_name: str,
 
 
 def is_port(port_number: int) -> bool:
-    """Check if the number provided is valid as a TCP/UDP port
-       (i.e an integer in the range from 0 to 65535)."""
+    """Validates if a number is a valid TCP/UDP port.
+
+    Checks whether the provided integer is within the valid port range
+    of 0 to 65535 inclusive.
+
+    Args:
+        port_number: The port number to validate.
+
+    Returns:
+        True if port_number is a valid port, False otherwise.
+
+    Raises:
+        ValueError: If port_number is not an integer.
+    """
 
     if not isinstance(port_number, int):
         raise ValueError('Port has to be an integer.')
@@ -201,9 +281,25 @@ def string_in_range(string_to_check: str,
                     minimum_length: int,
                     maximum_length: int,
                     strip_string: bool = True) -> bool:
-    """Strips whitespace from both ends of a string and then checks
-       if the length of that string falls in those limits.
-       The strip() can be turned off. """
+    """Validates string length within specified limits.
+
+    Optionally strips whitespace from both ends of the string and then
+    checks if the resulting length falls within the specified range.
+
+    Args:
+        string_to_check: The string to validate.
+        minimum_length: Minimum allowed length (inclusive).
+        maximum_length: Maximum allowed length (inclusive).
+        strip_string: Whether to strip whitespace before checking length.
+            Defaults to True.
+
+    Returns:
+        True if string length is within range, False otherwise.
+
+    Raises:
+        ContradictoryParameters: If minimum_length > maximum_length.
+        ValueError: If strip_string is not a boolean.
+    """
 
     if minimum_length > maximum_length:
         raise err.ContradictoryParameters("Minimum must not be larger than maximum value.")
@@ -221,10 +317,20 @@ def string_in_range(string_to_check: str,
 
 
 def is_aws_s3_bucket_name(bucket_name: str) -> bool:
-    """Returns True if bucket name is well-formed for AWS S3 buckets
+    """Validates AWS S3 bucket name compliance.
 
-    Applying the rules set here:
-    https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
+    Checks if a bucket name follows AWS S3 naming conventions including
+    length, character restrictions, format rules, and other constraints.
+
+    Args:
+        bucket_name: The bucket name to validate.
+
+    Returns:
+        True if the bucket name is valid for AWS S3, False otherwise.
+
+    Note:
+        Applies rules from:
+        https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
     """
 
     # Lengthy code which could be written as a single regular expression.
@@ -276,7 +382,19 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
 
 def enforce_boolean(parameter_value: bool,
                     parameter_name: Optional[str] = None) -> None:
-    """Raise a ValueError if the parameter is not of type bool."""
+    """Validates that a parameter is a boolean type.
+
+    Ensures the provided parameter is exactly of type bool (not truthy/falsy
+    values like 0, 1, '', etc.).
+
+    Args:
+        parameter_value: The value to check for boolean type.
+        parameter_name: Name of the parameter for error messages.
+            Defaults to 'parameter' if None.
+
+    Raises:
+        ValueError: If parameter_value is not of type bool.
+    """
     if type(parameter_value) != bool:  # pylint: disable=unidiomatic-typecheck
         parameter_name = parameter_name or 'parameter'
         raise ValueError(f"Value of {parameter_name} must be boolean," +

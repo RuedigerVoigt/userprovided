@@ -21,8 +21,19 @@ from userprovided import err
 
 def is_url(url: str,
            require_specific_schemes: Union[tuple, None] = None) -> bool:
-    """Very basic check if the URL fulfills basic conditions ("LGTM").
-       Will not try to connect."""
+    """Validates basic URL format without attempting connection.
+
+    Performs basic structural validation of a URL including scheme and
+    network location presence. Optionally restricts to specific schemes.
+
+    Args:
+        url: The URL string to validate.
+        require_specific_schemes: Tuple of allowed schemes (e.g., ('http', 'https')).
+            If None, any scheme is allowed. Defaults to None.
+
+    Returns:
+        True if URL has valid basic structure, False otherwise.
+    """
     parsed = urllib.parse.urlparse(url)
 
     if parsed.scheme == '':
@@ -42,12 +53,24 @@ def is_url(url: str,
 
 def normalize_query_part(query: str,
                          drop_keys: Union[list, tuple, set, None] = None) -> str:
-    """Normalize the query part (for example '?foo=1&example=2') of an URL:
-       * Remove every chunk that has no value assigned.
-       * Sort the remaining chunks alphabetically.
-       * Do not change queries without key (old implementations).
-        The optional drop_keys allows you to remove specific keys
-        (for example trackers)."""
+    """Normalizes URL query parameters for consistent formatting.
+
+    Processes query parameters by removing empty values, sorting alphabetically,
+    and optionally filtering out specified keys. Preserves legacy query formats
+    that don't follow key=value syntax.
+
+    Args:
+        query: Query string to normalize (without leading '?').
+        drop_keys: Collection of parameter keys to remove from the query.
+            Can be list, tuple, or set. Defaults to None.
+
+    Returns:
+        Normalized query string with parameters sorted alphabetically.
+
+    Raises:
+        ValueError: If a full URL is provided instead of just the query part.
+        QueryKeyConflict: If duplicate keys have conflicting values.
+    """
     if is_url(query):
         raise ValueError('Provide only the query part to normalize_query_part')
 
@@ -89,20 +112,34 @@ def normalize_query_part(query: str,
 def normalize_url(url: str,
                   drop_keys: Union[list, tuple, set, None] = None,
                   do_not_change_query_part: bool = False) -> str:
-    """Normalize an URL:
-       * remove whitespace around it,
-       * convert scheme and hostname to lowercase,
-       * remove ports if they are the standard port for the scheme,
-       * remove duplicate slashes from the path,
-       * remove fragments (like #foo),
-       * remove empty elements of the query part,
-       * order the elements in the query part by alphabet,
-       The optional drop_keys allows you to remove specific keys
-       (for example trackers).
+    """Normalizes a URL to a canonical format.
 
-       The option do_not_change_query_part is there, because some content
-       management systems use duplicate keys with different values. Sometimes
-       that must not raise an exception."""
+    Performs comprehensive URL normalization including:
+    - Remove whitespace around the URL
+    - Convert scheme and hostname to lowercase
+    - Remove standard ports (80 for HTTP, 443 for HTTPS)
+    - Remove duplicate slashes from the path
+    - Remove fragments (like #foo)
+    - Remove empty query parameters
+    - Sort query parameters alphabetically
+    - Optionally remove specified query keys (e.g., tracking parameters)
+
+    Args:
+        url: The URL to normalize.
+        drop_keys: Collection of query parameter keys to remove.
+            Can be list, tuple, or set. Defaults to None.
+        do_not_change_query_part: If True, preserves original query format
+            to avoid issues with legacy systems using duplicate keys.
+            Defaults to False.
+
+    Returns:
+        Normalized URL string with consistent formatting.
+
+    Raises:
+        ValueError: If the URL is malformed.
+        ContradictoryParameters: If both drop_keys and do_not_change_query_part
+            are specified.
+    """
     url = url.strip()
 
     if not is_url(url):
@@ -155,12 +192,22 @@ def normalize_url(url: str,
 
 def determine_file_extension(url: str,
                              provided_mime_type: Optional[str] = None) -> str:
-    """Guess the correct filename extension from an URL and / or
-    the mime-type returned by the server.
-    Sometimes a valid URL does not contain a file extension
-    (like https://www.example.com/), or it is ambiguous.
-    So the mime type acts as a fallback. In case the correct
-    extension cannot be determined at all it is set to 'unknown'."""
+    """Determines appropriate file extension from URL and/or MIME type.
+
+    Attempts to guess the correct file extension by analyzing the URL path
+    and optionally using a provided MIME type as fallback. Handles cases
+    where URLs lack extensions or have ambiguous formats.
+
+    Args:
+        url: The URL to analyze for file extension hints.
+        provided_mime_type: MIME type from server response headers.
+            Used as fallback when URL doesn't provide clear extension.
+            Defaults to None.
+
+    Returns:
+        File extension with leading dot (e.g., '.pdf', '.html') or
+        '.unknown' if extension cannot be determined.
+    """
     if provided_mime_type:
         provided_mime_type = provided_mime_type.strip()
     if provided_mime_type == '':

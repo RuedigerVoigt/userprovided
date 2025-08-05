@@ -15,7 +15,20 @@ import re
 
 
 def is_email(mailaddress: str) -> bool:
-    "Very basic check if the email address has a valid format."
+    """Validates if a string has a valid email address format.
+
+    Performs basic regex-based validation to check if the provided string
+    follows a valid email address pattern. Supports internationalized domains.
+
+    Args:
+        mailaddress: The email address string to validate.
+
+    Returns:
+        True if the email address format is valid, False otherwise.
+
+    Raises:
+        TypeError: If mailaddress is not a string.
+    """
 
     if not isinstance(mailaddress, str):
         raise TypeError('Email address must be a string')
