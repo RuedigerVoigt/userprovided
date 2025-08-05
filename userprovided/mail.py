@@ -32,7 +32,7 @@ def is_email(mailaddress: str) -> bool:
 
     if not isinstance(mailaddress, str):
         raise TypeError('Email address must be a string')
-    
+
     if not mailaddress or mailaddress == '':
         logging.warning('No mail address supplied.')
         return False

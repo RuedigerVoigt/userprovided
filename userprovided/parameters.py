@@ -242,7 +242,7 @@ def int_in_range(parameter_name: str,
             is outside the allowed range.
     """
     for param in {given_value, minimum_value, maximum_value, fallback_value}:
-        if type(param) != int:  # pylint: disable=unidiomatic-typecheck
+        if type(param) != int:  # pylint: disable=unidiomatic-typecheck  # noqa: E721
             raise ValueError('Value must be an integer.')
     return int(numeric_in_range(parameter_name,
                                 given_value,
@@ -359,12 +359,12 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
     if bucket_name.endswith('.') or bucket_name.endswith('-'):
         logging.error('AWS bucket name cannot end with dot or hyphen.')
         return False
-    
+
     # Check for consecutive dots or invalid dot-hyphen patterns
     if '..' in bucket_name or '.-' in bucket_name or '-.' in bucket_name:
         logging.error('AWS bucket name cannot contain consecutive dots or dot-hyphen patterns.')
         return False
-    
+
     if re.match(r"([a-z0-9][a-z0-9\-]*[a-z0-9]\.)*[a-z0-9][a-z0-9\-]*[a-z0-9]",
                 bucket_name):
         # Must start with a lowercase letter or number
@@ -395,7 +395,7 @@ def enforce_boolean(parameter_value: bool,
     Raises:
         ValueError: If parameter_value is not of type bool.
     """
-    if type(parameter_value) != bool:  # pylint: disable=unidiomatic-typecheck
+    if type(parameter_value) != bool:  # pylint: disable=unidiomatic-typecheck  # noqa: E721
         parameter_name = parameter_name or 'parameter'
         raise ValueError(f"Value of {parameter_name} must be boolean," +
                          "i.e True / False (without quotation marks).")
