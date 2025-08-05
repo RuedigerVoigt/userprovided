@@ -50,13 +50,15 @@ The Python package userprovided checks input for validity and plausibility. It a
 
 ### Test driven development:
 
-* Add tests for new code in [tests.py](tests.py).
+* **MANDATORY**: Add tests for new code in [tests.py](tests.py) - agents must do this automatically, not wait to be asked.
+* **Tests are required before code submission** - incomplete PRs will be rejected.
+* **Verify tests pass**: Run `pytest -q` to confirm all tests pass before considering the task complete.
 * Cover both expected and edge case inputs.
 * Write property-based tests using `@given(...)` from hypothesis to automatically check your code against a wide range of inputs, including edge cases you might not think of.
 * Do **not** copy the implementation logic into the test: Tests should verify what the code does, not how it does it. Avoid repeating the same expressions or algorithms from the main code in your tests. If both are wrong, the test would still pass.
 * Required testing dependencies: `pytest` and `hypothesis`
 * Additional testing dependencies are allowed (see dependency policy above)
-* Run `pytest -q` for the test suite.
+* Run `pytest -q` for the test suite (or `python -m pytest -q` if pytest command not found).
 * Run `flake8` to check style.
 * Run `mypy`.
 * REQUIRED: Run a static security analyzer (e.g. `bandit`) before submitting a PR and include results in the PR description.
