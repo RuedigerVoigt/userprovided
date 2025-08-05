@@ -18,6 +18,19 @@ from typing import Optional, Union
 from userprovided import err
 
 
+def _hash_is_deprecated(hash_method: str) -> bool:
+    """Checks if a hash algorithm is deprecated for security reasons.
+
+    Args:
+        hash_method: Name of the hash algorithm to check.
+
+    Returns:
+        True if the hash method is deprecated, False otherwise.
+    """
+    deprecated_algorithms = {'md5', 'sha1'}
+    return hash_method.lower() in deprecated_algorithms
+
+
 def hash_available(hash_method: str,
                    fail_on_deprecated: bool = True) -> bool:
     """Checks if a hashing algorithm is available on the system.
@@ -49,7 +62,7 @@ def hash_available(hash_method: str,
     # Is the chosen method available and supported?
 
     if fail_on_deprecated:
-        if hash_method in ('md5', 'sha1'):
+        if _hash_is_deprecated(hash_method):
             raise err.DeprecatedHashAlgorithm('The supplied hash method %s is deprecated!', hash_method)
 
     if hash_method in hashlib.algorithms_available:
@@ -86,7 +99,7 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
         PermissionError: If insufficient permissions to read the file.
     """
 
-    if hash_method in ('md5', 'sha1'):
+    if _hash_is_deprecated(hash_method):
         raise err.DeprecatedHashAlgorithm(
             'Deprecated hash method not supported')
 
@@ -127,3 +140,87 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
         logging.error('Exception while trying to get file hash',
                       exc_info=True)
         raise
+
+
+def calculate_string_hash(data: str,
+                          hash_method: str = 'sha256',
+                          salt: Optional[str] = None,
+                          encoding: str = 'utf-8') -> str:
+    """Calculates cryptographic hash of string data.
+
+    Computes the hash digest of string data using the specified algorithm.
+    Optionally adds salt for enhanced security against rainbow table attacks.
+    Always uses secure hash algorithms.
+
+    Args:
+        data: String data to hash.
+        hash_method: Hash algorithm to use. Supported: 'sha224', 'sha256',
+            'sha512'. Defaults to 'sha256'.
+        salt: Optional salt string to append to data before hashing.
+            Strongly recommended for password hashing. Defaults to None.
+        encoding: Text encoding to use when converting string to bytes.
+            Defaults to 'utf-8'.
+
+    Returns:
+        Hexadecimal string representation of the hash digest.
+
+    Raises:
+        DeprecatedHashAlgorithm: If hash_method is MD5 or SHA1.
+        ValueError: If hash method is not supported or data is empty.
+        TypeError: If data is not a string.
+        UnicodeEncodeError: If data cannot be encoded with specified encoding.
+    """
+    if not isinstance(data, str):
+        raise TypeError('Data must be a string')
+
+    if not data:
+        raise ValueError('Cannot hash empty string')
+
+    if _hash_is_deprecated(hash_method):
+        raise err.DeprecatedHashAlgorithm(
+            'Deprecated hash method not supported')
+
+    if not hash_available(hash_method):
+        raise ValueError(f"Hash method {hash_method} not available on "
+                         "system.")
+
+    # Prepare data for hashing
+    if salt:
+        if not isinstance(salt, str):
+            raise TypeError('Salt must be a string')
+        data_to_hash = data + salt
+        logging.debug('Salt added to data for hashing')
+    else:
+        data_to_hash = data
+        logging.warning('No salt provided - consider using salt for '
+                        'enhanced security')
+
+    try:
+        # Convert string to bytes using specified encoding
+        byte_data = data_to_hash.encode(encoding)
+
+        # Create hash object
+        if hash_method == 'sha224':
+            h = hashlib.sha224()
+        elif hash_method == 'sha256':
+            h = hashlib.sha256()
+        elif hash_method == 'sha512':
+            h = hashlib.sha512()
+        else:
+            raise ValueError('Hash method not supported')
+
+        h.update(byte_data)
+        calculated_hash = h.hexdigest()
+
+        logging.debug('String hash calculated successfully using %s',
+                      hash_method)
+        return calculated_hash
+
+    except UnicodeEncodeError:
+        logging.exception('Cannot encode string with %s encoding', encoding)
+        raise
+    except Exception:
+        logging.error('Exception while calculating string hash',
+                      exc_info=True)
+        raise
+

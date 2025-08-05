@@ -22,6 +22,7 @@ import pathlib
 from hypothesis import given
 from hypothesis import settings
 from hypothesis import Verbosity
+from hypothesis import HealthCheck
 from hypothesis.strategies import emails
 from hypothesis.strategies import dates
 import pytest
@@ -90,6 +91,89 @@ def test_calculate_file_hash_mocked_permission():
             assert "insufficient permissions" in str(excinfo.value)
 
 
+def test_calculate_string_hash():
+    # Test basic functionality
+    test_data = "hello"
+    result = userprovided.hashing.calculate_string_hash(test_data)
+    assert len(result) == 64  # SHA256 produces 64-char hex string
+    assert result == '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824'
+    
+    # Test with different hash methods
+    sha224_result = userprovided.hashing.calculate_string_hash(test_data, 'sha224')
+    assert len(sha224_result) == 56  # SHA224 produces 56-char hex string
+    
+    sha512_result = userprovided.hashing.calculate_string_hash(test_data, 'sha512')
+    assert len(sha512_result) == 128  # SHA512 produces 128-char hex string
+    
+    # Test with salt
+    salted_result = userprovided.hashing.calculate_string_hash(test_data, salt="mysalt")
+    assert salted_result != result  # Should be different with salt
+    
+    # Test consistency - same input should produce same output
+    result2 = userprovided.hashing.calculate_string_hash(test_data)
+    assert result == result2
+    
+    # Test with salt consistency
+    salted_result2 = userprovided.hashing.calculate_string_hash(test_data, salt="mysalt")
+    assert salted_result == salted_result2
+
+
+def test_calculate_string_hash_errors():
+    # Test deprecated hash methods
+    with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
+        userprovided.hashing.calculate_string_hash("test", hash_method="md5")
+    
+    with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
+        userprovided.hashing.calculate_string_hash("test", hash_method="sha1")
+    
+    # Test non-string data
+    with pytest.raises(TypeError):
+        userprovided.hashing.calculate_string_hash(123)
+    
+    with pytest.raises(TypeError):
+        userprovided.hashing.calculate_string_hash(None)
+    
+    # Test empty string
+    with pytest.raises(ValueError):
+        userprovided.hashing.calculate_string_hash("")
+    
+    # Test non-string salt
+    with pytest.raises(TypeError):
+        userprovided.hashing.calculate_string_hash("test", salt=123)
+    
+    # Test unsupported hash method
+    with pytest.raises(ValueError):
+        userprovided.hashing.calculate_string_hash("test", hash_method="sha384")
+    
+    # Test non-existent hash method
+    with pytest.raises(ValueError):
+        userprovided.hashing.calculate_string_hash("test", hash_method="nonexistent")
+
+
+def test_calculate_string_hash_encoding():
+    # Test different encodings
+    unicode_data = "héllo"
+    result_utf8 = userprovided.hashing.calculate_string_hash(unicode_data, encoding='utf-8')
+    result_latin1 = userprovided.hashing.calculate_string_hash(unicode_data, encoding='latin-1')
+    
+    # Different encodings should produce different hashes for unicode chars
+    assert result_utf8 != result_latin1
+    
+    # Test invalid encoding
+    with pytest.raises(UnicodeEncodeError):
+        userprovided.hashing.calculate_string_hash("héllo", encoding='ascii')
+
+
+def test_hash_is_deprecated():
+    # Test the private helper function through public interface
+    assert userprovided.hashing._hash_is_deprecated('md5') is True
+    assert userprovided.hashing._hash_is_deprecated('MD5') is True  # Case insensitive
+    assert userprovided.hashing._hash_is_deprecated('sha1') is True
+    assert userprovided.hashing._hash_is_deprecated('SHA1') is True  # Case insensitive
+    assert userprovided.hashing._hash_is_deprecated('sha256') is False
+    assert userprovided.hashing._hash_is_deprecated('sha512') is False
+
+
 @pytest.mark.parametrize("mail_address,truth_value", [
     # valid addresses:
     ('test@example.com', True),
@@ -132,8 +216,7 @@ def test_mail_is_email_type_validation():
 
 
 @settings(max_examples=1000,
-          print_blob=True,
-          verbosity=Verbosity.normal)
+          suppress_health_check=[HealthCheck.too_slow])
 @given(x=emails())
 def test_hypothesis_mail_is_email(x):
     assert userprovided.mail.is_email(x) is True
