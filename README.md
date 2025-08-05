@@ -38,7 +38,7 @@ Userprovided has functionality for the following inputs:
 
 ## Installation
 
-Install exoskeleton using `pip` or `pip3`. For example:
+Install userprovided using `pip` or `pip3`. For example:
 
 ```bash
 sudo pip3 install userprovided
@@ -182,21 +182,21 @@ userprovided.url.determine_file_extension(
 ## Check Email Addresses
 
 ```python
-userprovided.mail.is_email(None)
-# => False
-
 userprovided.mail.is_email('example@example.com')
 # => True
+
+userprovided.mail.is_email('invalid.email')
+# => False
 ```
 
 
 ## File Hashes
 
-You can check whether a specific hash method is available. This will raise a ValueError for `MD5` and `SHA1` *even if they are available*, because they are deprecated.
+You can check whether a specific hash method is available. This will raise a DeprecatedHashAlgorithm exception for `MD5` and `SHA1` *even if they are available*, because they are deprecated.
 
 ```python
 print(userprovided.hash.hash_available('md5'))
-# => ValueError because md5 is deprecated
+# => DeprecatedHashAlgorithm exception because md5 is deprecated
 
 print(userprovided.hash.hash_available('sha256'))
 # => True on almost any system
