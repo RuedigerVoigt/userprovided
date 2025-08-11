@@ -67,7 +67,7 @@ def date_en_long_to_iso(date_string: str) -> str:
     """
     date_string = date_string.strip()
     regex_long_date_en = re.compile(
-        r"(?P<monthL>[a-zA-Z\.]{3,9})\s+(?P<day>\d{1,2})(th)?,\s*(?P<year>\d\d\d\d)")
+        r"(?P<monthL>[a-zA-Z\.]{3,9})\s+(?P<day>\d{1,2})(?:st|nd|rd|th)?,\s*(?P<year>\d\d\d\d)")
     try:
         match = re.search(regex_long_date_en, date_string)
         if match:
