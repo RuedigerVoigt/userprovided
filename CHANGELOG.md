@@ -10,20 +10,23 @@
   * Added [AGENTS.md](./AGENTS.md) file that defines rules and guidelines for software agents.
 * Packaging:
   * Replaced `setup.py` with a `pyproject.toml` managed by Poetry.
-* New Features:
+* New Features and bug fixes:
+  * `date`:
+    * parse more ordinal suffixes (1st, 2nd, 3rd, 4th) in `date_en_long_to_iso`
   * `hashing`:
     * Added `calculate_string_hash` function for hashing string data with optional salt support.
     * Added `_hash_is_deprecated` helper function to centralize deprecated algorithm checking.
-* Bugfixes:
+  * `mail`:
+    * Extend check / RegEx for email validation
   * `parameters`:
     * Fix typo in parameter name: `maximum_lenght` → `maximum_length`.
     * `is_port`: port 0 was incorrectly excluded.
     * Fix parameter name logic in `enforce_boolean`.
     * Catch more errors in `is_aws_s3_bucket_name`.
-  * `mail`:
-    * Extend check / RegEx for email validation
-  * `date`:
-    * parse more ordinal suffixes (1st, 2nd, 3rd, 4th) in `date_en_long_to_iso`
+  * `url`:
+    * Added `is_shortened_url` which checks if an URL is a short link by comparing it to a list of popular services. (Currently 24 domains recognized)
+
+
 
 ## Version 1.0.0 (2023-10-10)
 

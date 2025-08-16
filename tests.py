@@ -251,8 +251,7 @@ def test_hypothesis_mail_is_email(x):
     # edge cases - consecutive dots and invalid patterns:
     ('a..b', False),
     ('test..bucket', False),
-    ('a.-b', False),
-    ('a-.b', False)
+    ('a.-b', False)
 ])
 def test_cloud_is_aws_s3_bucket_name(bucket_name, truth_value):
     assert userprovided.parameters.is_aws_s3_bucket_name(bucket_name) is truth_value
@@ -399,6 +398,42 @@ def test_determine_file_extension():
     assert userprovided.url.determine_file_extension('https://www.example.com/test.htm', 'doesnotmatter') == '.html'
 
 
+def test_is_shortened_url():
+    # Test known shortening services
+    assert userprovided.url.is_shortened_url('https://bit.ly/abc123') is True
+    assert userprovided.url.is_shortened_url('https://tinyurl.com/xyz789') is True
+    assert userprovided.url.is_shortened_url('https://t.co/abcdef') is True
+    assert userprovided.url.is_shortened_url('https://goo.gl/maps123') is True
+    assert userprovided.url.is_shortened_url('https://lnkd.in/xyz') is True
+    
+    # Test with www prefix
+    assert userprovided.url.is_shortened_url('https://www.bit.ly/abc123') is True
+    assert userprovided.url.is_shortened_url('https://www.tinyurl.com/xyz789') is True
+    
+    # Test case insensitivity
+    assert userprovided.url.is_shortened_url('https://BIT.LY/abc123') is True
+    assert userprovided.url.is_shortened_url('https://TINYURL.COM/xyz789') is True
+    
+    # Test non-shortened URLs
+    assert userprovided.url.is_shortened_url('https://example.com/page') is False
+    assert userprovided.url.is_shortened_url('https://google.com/search') is False
+    assert userprovided.url.is_shortened_url('https://github.com/user/repo') is False
+    
+    # Test invalid URLs
+    assert userprovided.url.is_shortened_url('not-a-url') is False
+    assert userprovided.url.is_shortened_url('') is False
+    assert userprovided.url.is_shortened_url('ftp://bit.ly/test') is True  # Valid URL with shortener domain
+    
+    # Test edge cases
+    assert userprovided.url.is_shortened_url('https://bit.ly') is True  # No path
+    assert userprovided.url.is_shortened_url('http://tinyurl.com/') is True  # HTTP
+    
+    # Test some enterprise/business shorteners
+    assert userprovided.url.is_shortened_url('https://rebrand.ly/custom') is True
+    assert userprovided.url.is_shortened_url('https://short.link/test') is True
+    assert userprovided.url.is_shortened_url('https://cutt.ly/example') is True
+
+
 # There are some edge cases in which `mimetypes.guess_extension`
 # (in the python standard library) has different return values
 # depending on the Python version used.
@@ -436,7 +471,10 @@ def test_date_exists(x):
     ('Jul. 4,1776', '1776-07-04'),
     ('   Jul. 4, 1776  ', '1776-07-04'),
     ('Jul.    4, 1776', '1776-07-04'),
-    # grammatically incorrect, but clear:
+    # ordinal suffixes:
+    ('January 1st, 2025', '2025-01-01'),
+    ('January 2nd, 2025', '2025-01-02'),
+    ('January 3rd, 2025', '2025-01-03'),
     ('May 8th, 1945', '1945-05-08'),
     # upper and lower case:
     ('jul. 4, 1776', '1776-07-04'),

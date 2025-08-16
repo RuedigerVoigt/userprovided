@@ -263,3 +263,67 @@ def determine_file_extension(url: str,
         return '.unknown'
 
     return extension
+
+
+def is_shortened_url(url: str) -> bool:
+    """Check if a URL is from a known URL shortening service that allows random targets.
+    Such URLs can be useful and harmless, but could also be a way for an attacker to 
+    disguise the target of a link.
+
+    Args:
+        url: The URL string to check.
+
+    Returns:
+        True if the URL is from a shortening service in the list, False otherwise.
+
+    Note:
+        This function checks against a list of popular URL shortening
+        services. It will not detect all shortening services, especially
+        custom domain shorteners or newer services.
+        By design it will *not* recognize short URLs like youtu.be as 
+        they do not have random targets but the specific platform YouTube.
+    """
+    if not is_url(url):
+        logging.debug('Invalid URL provided to shortened URL check')
+        return False
+
+    try:
+        parsed = urllib.parse.urlparse(url)
+        domain = parsed.netloc.lower()
+
+        # Remove 'www.' prefix if present
+        if domain.startswith('www.'):
+            domain = domain[4:]
+
+        # Known URL shortening service domains
+        shortener_domains = {
+            'bit.ly', 'bitly.com',
+            'tinyurl.com',
+            't.co',  # https://help.x.com/en/using-x/url-shortener
+            'goo.gl', # EOL 09/2025: https://developers.googleblog.com/en/google-url-shortener-links-will-no-longer-be-available/
+            'lnkd.in',
+            'ow.ly',
+            'buff.ly',
+            'short.link',
+            'is.gd',
+            'v.gd',
+            'rebrand.ly',
+            'tiny.cc',
+            'shortened.com',
+            'clicky.me',  # 08/2025 website says it is in "maintenace mode"
+            'short.cm',
+            'cutt.ly',
+            'ur.ly',
+            'short.io',
+            'bl.ink',
+            'u.to',
+            'x.co',
+            'shorturl.at',
+            'trib.al'
+        }
+
+        return domain in shortener_domains
+
+    except Exception:
+        logging.debug('Error parsing URL for shortened URL detection')
+        return False
