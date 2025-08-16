@@ -53,6 +53,7 @@ The Python package userprovided checks input for validity and plausibility. It a
 * **MANDATORY**: Add tests for new code in [tests.py](tests.py) - agents must do this automatically, not wait to be asked.
 * **Tests are required before code submission** - incomplete PRs will be rejected.
 * **Verify tests pass**: Run `pytest -q` to confirm all tests pass before considering the task complete.
+* **Document new features**: Add new functions, classes, or significant changes to [CHANGELOG.md](CHANGELOG.md) under the "Upcoming" section.
 * Cover both expected and edge case inputs.
 * Write property-based tests using `@given(...)` from hypothesis to automatically check your code against a wide range of inputs, including edge cases you might not think of.
 * Do **not** copy the implementation logic into the test: Tests should verify what the code does, not how it does it. Avoid repeating the same expressions or algorithms from the main code in your tests. If both are wrong, the test would still pass.

@@ -16,7 +16,7 @@ Specific instructions for these agents are found in the [AGENTS.md](AGENTS.md) f
 * Respect [PEP 8](https://peps.python.org/pep-0008/) style guidelines.
 * The use of type hints ([PEP 484](https://peps.python.org/pep-0484/)) is encouraged.
 * Please provide useful log and error messages.
-* For docstrings [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings) is prefered.
+* Docstrings are required for all functions and classes using [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings).
 
 ## Pull Requests / Code Guidelines
 
@@ -30,3 +30,10 @@ Specific instructions for these agents are found in the [AGENTS.md](AGENTS.md) f
   * You can use `flake8` as a linter to check the coding style / adherence to PEP8 .
   * `mypy` to check type hints.
 * Please check that there are no untracked, modified, or staged files left unintentionally before you make a commit (e.g. run `git status` to confirm a clean working tree).
+
+
+This project supports Python 3.10 to 3.13 and uses [Poetry](https://python-poetry.org/) for packaging and dependency management. After cloning the repository you can set up a development environment with:
+
+```bash
+poetry install
+```
