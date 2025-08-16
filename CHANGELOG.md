@@ -13,6 +13,9 @@
 * New Features and bug fixes:
   * `date`:
     * parse more ordinal suffixes (1st, 2nd, 3rd, 4th) in `date_en_long_to_iso`
+  * `geo`:
+    * new module
+    * `is_valid_coordinates` checks if coordinates are possible i.e. within possible Earth ranges
   * `hashing`:
     * Added `calculate_string_hash` function for hashing string data with optional salt support.
     * Added `_hash_is_deprecated` helper function to centralize deprecated algorithm checking.
