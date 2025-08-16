@@ -5,12 +5,13 @@
 userprovided library
 ~~~~~~~~~~~~~~~~~~~~~
 Source: https://github.com/RuedigerVoigt/userprovided
-(c) 2020-2021 Rüdiger Voigt
+(c) 2020-2025 Rüdiger Voigt
 Released under the Apache License 2.0
 """
 
 from userprovided import _version
 from userprovided import date
+from userprovided import geo
 from userprovided import hashing
 from userprovided import mail
 from userprovided import parameters
