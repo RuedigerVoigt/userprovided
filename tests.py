@@ -251,7 +251,13 @@ def test_hypothesis_mail_is_email(x):
     # edge cases - consecutive dots and invalid patterns:
     ('a..b', False),
     ('test..bucket', False),
-    ('a.-b', False)
+    ('a.-b', False),
+    # single character labels that fail final regex validation:
+    ('a.b', False),
+    ('x.y.z', False),
+    ('1.a', False),
+    ('a.1', False),
+    ('a.test', False)
 ])
 def test_cloud_is_aws_s3_bucket_name(bucket_name, truth_value):
     assert userprovided.parameters.is_aws_s3_bucket_name(bucket_name) is truth_value
