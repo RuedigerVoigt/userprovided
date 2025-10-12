@@ -18,6 +18,7 @@
   * `hashing`:
     * Added `calculate_string_hash` function for hashing string data with optional salt support.
     * Added `_hash_is_deprecated` helper function to centralize deprecated algorithm checking.
+    * Bugfix in `calculate_file_hash`: prevent memory exhaustion by reading file in chunks.
   * `mail`:
     * Extend check / RegEx for email validation
   * `parameters`:

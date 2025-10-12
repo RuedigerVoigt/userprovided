@@ -117,8 +117,8 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
 
     try:
         with open(pathlib.Path(file_path), 'rb') as file:
-            content = file.read()
-        h.update(content)
+            while chunk := file.read(65536):
+                h.update(chunk)
         calculated_hash = h.hexdigest()
         if expected_hash and expected_hash != calculated_hash:
             mismatch_message = ("Mismatch between calculated and expected " +
