@@ -1,6 +1,6 @@
 # Changelog / History
 
-## Version 2.0.0
+## Version 2.0.0 (2025-10-13)
 
 * Supported Python versions:
   * Dropped support for Python 3.8 and 3.9 (EOL).
@@ -9,6 +9,8 @@
   * Added [AGENTS.md](./AGENTS.md) file that defines rules and guidelines for software agents.
 * Packaging:
   * Replaced `setup.py` with a `pyproject.toml` managed by Poetry.
+* Security:
+  * security linter: Add [bandit](https://github.com/PyCQA/bandit) workflow.
 * New Features and bug fixes:
   * `date`:
     * parse more ordinal suffixes (1st, 2nd, 3rd, 4th) in `date_en_long_to_iso`
@@ -18,7 +20,7 @@
   * `hashing`:
     * Added `calculate_string_hash` function for hashing string data with optional salt support.
     * Added `_hash_is_deprecated` helper function to centralize deprecated algorithm checking.
-    * Bugfix in `calculate_file_hash`: prevent memory exhaustion by reading file in chunks.
+    * Bugfix in `calculate_file_hash`: prevent memory exhaustion by reading file in chunks. Support more methods.
   * `mail`:
     * Extend check / RegEx for email validation
   * `parameters`:
