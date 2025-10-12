@@ -181,13 +181,40 @@ def test_hash_is_deprecated():
     ('test@example.co.uk', True),
     ('  test@example.com  ', True),
     ('test+filter@example.com', True),
+    # single character local part:
+    ('a@example.com', True),
+    ('x@test.org', True),
     # single character domains:
     ('example@x.com', True),
     ('test@a.org', True),
-    # invalid addresses:
+    # valid special characters in local part:
+    ('user.name@example.com', True),
+    ('user_name@example.com', True),
+    ('user-name@example.com', True),
+    ('first.last@example.com', True),
+    # internationalized domain names (IDN):
+    ('test@xn--90ae.com', True),
+    ('user@example.xn--node', True),
+    ('0@a.xn--90ae', True),
+    # invalid addresses - consecutive dots in local part:
+    ('test..name@example.com', False),
+    ('user...name@example.com', False),
+    # invalid addresses - dot at start/end of local part:
+    ('.test@example.com', False),
+    ('test.@example.com', False),
+    ('.test.@example.com', False),
+    # invalid addresses - TLD too short (single letter TLDs don't exist):
+    ('test@example.c', False),
+    ('user@domain.x', False),
+    # invalid addresses - domain starts/ends with hyphen:
+    ('test@-example.com', False),
+    ('test@example-.com', False),
+    ('test@exam-ple.com', True),  # hyphen in middle is valid
+    # invalid addresses - basic format errors:
     ('@example.com', False),
     ('test@@example.com', False),
     ('test@example.', False),
+    ('test@example', False),  # missing TLD
     # multiple @ signs:
     ('user@domain.com@evil.com', False),
     ('test@example@malicious.org', False),
@@ -196,7 +223,12 @@ def test_hash_is_deprecated():
     ('valid@domain.com@another.com', False),
     # missing input:
     ('', False),
-    ('   ', False)
+    ('   ', False),
+    # no @ sign:
+    ('testexample.com', False),
+    # multiple dots in domain labels:
+    ('test@exam..ple.com', False),
+    ('test@example..com', False)
 ])
 def test_mail_is_email(mail_address, truth_value):
     assert userprovided.mail.is_email(mail_address) is truth_value

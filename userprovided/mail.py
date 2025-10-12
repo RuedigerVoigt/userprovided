@@ -15,7 +15,16 @@ import re
 
 
 # Compiled regex pattern for performance optimization
-_EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[a-zA-Z0-9\-]+$")
+# Improvements: no consecutive dots in local part, no dots at start/end of local part,
+# TLD minimum 2 chars (supports IDN with xn-- prefix), domain labels can't start/end with hyphen
+_EMAIL_PATTERN = re.compile(
+    r"^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+"  # Local part start
+    r"(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*"  # Local part with dots (no consecutive)
+    r"@"  # @
+    r"[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?"  # Domain label
+    r"(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*"  # More domain labels
+    r"\.(?:[a-zA-Z0-9]{2,}|[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9])$"  # TLD (minimum 2 chars, alphanumeric+hyphen for IDN)
+)
 
 
 def is_email(mailaddress: str) -> bool:
