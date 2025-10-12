@@ -5,8 +5,8 @@
 Automatic Tests for userprovided
 
 To run these tests with coverage:
-coverage run --source userprovided -m pytest tests.py
-To generate a report afterwards.
+coverage run --source userprovided -m pytest tests/
+To generate a report afterwards:
 coverage html
 ~~~~~~~~~~~~~~~~~~~~~
 Source: https://github.com/RuedigerVoigt/userprovided

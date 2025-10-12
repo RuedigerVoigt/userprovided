@@ -4,7 +4,7 @@
 ![pypi version](https://img.shields.io/pypi/v/userprovided)
 ![Last commit](https://img.shields.io/github/last-commit/RuedigerVoigt/userprovided)
 [![Downloads](https://pepy.tech/badge/userprovided)](https://pepy.tech/project/userprovided)
-![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)]
+![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)
 
 *"Never trust user input!"* is also true outside the security context: You cannot be sure users always provide you with valid and well formatted data.
 For a wide range of data, the Python package `userprovided`:
@@ -105,7 +105,7 @@ def numeric_in_range(parameter_name,
 
 def string_in_range(string_to_check,
                     minimum_length,
-                    maximum_lenght,
+                    maximum_length,
                     strip_string: bool = True) -> bool
 
 userprovided.parameters.is_port(int)

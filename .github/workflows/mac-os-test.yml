@@ -33,4 +33,4 @@ jobs:
         pip install flake8
 
     - name: Run Pytest
-      run: pytest tests.py
+      run: pytest tests/
