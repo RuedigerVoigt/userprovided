@@ -5,7 +5,7 @@
 Checking Email for the userprovided library
 ~~~~~~~~~~~~~~~~~~~~~
 Source: https://github.com/RuedigerVoigt/userprovided
-(c) 2020-2025 Rüdiger Voigt
+Copyright (c) 2020-2025 Rüdiger Voigt and contributors
 Released under the Apache License 2.0
 """
 
