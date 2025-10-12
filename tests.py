@@ -114,6 +114,15 @@ def test_calculate_file_hash_mocked_permission():
             assert "insufficient permissions" in str(excinfo.value)
 
 
+def test_calculate_file_hash_hashlib_error():
+    # Test exception handling when hashlib.new raises ValueError
+    # This shouldn't normally happen as hash_available checks first,
+    # but tests the fallback error handling
+    with patch('hashlib.new', side_effect=ValueError('Invalid hash')):
+        with pytest.raises(ValueError, match='Hash method sha256 not supported'):
+            userprovided.hashing.calculate_file_hash('testfile', 'sha256')
+
+
 def test_calculate_string_hash():
     # Test basic functionality
     test_data = "hello"
@@ -194,13 +203,32 @@ def test_calculate_string_hash_encoding():
     unicode_data = "héllo"
     result_utf8 = userprovided.hashing.calculate_string_hash(unicode_data, encoding='utf-8')
     result_latin1 = userprovided.hashing.calculate_string_hash(unicode_data, encoding='latin-1')
-    
+
     # Different encodings should produce different hashes for unicode chars
     assert result_utf8 != result_latin1
-    
+
     # Test invalid encoding
     with pytest.raises(UnicodeEncodeError):
         userprovided.hashing.calculate_string_hash("héllo", encoding='ascii')
+
+
+def test_calculate_string_hash_hashlib_error():
+    # Test exception handling when hashlib.new raises ValueError
+    # This shouldn't normally happen as hash_available checks first,
+    # but tests the fallback error handling
+    with patch('hashlib.new', side_effect=ValueError('Invalid hash')):
+        with pytest.raises(ValueError, match='Hash method sha256 not supported'):
+            userprovided.hashing.calculate_string_hash('test', 'sha256')
+
+
+def test_calculate_string_hash_generic_exception():
+    # Test generic exception handler by mocking hash update to raise unexpected error
+    # The generic exception handler catches and re-raises unexpected exceptions
+    with patch('hashlib.new') as mock_hash:
+        mock_hash_obj = mock_hash.return_value
+        mock_hash_obj.update.side_effect = RuntimeError('Unexpected error')
+        with pytest.raises(RuntimeError):
+            userprovided.hashing.calculate_string_hash('test')
 
 
 def test_hash_is_deprecated():
@@ -331,6 +359,8 @@ def test_hypothesis_mail_is_email(x):
     ('a..b', False),
     ('test..bucket', False),
     ('a.-b', False),
+    ('-a.b', False),  # label starts with hyphen
+    ('a-.b', False),  # label ends with hyphen
     # single character labels are valid per AWS rules:
     ('a.b', True),
     ('x.y.z', True),
@@ -518,33 +548,46 @@ def test_is_shortened_url():
     assert userprovided.url.is_shortened_url('https://t.co/abcdef') is True
     assert userprovided.url.is_shortened_url('https://goo.gl/maps123') is True
     assert userprovided.url.is_shortened_url('https://lnkd.in/xyz') is True
-    
+
     # Test with www prefix
     assert userprovided.url.is_shortened_url('https://www.bit.ly/abc123') is True
     assert userprovided.url.is_shortened_url('https://www.tinyurl.com/xyz789') is True
-    
+
     # Test case insensitivity
     assert userprovided.url.is_shortened_url('https://BIT.LY/abc123') is True
     assert userprovided.url.is_shortened_url('https://TINYURL.COM/xyz789') is True
-    
+
     # Test non-shortened URLs
     assert userprovided.url.is_shortened_url('https://example.com/page') is False
     assert userprovided.url.is_shortened_url('https://google.com/search') is False
     assert userprovided.url.is_shortened_url('https://github.com/user/repo') is False
-    
+
     # Test invalid URLs
     assert userprovided.url.is_shortened_url('not-a-url') is False
     assert userprovided.url.is_shortened_url('') is False
     assert userprovided.url.is_shortened_url('ftp://bit.ly/test') is True  # Valid URL with shortener domain
-    
+
     # Test edge cases
     assert userprovided.url.is_shortened_url('https://bit.ly') is True  # No path
     assert userprovided.url.is_shortened_url('http://tinyurl.com/') is True  # HTTP
-    
+
     # Test some enterprise/business shorteners
     assert userprovided.url.is_shortened_url('https://rebrand.ly/custom') is True
     assert userprovided.url.is_shortened_url('https://short.link/test') is True
     assert userprovided.url.is_shortened_url('https://cutt.ly/example') is True
+
+
+def test_is_shortened_url_exception_handling():
+    # Test exception handling in is_shortened_url when urlparse throws unexpected error
+    # Need to patch where it's used in the url module
+    with patch('userprovided.url.urllib.parse.urlparse') as mock_parse:
+        # Make is_url succeed but then fail in is_shortened_url
+        mock_parse.side_effect = [
+            type('obj', (object,), {'scheme': 'https', 'netloc': 'bit.ly'})(),  # First call in is_url
+            Exception('Unexpected error')  # Second call in is_shortened_url
+        ]
+        # Should return False and not raise
+        assert userprovided.url.is_shortened_url('https://bit.ly/test') is False
 
 
 def test_is_valid_coordinates():
@@ -917,6 +960,11 @@ def test_string_in_range():
     # parameters contradict each other
     with pytest.raises(userprovided.err.ContradictoryParameters):
         userprovided.parameters.string_in_range('example', 10, 5)
+    # not a string - test TypeError
+    with pytest.raises(TypeError):
+        userprovided.parameters.string_in_range(123, 1, 5)
+    with pytest.raises(TypeError):
+        userprovided.parameters.string_in_range(None, 1, 5)
 
 
 def test_enforce_boolean():
