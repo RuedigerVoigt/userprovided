@@ -297,9 +297,13 @@ def string_in_range(string_to_check: str,
         True if string length is within range, False otherwise.
 
     Raises:
+        TypeError: If string_to_check is not a string.
         ContradictoryParameters: If minimum_length > maximum_length.
         ValueError: If strip_string is not a boolean.
     """
+
+    if not isinstance(string_to_check, str):
+        raise TypeError('string_to_check must be a string.')
 
     if minimum_length > maximum_length:
         raise err.ContradictoryParameters("Minimum must not be larger than maximum value.")
