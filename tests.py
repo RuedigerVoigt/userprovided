@@ -252,12 +252,40 @@ def test_hypothesis_mail_is_email(x):
     ('a..b', False),
     ('test..bucket', False),
     ('a.-b', False),
-    # single character labels that fail final regex validation:
-    ('a.b', False),
-    ('x.y.z', False),
-    ('1.a', False),
-    ('a.1', False),
-    ('a.test', False)
+    # single character labels are valid per AWS rules:
+    ('a.b', True),
+    ('x.y.z', True),
+    ('1.a', True),
+    ('a.1', True),
+    ('a.test', True),
+    # forbidden prefixes:
+    ('xn--bucket', False),
+    ('xn--test-example', False),
+    ('sthree-bucket', False),
+    ('sthree-example-name', False),
+    ('amzn-s3-demo-bucket', False),
+    ('amzn-s3-demo-test', False),
+    # valid names that contain but don't start with forbidden prefixes:
+    ('my-xn--bucket', True),
+    ('test-sthree-bucket', True),
+    ('my-amzn-s3-demo-bucket', True),
+    # forbidden suffixes:
+    ('bucket-s3alias', False),
+    ('test-bucket-s3alias', False),
+    ('bucket--ol-s3', False),
+    ('test--ol-s3', False),
+    ('bucket.mrap', False),
+    ('test.mrap', False),
+    ('bucket--x-s3', False),
+    ('test--x-s3', False),
+    ('bucket--table-s3', False),
+    ('test--table-s3', False),
+    # valid names that contain but don't end with forbidden suffixes:
+    ('s3alias-bucket', True),
+    ('ol-s3-test', True),
+    ('mrap-bucket', True),
+    ('x-s3-test', True),
+    ('table-s3-bucket', True)
 ])
 def test_cloud_is_aws_s3_bucket_name(bucket_name, truth_value):
     assert userprovided.parameters.is_aws_s3_bucket_name(bucket_name) is truth_value
