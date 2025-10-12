@@ -15,6 +15,13 @@ import logging
 import re
 
 
+# Compiled regex patterns for performance optimization
+_REGEX_LONG_DATE_EN = re.compile(
+    r"(?P<monthL>[a-zA-Z\.]{3,9})\s+(?P<day>\d{1,2})(?:st|nd|rd|th)?,\s*(?P<year>\d\d\d\d)")
+_REGEX_LONG_DATE_DE = re.compile(
+    r"(?P<day>\d{1,2})\.\s+(?P<monthL>[a-zA-ZÄä\.]{3,9})\s+(?P<year>\d{4})")
+
+
 def date_exists(year: int,
                 month: int,
                 day: int) -> bool:
@@ -66,10 +73,8 @@ def date_en_long_to_iso(date_string: str) -> str:
         ValueError: If the parsed date is invalid (e.g., February 30).
     """
     date_string = date_string.strip()
-    regex_long_date_en = re.compile(
-        r"(?P<monthL>[a-zA-Z\.]{3,9})\s+(?P<day>\d{1,2})(?:st|nd|rd|th)?,\s*(?P<year>\d\d\d\d)")
     try:
-        match = re.search(regex_long_date_en, date_string)
+        match = _REGEX_LONG_DATE_EN.search(date_string)
         if match:
             match_year = match.group('year')
             match_month = match.group('monthL')
@@ -129,10 +134,8 @@ def date_de_long_to_iso(date_string: str) -> str:
         ValueError: If the parsed date is invalid (e.g., 30. Februar).
     """
     date_string = date_string.strip()
-    regex_long_date_de = re.compile(
-        r"(?P<day>\d{1,2})\.\s+(?P<monthL>[a-zA-ZÄä\.]{3,9})\s+(?P<year>\d{4})")
     try:
-        match = re.search(regex_long_date_de, date_string)
+        match = _REGEX_LONG_DATE_DE.search(date_string)
         if match:
             match_year = match.group('year')
             match_month = match.group('monthL')

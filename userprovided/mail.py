@@ -14,6 +14,10 @@ import logging
 import re
 
 
+# Compiled regex pattern for performance optimization
+_EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[a-zA-Z0-9\-]+$")
+
+
 def is_email(mailaddress: str) -> bool:
     """Validates if a string has a valid email address format.
 
@@ -38,7 +42,7 @@ def is_email(mailaddress: str) -> bool:
         return False
 
     mailaddress = mailaddress.strip()
-    if not re.match(r"^[^\s@]+@[^\s@]+\.[a-zA-Z0-9\-]+$", mailaddress):
+    if not _EMAIL_PATTERN.match(mailaddress):
         logging.error(
             'The supplied mailaddress %s has an unknown format.', mailaddress)
         return False

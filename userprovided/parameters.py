@@ -16,6 +16,12 @@ from typing import Optional, Union
 from userprovided import err
 
 
+# Compiled regex patterns for performance optimization
+_AWS_S3_BUCKET_CHARS = re.compile(r"^[a-z0-9\-\.]*$")
+_AWS_S3_BUCKET_IPV4 = re.compile(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
+_AWS_S3_BUCKET_LABELS = re.compile(r"^([a-z0-9]([a-z0-9\-]*[a-z0-9])?\.)*[a-z0-9]([a-z0-9\-]*[a-z0-9])?$")
+
+
 def convert_to_set(convert_this: Union[list, set, str, tuple]) -> set:
     """Converts various iterable types to a set.
 
@@ -347,11 +353,10 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
         logging.error(
             'The AWS bucket name exceeds the maximum length of 63 characters.')
         return False
-    if not re.match(r"^[a-z0-9\-\.]*$", bucket_name):
+    if not _AWS_S3_BUCKET_CHARS.match(bucket_name):
         logging.error('The AWS bucket name contains invalid characters.')
         return False
-    if re.match(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}",
-                bucket_name):
+    if _AWS_S3_BUCKET_IPV4.match(bucket_name):
         # Check if the bucket name resembles an IPv4 address.
         # No need to check IPv6 as the colon is not an allowed character.
         logging.error('An AWS bucket name must not resemble an IP address.')
@@ -388,8 +393,7 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
     # - End with a letter or number
     # - Can contain hyphens in the middle
     # - Can be a single character
-    if re.match(r"^([a-z0-9]([a-z0-9\-]*[a-z0-9])?\.)*[a-z0-9]([a-z0-9\-]*[a-z0-9])?$",
-                bucket_name):
+    if _AWS_S3_BUCKET_LABELS.match(bucket_name):
         return True
 
     logging.error('Invalid AWS bucket name.')
