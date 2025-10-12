@@ -27,7 +27,7 @@ def _hash_is_deprecated(hash_method: str) -> bool:
     Returns:
         True if the hash method is deprecated, False otherwise.
     """
-    deprecated_algorithms = {'md5', 'sha1'}
+    deprecated_algorithms = {'md5', 'sha1', 'md5-sha1'}
     return hash_method.lower() in deprecated_algorithms
 
 
@@ -82,8 +82,9 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
 
     Args:
         file_path: Path to the file to hash. Can be string or Path object.
-        hash_method: Hash algorithm to use. Supported: 'sha224', 'sha256',
-            'sha512'. Defaults to 'sha256'.
+        hash_method: Hash algorithm to use. Supports all algorithms available
+            in hashlib (sha224, sha256, sha384, sha512, sha3_*, blake2*, etc.)
+            excluding deprecated algorithms (MD5, SHA1). Defaults to 'sha256'.
         expected_hash: Expected hash value for verification. If provided
             and doesn't match calculated hash, raises ValueError.
             Defaults to None.
@@ -103,17 +104,13 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
         raise err.DeprecatedHashAlgorithm(
             'Deprecated hash method not supported')
 
-    if hash_available(hash_method):
-        if hash_method == 'sha224':
-            h = hashlib.sha224()
-        elif hash_method == 'sha256':
-            h = hashlib.sha256()
-        elif hash_method == 'sha512':
-            h = hashlib.sha512()
-        else:
-            raise ValueError('Hash method not supported')
-    else:
+    if not hash_available(hash_method):
         raise ValueError(f"Hash method {hash_method} not available on system.")
+
+    try:
+        h = hashlib.new(hash_method)
+    except ValueError as e:
+        raise ValueError(f"Hash method {hash_method} not supported: {e}") from e
 
     try:
         with open(pathlib.Path(file_path), 'rb') as file:
@@ -154,8 +151,9 @@ def calculate_string_hash(data: str,
 
     Args:
         data: String data to hash.
-        hash_method: Hash algorithm to use. Supported: 'sha224', 'sha256',
-            'sha512'. Defaults to 'sha256'.
+        hash_method: Hash algorithm to use. Supports all algorithms available
+            in hashlib (sha224, sha256, sha384, sha512, sha3_*, blake2*, etc.)
+            excluding deprecated algorithms (MD5, SHA1). Defaults to 'sha256'.
         salt: Optional salt string to append to data before hashing.
             Strongly recommended for password hashing. Defaults to None.
         encoding: Text encoding to use when converting string to bytes.
@@ -199,15 +197,11 @@ def calculate_string_hash(data: str,
         # Convert string to bytes using specified encoding
         byte_data = data_to_hash.encode(encoding)
 
-        # Create hash object
-        if hash_method == 'sha224':
-            h = hashlib.sha224()
-        elif hash_method == 'sha256':
-            h = hashlib.sha256()
-        elif hash_method == 'sha512':
-            h = hashlib.sha512()
-        else:
-            raise ValueError('Hash method not supported')
+        # Create hash object dynamically
+        try:
+            h = hashlib.new(hash_method)
+        except ValueError as e:
+            raise ValueError(f"Hash method {hash_method} not supported: {e}") from e
 
         h.update(byte_data)
         calculated_hash = h.hexdigest()

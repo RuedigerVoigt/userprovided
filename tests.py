@@ -32,17 +32,32 @@ import userprovided
 
 
 def test_hash_available():
+    # Deprecated algorithms
     with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
         userprovided.hashing.hash_available('md5', True)
     with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
         userprovided.hashing.hash_available('sha1', True)
+    with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
+        userprovided.hashing.hash_available('md5-sha1', True)
+    # Invalid input
     with pytest.raises(ValueError):
         userprovided.hashing.hash_available(None, True)
     with pytest.raises(ValueError):
         userprovided.hashing.hash_available('  ', True)
+    # SHA-2 family (guaranteed in Python 3.10+)
     assert userprovided.hashing.hash_available('sha224', True) is True
     assert userprovided.hashing.hash_available('sha256', True) is True
+    assert userprovided.hashing.hash_available('sha384', True) is True
     assert userprovided.hashing.hash_available('sha512', True) is True
+    # SHA-3 family (guaranteed in Python 3.10+)
+    assert userprovided.hashing.hash_available('sha3_224', True) is True
+    assert userprovided.hashing.hash_available('sha3_256', True) is True
+    assert userprovided.hashing.hash_available('sha3_384', True) is True
+    assert userprovided.hashing.hash_available('sha3_512', True) is True
+    # BLAKE2 family (guaranteed in Python 3.10+)
+    assert userprovided.hashing.hash_available('blake2b', True) is True
+    assert userprovided.hashing.hash_available('blake2s', True) is True
+    # Non-existent algorithm
     assert userprovided.hashing.hash_available('NonExistentHash', True) is False
 
 testfile_sha224 = '0808f64e60d58979fcb676c96ec938270dea42445aeefcd3a4e6f8db'
@@ -59,13 +74,12 @@ def test_calculate_file_hash():
         userprovided.hashing.calculate_file_hash(pathlib.Path('.'), 'md5')
     with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
         userprovided.hashing.calculate_file_hash(pathlib.Path('.'), 'sha1')
+    with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
+        userprovided.hashing.calculate_file_hash(pathlib.Path('.'), 'md5-sha1')
     # Non Existent hash method:
     with pytest.raises(ValueError):
         userprovided.hashing.calculate_file_hash(pathlib.Path('.'),
                                               'non-existent-hash')
-    # Not supported hash method (available, but not an option):
-    with pytest.raises(ValueError):
-        userprovided.hashing.calculate_file_hash(pathlib.Path('.'), 'sha384')
     # Default is fallback to SHA256
     assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile')) == testfile_sha256
     assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha256') == testfile_sha256
@@ -73,6 +87,15 @@ def test_calculate_file_hash():
     assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha224') == testfile_sha224
     # SHA512
     assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha512') == testfile_sha512
+    # SHA384 (now supported with dynamic algorithm selection)
+    result_sha384 = userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha384')
+    assert len(result_sha384) == 96  # SHA384 produces 96-char hex string
+    # SHA3-256 (guaranteed in Python 3.10+)
+    result_sha3_256 = userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha3_256')
+    assert len(result_sha3_256) == 64  # SHA3-256 produces 64-char hex string
+    # BLAKE2b (guaranteed in Python 3.10+)
+    result_blake2b = userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'blake2b')
+    assert len(result_blake2b) == 128  # BLAKE2b produces 128-char hex string
 
 
 def test_calculate_file_hash_with_expected_value():
@@ -97,22 +120,39 @@ def test_calculate_string_hash():
     result = userprovided.hashing.calculate_string_hash(test_data)
     assert len(result) == 64  # SHA256 produces 64-char hex string
     assert result == '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824'
-    
-    # Test with different hash methods
+
+    # Test with different SHA-2 hash methods
     sha224_result = userprovided.hashing.calculate_string_hash(test_data, 'sha224')
     assert len(sha224_result) == 56  # SHA224 produces 56-char hex string
-    
+
+    sha384_result = userprovided.hashing.calculate_string_hash(test_data, 'sha384')
+    assert len(sha384_result) == 96  # SHA384 produces 96-char hex string
+
     sha512_result = userprovided.hashing.calculate_string_hash(test_data, 'sha512')
     assert len(sha512_result) == 128  # SHA512 produces 128-char hex string
-    
+
+    # Test with SHA-3 hash methods (guaranteed in Python 3.10+)
+    sha3_256_result = userprovided.hashing.calculate_string_hash(test_data, 'sha3_256')
+    assert len(sha3_256_result) == 64  # SHA3-256 produces 64-char hex string
+
+    sha3_512_result = userprovided.hashing.calculate_string_hash(test_data, 'sha3_512')
+    assert len(sha3_512_result) == 128  # SHA3-512 produces 128-char hex string
+
+    # Test with BLAKE2 hash methods (guaranteed in Python 3.10+)
+    blake2b_result = userprovided.hashing.calculate_string_hash(test_data, 'blake2b')
+    assert len(blake2b_result) == 128  # BLAKE2b produces 128-char hex string
+
+    blake2s_result = userprovided.hashing.calculate_string_hash(test_data, 'blake2s')
+    assert len(blake2s_result) == 64  # BLAKE2s produces 64-char hex string
+
     # Test with salt
     salted_result = userprovided.hashing.calculate_string_hash(test_data, salt="mysalt")
     assert salted_result != result  # Should be different with salt
-    
+
     # Test consistency - same input should produce same output
     result2 = userprovided.hashing.calculate_string_hash(test_data)
     assert result == result2
-    
+
     # Test with salt consistency
     salted_result2 = userprovided.hashing.calculate_string_hash(test_data, salt="mysalt")
     assert salted_result == salted_result2
@@ -122,29 +162,28 @@ def test_calculate_string_hash_errors():
     # Test deprecated hash methods
     with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
         userprovided.hashing.calculate_string_hash("test", hash_method="md5")
-    
+
     with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
         userprovided.hashing.calculate_string_hash("test", hash_method="sha1")
-    
+
+    with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
+        userprovided.hashing.calculate_string_hash("test", hash_method="md5-sha1")
+
     # Test non-string data
     with pytest.raises(TypeError):
         userprovided.hashing.calculate_string_hash(123)
-    
+
     with pytest.raises(TypeError):
         userprovided.hashing.calculate_string_hash(None)
-    
+
     # Test empty string
     with pytest.raises(ValueError):
         userprovided.hashing.calculate_string_hash("")
-    
+
     # Test non-string salt
     with pytest.raises(TypeError):
         userprovided.hashing.calculate_string_hash("test", salt=123)
-    
-    # Test unsupported hash method
-    with pytest.raises(ValueError):
-        userprovided.hashing.calculate_string_hash("test", hash_method="sha384")
-    
+
     # Test non-existent hash method
     with pytest.raises(ValueError):
         userprovided.hashing.calculate_string_hash("test", hash_method="nonexistent")
@@ -166,12 +205,20 @@ def test_calculate_string_hash_encoding():
 
 def test_hash_is_deprecated():
     # Test the private helper function through public interface
+    # Deprecated algorithms
     assert userprovided.hashing._hash_is_deprecated('md5') is True
     assert userprovided.hashing._hash_is_deprecated('MD5') is True  # Case insensitive
     assert userprovided.hashing._hash_is_deprecated('sha1') is True
     assert userprovided.hashing._hash_is_deprecated('SHA1') is True  # Case insensitive
+    assert userprovided.hashing._hash_is_deprecated('md5-sha1') is True
+    assert userprovided.hashing._hash_is_deprecated('MD5-SHA1') is True  # Case insensitive
+    # Secure algorithms
+    assert userprovided.hashing._hash_is_deprecated('sha224') is False
     assert userprovided.hashing._hash_is_deprecated('sha256') is False
+    assert userprovided.hashing._hash_is_deprecated('sha384') is False
     assert userprovided.hashing._hash_is_deprecated('sha512') is False
+    assert userprovided.hashing._hash_is_deprecated('sha3_256') is False
+    assert userprovided.hashing._hash_is_deprecated('blake2b') is False
 
 
 @pytest.mark.parametrize("mail_address,truth_value", [
