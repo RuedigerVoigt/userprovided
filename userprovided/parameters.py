@@ -350,7 +350,7 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
                 bucket_name):
         # Check if the bucket name resembles an IPv4 address.
         # No need to check IPv6 as the colon is not an allowed character.
-        logging.error('An AWS must not resemble an IP address.')
+        logging.error('An AWS bucket name must not resemble an IP address.')
         return False
     # Check for invalid start/end characters
     if bucket_name.startswith('.') or bucket_name.startswith('-'):
@@ -360,20 +360,32 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
         logging.error('AWS bucket name cannot end with dot or hyphen.')
         return False
 
+    # Check for forbidden prefixes
+    forbidden_prefixes = ('xn--', 'sthree-', 'amzn-s3-demo-')
+    if bucket_name.startswith(forbidden_prefixes):
+        logging.error('AWS bucket name cannot start with reserved prefixes: %s',
+                      ', '.join(forbidden_prefixes))
+        return False
+
+    # Check for forbidden suffixes
+    forbidden_suffixes = ('-s3alias', '--ol-s3', '.mrap', '--x-s3', '--table-s3')
+    if bucket_name.endswith(forbidden_suffixes):
+        logging.error('AWS bucket name cannot end with reserved suffixes: %s',
+                      ', '.join(forbidden_suffixes))
+        return False
+
     # Check for consecutive dots or invalid dot-hyphen patterns
     if '..' in bucket_name or '.-' in bucket_name or '-.' in bucket_name:
         logging.error('AWS bucket name cannot contain consecutive dots or dot-hyphen patterns.')
         return False
 
-    if re.match(r"([a-z0-9][a-z0-9\-]*[a-z0-9]\.)*[a-z0-9][a-z0-9\-]*[a-z0-9]",
+    # Final validation: Each label (part between dots) must:
+    # - Start with a letter or number
+    # - End with a letter or number
+    # - Can contain hyphens in the middle
+    # - Can be a single character
+    if re.match(r"^([a-z0-9]([a-z0-9\-]*[a-z0-9])?\.)*[a-z0-9]([a-z0-9\-]*[a-z0-9])?$",
                 bucket_name):
-        # Must start with a lowercase letter or number
-        # Bucket names must be a series of one or more labels.
-        # Adjacent labels are separated by a single period (.).
-        # Each label must start and end with a lowercase letter or a number.
-        # => Adopted the answer provided by Zak (zero or more labels
-        # followed by a dot) found here:
-        # https://stackoverflow.com/questions/50480924
         return True
 
     logging.error('Invalid AWS bucket name.')
