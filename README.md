@@ -7,8 +7,11 @@
 ![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)]
 
 *"Never trust user input!"* is also true outside the security context: You cannot be sure users always provide you with valid and well formatted data.
-
-*The Python package `userprovided` checks input for validity and / or plausibility. Besides that it contains some methods to convert input into standardized formats.*
+For a wide range of data, the Python package `userprovided`:
+* checks for validity and plausibility
+* normalizes input
+* converts into standardized formats
+* performs basic security checks
 
 The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/)) and aims to provide useful log and error messages.
 

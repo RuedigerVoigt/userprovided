@@ -5,5 +5,5 @@
 
 from datetime import date
 
-__version__ = '1.1.0'
-release_date = date(2025, 6, 15)
+__version__ = '2.0.0'
+release_date = date(2025, 10, 12)
