@@ -6,7 +6,7 @@
 [![Downloads](https://pepy.tech/badge/userprovided)](https://pepy.tech/project/userprovided)
 ![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)
 
-*"Never trust user input!"* is also true outside the security context: You cannot be sure users always provide you with valid and well formatted data.
+*"Never trust user input!"* is also true outside the security context: You cannot be sure users always provide you with valid and well-formatted data.
 For a wide range of data, the Python package `userprovided`:
 * checks for validity and plausibility
 * normalizes input
@@ -18,13 +18,13 @@ The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/)) a
 Userprovided has functionality for the following inputs:
 * [parameters](#handle-parameters):
   * [Check a dictionary](#check-a-parameter-dictionary) for valid, needed, and unknown keys.
-  * Convert lists, strings and tuples into a set
+  * Convert lists, strings and tuples into a set.
   * Check if an integer or string is in a specific range.
   * ...
 * [url](#handle-urls):
-  * [Normalize an URL](#normalize-urls) and drop specific keys from the query part of it.
-  * [Check](#check-urls) if a string is an URL.
-  * [Determine a file extension](#determine-a-file-extension) from an URL and the Mime-type sent by the server.
+  * [Normalize a URL](#normalize-urls) and drop specific keys from the query part of it.
+  * [Check](#check-urls) if a string is a URL.
+  * [Determine a file extension](#determine-a-file-extension) from a URL and the MIME-type sent by the server.
 * [hash](#file-hashes):
   * Is the hash method available?
   * Calculate a file hash and (optionally) compare it to an expected value.
@@ -71,7 +71,7 @@ Returns `True` if the dictionary `dict_to_check` contains only allowed keys and 
 
 ### Avoid Keys without Value in a Dictionary
 
-Check if all keys in a dictionary have a value. Return `False` if the value for any key is empty. Works for strings (including whitespace only), dictionary, list, tuple, and set.
+Check if all keys in a dictionary have a value. Return `False` if the value for any key is empty. Works for strings (including whitespace only), dictionaries, lists, tuples, and sets.
 
 ```python
 # returns True:
@@ -118,14 +118,14 @@ userprovided.parameters.is_port(int)
 
 ### Normalize URLs
 
-Normalize an URL means:
+Normalizing a URL means:
   * remove whitespace around it,
   * convert scheme and hostname to lowercase,
   * remove ports if they are the standard port for the scheme,
   * remove duplicate slashes from the path,
   * remove fragments (like #foo),
   * remove empty elements of the query part,
-  * order the elements in the query part by alphabet
+  * order the elements in the query part alphabetically
 
 The optional parameter `drop_keys` allows you to remove specific keys, like session ids or trackers, from the query part of the URL.
 
@@ -153,7 +153,7 @@ You can insist on a specific scheme:
 
 ```python
 userprovided.url.is_url('https://www.example.com', ('ftp'))
-# => False (Schema does not match permitted)
+# => False (Schema is not permitted)
 
 userprovided.url.is_url('ftp://www.example.com', ('ftp'))
 # => True
@@ -164,18 +164,18 @@ To check the URL with an actual connection attempt, you could use the [salted li
 
 ### Determine a File Extension
 
-Guess the correct filename extension from an URL and / or the mime-type returned by the server.
+Guess the correct filename extension from a URL and / or the mime-type returned by the server.
 Sometimes a valid URL does not contain a file extension (like `https://www.example.com/`), or it is ambiguous.
 So the mime type acts as a fallback. In case the correct extension cannot be determined at all, it is set to 'unknown'.
 
 ```python
-# retuns '.html'
+# returns '.html'
 userprovided.url.determine_file_extension(
     url='https://www.example.com',
     provided_mime_type='text/html'
 )
 
-# retuns '.pdf'
+# returns '.pdf'
 userprovided.url.determine_file_extension(
     'https://www.example.com/example.pdf',
     None
@@ -245,4 +245,4 @@ userprovided.date.date_de_long_to_iso('3. Oktober 1990')
 ## Update and Deprecation Policy
 
 * No breaking changes in micro-versions.
-* It makes no sense to duplicate functionality already available in the Python Standard Library. Therefore, if this package contains functionality that becomes superseded by the Standard Library, it will start to log a depreciation warning. The functionality itself is planned to stay available for at least a major version of `userprovided` and as long as Python versions not containing this functionality are supported.
+* It makes no sense to duplicate functionality already available in the Python Standard Library. Therefore, if this package contains functionality that becomes superseded by the Standard Library, it will start to log a deprecation warning. The functionality itself is planned to stay available for at least a major version of `userprovided` and as long as Python versions not containing this functionality are supported.
