@@ -1,6 +1,6 @@
 # Changelog / History
 
-## Version 2.0.0 (2025-10-13)
+## Version 2.0.0 (2025-10-22)
 
 * Supported Python versions:
   * Dropped support for Python 3.8 and 3.9 (EOL).
@@ -18,7 +18,7 @@
     * new module
     * `is_valid_coordinates` checks if coordinates are possible i.e. within possible Earth ranges
   * `hashing`:
-    * Added `calculate_string_hash` function for hashing string data with optional salt support.
+    * Added `calculate_string_hash` function for basic hashing of string data. This method is not advanced enough in a security context.
     * Added `_hash_is_deprecated` helper function to centralize deprecated algorithm checking.
     * Bugfix in `calculate_file_hash`: prevent memory exhaustion by reading file in chunks. Support more methods.
   * `mail`:
@@ -30,7 +30,6 @@
     * Catch more errors in `is_aws_s3_bucket_name`.
   * `url`:
     * Added `is_shortened_url` which checks if an URL is a short link by comparing it to a list of popular services. (Currently 24 domains recognized)
-
 
 
 ## Version 1.0.0 (2023-10-10)
