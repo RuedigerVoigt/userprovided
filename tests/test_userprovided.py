@@ -154,17 +154,9 @@ def test_calculate_string_hash():
     blake2s_result = userprovided.hashing.calculate_string_hash(test_data, 'blake2s')
     assert len(blake2s_result) == 64  # BLAKE2s produces 64-char hex string
 
-    # Test with salt
-    salted_result = userprovided.hashing.calculate_string_hash(test_data, salt="mysalt")
-    assert salted_result != result  # Should be different with salt
-
     # Test consistency - same input should produce same output
     result2 = userprovided.hashing.calculate_string_hash(test_data)
     assert result == result2
-
-    # Test with salt consistency
-    salted_result2 = userprovided.hashing.calculate_string_hash(test_data, salt="mysalt")
-    assert salted_result == salted_result2
 
 
 def test_calculate_string_hash_errors():
@@ -188,10 +180,6 @@ def test_calculate_string_hash_errors():
     # Test empty string
     with pytest.raises(ValueError):
         userprovided.hashing.calculate_string_hash("")
-
-    # Test non-string salt
-    with pytest.raises(TypeError):
-        userprovided.hashing.calculate_string_hash("test", salt=123)
 
     # Test non-existent hash method
     with pytest.raises(ValueError):

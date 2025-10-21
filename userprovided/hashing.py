@@ -141,23 +141,24 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
 
 def calculate_string_hash(data: str,
                           hash_method: str = 'sha256',
-                          salt: Optional[str] = None,
                           encoding: str = 'utf-8') -> str:
-    """Calculates cryptographic hash of string data.
+    """Compute a deterministic hash of string data (NOT for security).
 
-    Computes the hash digest of string data using the specified algorithm.
-    Optionally adds salt for enhanced security against rainbow table attacks.
-    Always uses secure hash algorithms.
+    This is a generic hash utility for non-security use cases such as
+    fingerprints, cache keys, or content de-duplication.
+    
+    Do NOT use it for:
+      - Password storage
+      - Message integrity/authenticity
+      - Anything needing resistance to brute force or active attackers.
 
     Args:
         data: String data to hash.
-        hash_method: Hash algorithm to use. Supports all algorithms available
-            in hashlib (sha224, sha256, sha384, sha512, sha3_*, blake2*, etc.)
+        hash_method: Hash algorithm to use. Supports algorithms available in
+            `hashlib` (sha224, sha256, sha384, sha512, sha3_*, blake2*, etc.)
             excluding deprecated algorithms (MD5, SHA1). Defaults to 'sha256'.
-        salt: Optional salt string to append to data before hashing.
-            Strongly recommended for password hashing. Defaults to None.
-        encoding: Text encoding to use when converting string to bytes.
-            Defaults to 'utf-8'.
+        encoding: Text encoding to use when converting string to bytes
+            (for this helper we only accept text input). Defaults to 'utf-8'.
 
     Returns:
         Hexadecimal string representation of the hash digest.
@@ -179,25 +180,11 @@ def calculate_string_hash(data: str,
             'Deprecated hash method not supported')
 
     if not hash_available(hash_method):
-        raise ValueError(f"Hash method {hash_method} not available on "
-                         "system.")
-
-    # Prepare data for hashing
-    if salt:
-        if not isinstance(salt, str):
-            raise TypeError('Salt must be a string')
-        data_to_hash = data + salt
-        logging.debug('Salt added to data for hashing')
-    else:
-        data_to_hash = data
-        logging.warning('No salt provided - consider using salt for '
-                        'enhanced security')
+        raise ValueError(f"Hash method {hash_method} not available on system.")
 
     try:
-        # Convert string to bytes using specified encoding
-        byte_data = data_to_hash.encode(encoding)
+        byte_data = data.encode(encoding)
 
-        # Create hash object dynamically
         try:
             h = hashlib.new(hash_method)
         except ValueError as e:
@@ -206,15 +193,12 @@ def calculate_string_hash(data: str,
         h.update(byte_data)
         calculated_hash = h.hexdigest()
 
-        logging.debug('String hash calculated successfully using %s',
-                      hash_method)
+        logging.debug('String hash calculated successfully using %s', hash_method)
         return calculated_hash
 
     except UnicodeEncodeError:
         logging.exception('Cannot encode string with %s encoding', encoding)
         raise
     except Exception:
-        logging.error('Exception while calculating string hash',
-                      exc_info=True)
+        logging.error('Exception while calculating string hash', exc_info=True)
         raise
-
