@@ -30,6 +30,7 @@
     * Catch more errors in `is_aws_s3_bucket_name`.
   * `url`:
     * Added `is_shortened_url` which checks if an URL is a short link by comparing it to a list of popular services. (Currently 24 domains recognized)
+    * Renamed `normalize_query_part` to `_normalize_query_part` to mark it as an internal helper function
 
 
 ## Version 1.0.0 (2023-10-10)

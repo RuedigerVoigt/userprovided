@@ -51,8 +51,8 @@ def is_url(url: str,
     return True
 
 
-def normalize_query_part(query: str,
-                         drop_keys: Union[list, tuple, set, None] = None) -> str:
+def _normalize_query_part(query: str,
+                          drop_keys: Union[list, tuple, set, None] = None) -> str:
     """Normalizes URL query parameters for consistent formatting.
 
     Processes query parameters by removing empty values, sorting alphabetically,
@@ -180,7 +180,7 @@ def normalize_url(url: str,
     if do_not_change_query_part:
         reassemble.append(parsed.query)
     else:
-        reassemble.append(normalize_query_part(parsed.query, drop_keys))
+        reassemble.append(_normalize_query_part(parsed.query, drop_keys))
 
     # urlunparse expects a fifth element (the already removed fragment)
     reassemble.append('')

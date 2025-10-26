@@ -406,29 +406,29 @@ def test_is_url():
 def test_normalize_query_part():
     # By mistake a full URL is provided instead of only the query part:
     with pytest.raises(ValueError):
-        userprovided.url.normalize_query_part('https://www.example.com/index.php?foo=foo&foo=bar')
+        userprovided.url._normalize_query_part('https://www.example.com/index.php?foo=foo&foo=bar')
     # Duplicate key in query part of URL query with conflicting values:
     with pytest.raises(userprovided.err.QueryKeyConflict):
-        userprovided.url.normalize_query_part('foo=foo&foo=bar')
+        userprovided.url._normalize_query_part('foo=foo&foo=bar')
     # Duplicate key in query part of URL with the same value:
-    assert userprovided.url.normalize_query_part('foo=bar&foo=bar') == 'foo=bar'
+    assert userprovided.url._normalize_query_part('foo=bar&foo=bar') == 'foo=bar'
     # Chunk of query is malformed: the = is missing:
-    assert userprovided.url.normalize_query_part('missingequalsign&foo=bar') == 'foo=bar'
-    assert userprovided.url.normalize_query_part('foo=bar&missingequalsign&') == 'foo=bar'
+    assert userprovided.url._normalize_query_part('missingequalsign&foo=bar') == 'foo=bar'
+    assert userprovided.url._normalize_query_part('foo=bar&missingequalsign&') == 'foo=bar'
     # Drop specific key (with tuple, list and set):
-    assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys=('bar')) == 'foo=1'
-    assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys=['bar']) == 'foo=1'
-    assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys={'bar'}) == 'foo=1'
+    assert userprovided.url._normalize_query_part('foo=1&bar=2&', drop_keys=('bar')) == 'foo=1'
+    assert userprovided.url._normalize_query_part('foo=1&bar=2&', drop_keys=['bar']) == 'foo=1'
+    assert userprovided.url._normalize_query_part('foo=1&bar=2&', drop_keys={'bar'}) == 'foo=1'
     # Try to drop non-existent key:
-    assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys=['not_in_url']) == 'bar=2&foo=1'
+    assert userprovided.url._normalize_query_part('foo=1&bar=2&', drop_keys=['not_in_url']) == 'bar=2&foo=1'
     # drop_key is set, but empty or None:
-    assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys=[]) == 'bar=2&foo=1'
-    assert userprovided.url.normalize_query_part('foo=1&bar=2&', drop_keys=None) == 'bar=2&foo=1'
+    assert userprovided.url._normalize_query_part('foo=1&bar=2&', drop_keys=[]) == 'bar=2&foo=1'
+    assert userprovided.url._normalize_query_part('foo=1&bar=2&', drop_keys=None) == 'bar=2&foo=1'
     # Multiple = signs in parameter values (preserve full value):
-    assert userprovided.url.normalize_query_part('token=eyJuYW1lIjoiSm9obiJ9==') == 'token=eyJuYW1lIjoiSm9obiJ9=='
-    assert userprovided.url.normalize_query_part('redirect=https://site.com?param=value') == 'redirect=https://site.com?param=value'
-    assert userprovided.url.normalize_query_part('formula=x=2*y+3') == 'formula=x=2*y+3'
-    assert userprovided.url.normalize_query_part('token=abc=def&name=john') == 'name=john&token=abc=def'
+    assert userprovided.url._normalize_query_part('token=eyJuYW1lIjoiSm9obiJ9==') == 'token=eyJuYW1lIjoiSm9obiJ9=='
+    assert userprovided.url._normalize_query_part('redirect=https://site.com?param=value') == 'redirect=https://site.com?param=value'
+    assert userprovided.url._normalize_query_part('formula=x=2*y+3') == 'formula=x=2*y+3'
+    assert userprovided.url._normalize_query_part('token=abc=def&name=john') == 'name=john&token=abc=def'
 
 
 @pytest.mark.parametrize("test_url,normalized_url", [
