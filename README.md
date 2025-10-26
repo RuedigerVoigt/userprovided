@@ -20,19 +20,26 @@ Userprovided has functionality for the following inputs:
   * [Check a dictionary](#check-a-parameter-dictionary) for valid, needed, and unknown keys.
   * Convert lists, strings and tuples into a set.
   * Check if an integer or string is in a specific range.
+  * [Check integer range](#check-integer-range) with strict integer type enforcement.
+  * [Enforce boolean type](#enforce-boolean-type) to reject truthy/falsy values.
+  * [Validate AWS S3 bucket names](#validate-aws-s3-bucket-names) against AWS naming rules.
   * ...
 * [url](#handle-urls):
   * [Normalize a URL](#normalize-urls) and drop specific keys from the query part of it.
   * [Check](#check-urls) if a string is a URL.
+  * [Check for shortened URLs](#check-for-shortened-urls) from known URL shortening services.
   * [Determine a file extension](#determine-a-file-extension) from a URL and the MIME-type sent by the server.
 * [hash](#file-hashes):
   * Is the hash method available?
   * Calculate a file hash and (optionally) compare it to an expected value.
+  * [Calculate a string hash](#calculate-string-hash) for non-security use cases like cache keys.
 * [date](#handle-calendar-dates):
   * Does a given date exist?
   * Convert English and German long format dates to ISO strings.
 * [mail](#check-email-addresses):
   * Check if a string is a valid email address.
+* [geo](#validate-geographic-coordinates):
+  * [Validate coordinates](#validate-geographic-coordinates) to check if latitude and longitude are within valid Earth ranges.
 
 
 
@@ -113,6 +120,91 @@ userprovided.parameters.is_port(int)
 # valid range from 0 to 65535.
 ```
 
+### Check Integer Range
+
+Similar to `numeric_in_range`, but with strict type checking to ensure all values are exactly integers (not floats). This is useful when you need to guarantee integer types, for example when working with array indices, counts, or IDs.
+
+```python
+# Returns the value if within range
+userprovided.parameters.int_in_range(
+    parameter_name='user_age',
+    given_value=25,
+    minimum_value=0,
+    maximum_value=120,
+    fallback_value=18
+)
+# => 25
+
+# Returns fallback if out of range
+userprovided.parameters.int_in_range(
+    parameter_name='page_number',
+    given_value=500,
+    minimum_value=1,
+    maximum_value=100,
+    fallback_value=1
+)
+# => 1 (fallback value, logs warning)
+
+# Rejects floats even if they represent whole numbers
+userprovided.parameters.int_in_range(
+    parameter_name='count',
+    given_value=5.0,  # This is a float, not an int
+    minimum_value=1,
+    maximum_value=10,
+    fallback_value=5
+)
+# => ValueError: Value must be an integer.
+```
+
+The function validates that minimum ≤ maximum and that the fallback value is within the allowed range.
+
+### Enforce Boolean Type
+
+Validates that a parameter is exactly of type `bool` (True or False), not just a truthy or falsy value. Use this when you need to ensure strict boolean parameters and avoid subtle bugs from implicit type conversions.
+
+```python
+# Valid boolean values pass
+userprovided.parameters.enforce_boolean(True)
+# => No error
+
+userprovided.parameters.enforce_boolean(False, parameter_name='debug_mode')
+# => No error
+
+# Truthy/falsy values are rejected
+userprovided.parameters.enforce_boolean(1)
+# => ValueError: Value of parameter must be boolean, i.e True / False
+
+userprovided.parameters.enforce_boolean('true')
+# => ValueError: Value of parameter must be boolean, i.e True / False
+```
+
+### Validate AWS S3 Bucket Names
+
+Check if a string complies with AWS S3 bucket naming rules. AWS has strict requirements for bucket names to ensure they work properly across all regions and services.
+
+```python
+userprovided.parameters.is_aws_s3_bucket_name('my-valid-bucket-name')
+# => True
+
+userprovided.parameters.is_aws_s3_bucket_name('192.168.1.1')
+# => False (cannot resemble IP address)
+
+userprovided.parameters.is_aws_s3_bucket_name('xn--bucket')
+# => False (cannot start with 'xn--')
+
+userprovided.parameters.is_aws_s3_bucket_name('bucket-s3alias')
+# => False (cannot end with '-s3alias')
+```
+
+AWS S3 bucket name requirements enforced:
+- Length: 3-63 characters
+- Allowed characters: lowercase letters, numbers, hyphens, and dots
+- Must start and end with a letter or number
+- Cannot resemble an IP address (e.g., 192.168.1.1)
+- Cannot contain consecutive dots (..) or dot-hyphen combinations (.- or -.)
+- Cannot start with reserved prefixes: `xn--`, `sthree-`, `amzn-s3-demo-`
+- Cannot end with reserved suffixes: `-s3alias`, `--ol-s3`, `.mrap`, `--x-s3`, `--table-s3`
+
 
 ## Handle URLs
 
@@ -160,6 +252,24 @@ userprovided.url.is_url('ftp://www.example.com', ('ftp'))
 ```
 
 To check the URL with an actual connection attempt, you could use the [salted library](https://github.com/RuedigerVoigt/salted).
+
+
+### Check for Shortened URLs
+
+Check whether a URL is from a known URL shortening service. Such URLs can be useful and harmless, but could also be a way for an attacker to disguise the target of a link.
+
+```python
+userprovided.url.is_shortened_url('https://bit.ly/example')
+# => True
+
+userprovided.url.is_shortened_url('https://www.example.com/page')
+# => False
+
+userprovided.url.is_shortened_url('https://youtu.be/dQw4w9WgXcQ')
+# => False (platform-specific shorteners like youtu.be are not included)
+```
+
+This function recognizes a list of 22 popular URL shortening services that allow random targets. By design, it will *not* recognize platform-specific short URLs like `youtu.be` as they point to a specific platform (YouTube) rather than arbitrary destinations.
 
 
 ### Determine a File Extension
@@ -222,6 +332,30 @@ userprovided.hash.calculate_file_hash(
 # => raises an exception
 ```
 
+### Calculate String Hash
+
+Compute a deterministic hash of string data for non-security use cases such as fingerprints, cache keys, or content de-duplication.
+
+```python
+userprovided.hash.calculate_string_hash('example data')
+# => returns the SHA256 hash as a string
+
+userprovided.hash.calculate_string_hash('example data', hash_method='sha512')
+# => returns the SHA512 hash as a string
+
+userprovided.hash.calculate_string_hash('example data', encoding='utf-8')
+# => specify encoding (defaults to utf-8)
+```
+
+**Important Security Warning:** Do NOT use this function for:
+- Password storage
+- Message integrity/authenticity
+- Anything needing resistance to brute force or active attackers
+
+This is a generic hash utility for non-security scenarios only. For security-sensitive applications, use proper cryptographic libraries with salting, key derivation functions (like bcrypt, scrypt, or Argon2), or HMAC.
+
+The function supports the same hash methods as `calculate_file_hash`: SHA224, SHA256 (default), SHA384, SHA512, SHA3 variants, BLAKE2 variants, and other algorithms available in hashlib, but rejects deprecated algorithms (MD5, SHA1).
+
 ## Handle Calendar Dates
 
 Does a specific date exist?
@@ -239,6 +373,23 @@ userprovided.date.date_en_long_to_iso('October 3, 1990')
 
 userprovided.date.date_de_long_to_iso('3. Oktober 1990')
 # => '1990-10-03'
+```
+
+
+## Validate Geographic Coordinates
+
+Check if latitude and longitude values are within valid Earth ranges. This validates that coordinates are mathematically possible, not whether they point to land, sea, or a specific feature.
+
+```python
+userprovided.geo.is_valid_coordinates(48.8566, 2.3522)
+# => True (Paris, France)
+
+userprovided.geo.is_valid_coordinates(45, 181)
+# => False (longitude out of range)
+
+# Accepts strings that can be converted to numbers
+userprovided.geo.is_valid_coordinates('51.5074', '-0.1278')
+# => True (London, UK)
 ```
 
 
