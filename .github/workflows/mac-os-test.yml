@@ -1,7 +1,6 @@
 # This workflow runs Unit-Tests for userprovided on MacOS
-# with the two latest python versions.
-# Flake8 and mypy will be run with the Ubuntu Workflow.
-# There is no need to repeat this here.
+# with the oldest and latest supported python versions.
+
 name: MacOS Test
 
 on: [push, pull_request]
@@ -12,7 +11,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.10', '3.14']
 
     steps:
     - uses: actions/checkout@v4
@@ -30,7 +29,6 @@ jobs:
       run: |
         pip install hypothesis
         pip install pytest
-        pip install flake8
 
     - name: Install package
       run: pip install -e .

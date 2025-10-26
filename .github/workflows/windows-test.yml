@@ -1,7 +1,5 @@
 # This workflow runs Unit-Tests for userprovided on Windows
-# with the two latest python versions.
-# Flake8 and mypy will be run with the Ubuntu Workflow.
-# There is no need to repeat this here.
+
 name: Windows Test
 
 on: [push, pull_request]
@@ -30,7 +28,6 @@ jobs:
       run: |
         pip install hypothesis
         pip install pytest
-        pip install flake8
 
     - name: Install package
       run: pip install -e .
