@@ -1,16 +1,18 @@
 # Changelog / History
 
-## Version 2.0.0 (2025-10-22)
+## Version 2.0.0 (2025-10-27)
 
 * Supported Python versions:
   * Dropped support for Python 3.8 and 3.9 (EOL).
   * Added support for Python 3.13 and 3.14.
 * Contributing Guidelines:
+  * Added [CONTRIBUTING.md](./CONTRIBUTING.md).
   * Added [AGENTS.md](./AGENTS.md) file that defines rules and guidelines for software agents.
+  * Add a Pull Request template.
 * Packaging:
   * Replaced `setup.py` with a `pyproject.toml` managed by Poetry.
 * Security:
-  * security linter: Add [bandit](https://github.com/PyCQA/bandit) workflow.
+  * Security linter: Added [bandit](https://github.com/PyCQA/bandit) workflow.
 * New Features and bug fixes:
   * `date`:
     * parse more ordinal suffixes (1st, 2nd, 3rd, 4th) in `date_en_long_to_iso`
@@ -30,7 +32,9 @@
     * Catch more errors in `is_aws_s3_bucket_name`.
   * `url`:
     * Added `is_shortened_url` which checks if an URL is a short link by comparing it to a list of popular services. (Currently 24 domains recognized)
-    * Renamed `normalize_query_part` to `_normalize_query_part` to mark it as an internal helper function
+    * Renamed `normalize_query_part` to `_normalize_query_part` to mark it as an internal helper function.
+* Other changes:
+  * Converted all docstrings to Google format.
 
 
 ## Version 1.0.0 (2023-10-10)
