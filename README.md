@@ -18,8 +18,9 @@ The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/)) a
 Userprovided has functionality for the following inputs:
 * [parameters](#handle-parameters):
   * [Check a dictionary](#check-a-parameter-dictionary) for valid, needed, and unknown keys.
-  * Convert lists, strings and tuples into a set.
-  * Check if an integer or string is in a specific range.
+  * [Avoid keys without value in a dictionary](#avoid-keys-without-value-in-a-dictionary) to ensure all values are present.
+  * [Convert into a set](#convert-into-a-set) from lists, strings and tuples.
+  * [Check range of numbers and strings](#check-range-of-numbers-and-strings) to validate if values are in a specific range.
   * [Check integer range](#check-integer-range) with strict integer type enforcement.
   * [Enforce boolean type](#enforce-boolean-type) to reject truthy/falsy values.
   * [Validate AWS S3 bucket names](#validate-aws-s3-bucket-names) against AWS naming rules.
