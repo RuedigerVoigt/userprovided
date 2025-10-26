@@ -19,20 +19,20 @@ def is_valid_coordinates(latitude: Union[float, int, str],
     """Validate if latitude and longitude are within possible Earth ranges.
 
     Args:
-        latitude (float | int | str): Latitude coordinate in decimal degrees.
+        latitude: Latitude coordinate in decimal degrees.
             Must be convertible to float and within -90 to +90 (inclusive).
-        longitude (float | int | str): Longitude coordinate in decimal degrees.
+        longitude: Longitude coordinate in decimal degrees.
             Must be convertible to float and within -180 to +180 (inclusive).
 
     Returns:
-        bool: True if both coordinates are finite numbers within the valid
+        True if both coordinates are finite numbers within the valid
         ranges, False otherwise.
 
-    Notes:
-        * Booleans are not accepted, even though they are instances of int.
-        * Non-finite values (NaN, ±Infinity) are rejected.
-        * The function only checks mathematical validity. It does not verify
-          whether the point is on land, sea, or a specific geographic feature.
+    Note:
+        Booleans are not accepted, even though they are instances of int.
+        Non-finite values (NaN, ±Infinity) are rejected.
+        The function only checks mathematical validity. It does not verify
+        whether the point is on land, sea, or a specific geographic feature.
     """
     # Explicitly reject booleans (bool is a subclass of int)
     if isinstance(latitude, bool) or isinstance(longitude, bool):
