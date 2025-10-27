@@ -13,7 +13,7 @@ For a wide range of data, the Python package `userprovided`:
 * converts into standardized formats
 * performs basic security checks
 
-The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/)) and aims to provide useful log and error messages.
+The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/)) and provides useful log and error messages.
 
 Userprovided has functionality for the following inputs:
 * [parameters](#handle-parameters):
@@ -24,19 +24,18 @@ Userprovided has functionality for the following inputs:
   * [Check integer range](#check-integer-range) with strict integer type enforcement.
   * [Enforce boolean type](#enforce-boolean-type) to reject truthy/falsy values.
   * [Validate AWS S3 bucket names](#validate-aws-s3-bucket-names) against AWS naming rules.
-  * ...
 * [url](#handle-urls):
   * [Normalize a URL](#normalize-urls) and drop specific keys from the query part of it.
   * [Check](#check-urls) if a string is a URL.
   * [Check for shortened URLs](#check-for-shortened-urls) from known URL shortening services.
   * [Determine a file extension](#determine-a-file-extension) from a URL and the MIME-type sent by the server.
-* [hash](#file-hashes):
-  * Is the hash method available?
-  * Calculate a file hash and (optionally) compare it to an expected value.
+* [hash](#hashes):
+  * [Is the hash method available?](#check-hash-availability)
+  * [Calculate a file hash](#calculate-a-file-hash) and (optionally) compare it to an expected value.
   * [Calculate a string hash](#calculate-string-hash) for non-security use cases like cache keys.
 * [date](#handle-calendar-dates):
-  * Does a given date exist?
-  * Convert English and German long format dates to ISO strings.
+  * [Does a given date exist?](#check-date-existence)
+  * Convert English and German [long format dates to ISO](#normalize-long-form-dates) strings.
 * [mail](#check-email-addresses):
   * Check if a string is a valid email address.
 * [geo](#validate-geographic-coordinates):
@@ -299,12 +298,17 @@ userprovided.url.determine_file_extension(
 userprovided.mail.is_email('example@example.com')
 # => True
 
+userprovided.mail.is_email('example+test@example.com')
+# => True
+
 userprovided.mail.is_email('invalid.email')
 # => False
 ```
 
 
-## File Hashes
+## Hashes
+
+### Check Hash Availability
 
 You can check whether a specific hash method is available. This will raise a DeprecatedHashAlgorithm exception for `MD5` and `SHA1` *even if they are available*, because they are deprecated.
 
@@ -315,6 +319,8 @@ print(userprovided.hash.hash_available('md5'))
 print(userprovided.hash.hash_available('sha256'))
 # => True on almost any system
 ```
+
+### Calculate a file hash
 
 You can calculate hash sums for files. If you do not provide the method, this defaults to `SHA256`. Other supported methods are `SHA224` and `SHA512`.
 
@@ -359,12 +365,16 @@ The function supports the same hash methods as `calculate_file_hash`: SHA224, SH
 
 ## Handle Calendar Dates
 
+### Check Date Existence
+
 Does a specific date exist?
 
 ```python
 userprovided.date.date_exists(2020, 2, 31)
 # => False
 ```
+
+### Normalize long form dates
 
 Normalize German or English long form dates:
 

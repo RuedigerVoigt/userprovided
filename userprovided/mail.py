@@ -15,8 +15,6 @@ import re
 
 
 # Compiled regex pattern for performance optimization
-# Improvements: no consecutive dots in local part, no dots at start/end of local part,
-# TLD minimum 2 chars (supports IDN with xn-- prefix), domain labels can't start/end with hyphen
 _EMAIL_PATTERN = re.compile(
     r"^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+"  # Local part start
     r"(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*"  # Local part with dots (no consecutive)
