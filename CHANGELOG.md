@@ -13,6 +13,9 @@
   * Replaced `setup.py` with a `pyproject.toml` managed by Poetry.
 * Security:
   * Security linter: Added [bandit](https://github.com/PyCQA/bandit) workflow.
+* Quality:
+  * Converted all docstrings to Google format.
+  * Ensure with an automatic workflow that coverage is 95% or higher.
 * New Features and bug fixes:
   * `date`:
     * parse more ordinal suffixes (1st, 2nd, 3rd, 4th) in `date_en_long_to_iso`
@@ -33,8 +36,6 @@
   * `url`:
     * Added `is_shortened_url` which checks if an URL is a short link by comparing it to a list of popular services. (Currently 24 domains recognized)
     * Renamed `normalize_query_part` to `_normalize_query_part` to mark it as an internal helper function.
-* Other changes:
-  * Converted all docstrings to Google format.
 
 
 ## Version 1.0.0 (2023-10-10)
