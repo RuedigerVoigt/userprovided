@@ -10,7 +10,8 @@ Copyright (c) 2020-2025 Rüdiger Voigt and contributors
 Released under the Apache License 2.0
 """
 
-from userprovided import _version
+from importlib.metadata import version
+
 from userprovided import date
 from userprovided import geo
 from userprovided import hashing
@@ -20,5 +21,5 @@ from userprovided import url
 
 
 NAME = "userprovided"
-__version__ = _version.__version__
+__version__ = version("userprovided")
 __author__ = "Rüdiger Voigt"
