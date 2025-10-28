@@ -120,21 +120,21 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
         if expected_hash and expected_hash != calculated_hash:
             mismatch_message = ("Mismatch between calculated and expected " +
                                 f"{hash_method} hash for {file_path}")
-            logging.exception(mismatch_message)
+            logging.debug(mismatch_message)
             raise ValueError(mismatch_message)
         return calculated_hash
     except FileNotFoundError:
-        logging.exception(
+        logging.debug(
             'Cannot calculate hash: File not found or not readable.',
             exc_info=True)
         raise
     except PermissionError:
-        logging.exception(
+        logging.debug(
             'Cannot calculate file hash: insufficient permissions.',
             exc_info=True)
         raise
     except Exception:
-        logging.error('Exception while trying to get file hash',
+        logging.debug('Exception while trying to get file hash',
                       exc_info=True)
         raise
 
@@ -197,8 +197,8 @@ def calculate_string_hash(data: str,
         return calculated_hash
 
     except UnicodeEncodeError:
-        logging.exception('Cannot encode string with %s encoding', encoding)
+        logging.debug('Cannot encode string with %s encoding', encoding)
         raise
     except Exception:
-        logging.error('Exception while calculating string hash', exc_info=True)
+        logging.debug('Exception while calculating string hash', exc_info=True)
         raise

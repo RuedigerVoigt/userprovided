@@ -41,7 +41,7 @@ def is_url(url: str,
         return False
     if require_specific_schemes:
         if parsed.scheme not in require_specific_schemes:
-            logging.error('Scheme %s not supported.', parsed.scheme)
+            logging.debug('Scheme %s not supported.', parsed.scheme)
             return False
 
     if parsed.netloc == '':
@@ -227,7 +227,7 @@ def determine_file_extension(url: str,
         # the server provides a mime type.
         extension = mimetypes.guess_extension(provided_mime_type)
         if extension is None:
-            logging.error('No hint in URL and mime-type malformed for %s', url)
+            logging.debug('No hint in URL and mime-type malformed for %s', url)
             return '.unknown'
     elif type_by_url is not None and provided_mime_type is None:
         # There is a usable file extension in the URL, but the misconfigured
@@ -239,7 +239,7 @@ def determine_file_extension(url: str,
         # Neither the URL nor the server does hint to a extension
         msg = (f"Neither URL ({url}) nor mime-type ({provided_mime_type}) " +
                "suggests a file extension.")
-        logging.error(msg)
+        logging.debug(msg)
         return '.unknown'
     elif type_by_url != provided_mime_type:
         # The suggestions contradict each other
@@ -247,7 +247,7 @@ def determine_file_extension(url: str,
                "does not match the mime type supplied by the server " +
                f"({provided_mime_type}). Using the extension suggested " +
                "by the URL.")
-        logging.error(msg)
+        logging.debug(msg)
         extension = mimetypes.guess_extension(type_by_url)  # type: ignore[arg-type]
 
     # Handle errors and irregularities in mimetypes:

@@ -44,13 +44,13 @@ def date_exists(year: int,
         month = int(month)
         day = int(day)
     except ValueError:
-        logging.error('Could not convert date parts to integer.')
+        logging.debug('Could not convert date parts to integer.')
         return False
 
     try:
         datetime.datetime(year, month, day)
     except ValueError:
-        logging.error('Provided date does not exist in the calendar.')
+        logging.debug('Provided date does not exist in the calendar.')
         return False
     return True
 
@@ -82,7 +82,7 @@ def date_en_long_to_iso(date_string: str) -> str:
         else:
             raise AttributeError('No date provided')
     except AttributeError:
-        logging.error('Malformed date')
+        logging.debug('Malformed date')
         raise
 
     # add a zero to day if <10
@@ -107,7 +107,7 @@ def date_en_long_to_iso(date_string: str) -> str:
     except KeyError:
         # String for month matched the regular expression but is no
         # recognized month.
-        logging.error('Do not recognize month.')
+        logging.debug('Do not recognize month.')
         raise
 
     if not date_exists(int(match_year), int(match_month), int(match_day)):

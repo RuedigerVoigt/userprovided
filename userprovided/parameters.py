@@ -147,7 +147,7 @@ def keys_neither_none_nor_empty(dict_to_check: dict) -> bool:
         raise ValueError('This dictionary is empty')
 
     def error_found() -> None:
-        logging.error("Dictionary contains key that is either empty or None!")
+        logging.debug("Dictionary contains key that is either empty or None!")
 
     for _, value in dict_to_check.items():
         if value is None:
@@ -209,13 +209,13 @@ def numeric_in_range(parameter_name: str,
     if given_value < minimum_value:
         msg = (f"Value of {parameter_name} is below the minimum allowed." +
                f"Falling back to {fallback_value}.")
-        logging.warning(msg)
+        logging.debug(msg)
         return fallback_value
 
     if given_value > maximum_value:
         msg = (f"Value of {parameter_name} is above the maximum allowed." +
                f"Falling back to {fallback_value}.")
-        logging.warning(msg)
+        logging.debug(msg)
         return fallback_value
 
     # passed all checks:
@@ -279,7 +279,7 @@ def is_port(port_number: int) -> bool:
     if 0 <= port_number <= 65535:
         logging.debug('Port within range')
         return True
-    logging.error('Port not within valid range from 0 to 65535')
+    logging.debug('Port not within valid range from 0 to 65535')
     return False
 
 
@@ -318,10 +318,10 @@ def string_in_range(string_to_check: str,
     if strip_string:
         string_to_check = string_to_check.strip()
     if len(string_to_check) < minimum_length:
-        logging.info("String length below minimum length.")
+        logging.debug("String length below minimum length.")
         return False
     if len(string_to_check) > maximum_length:
-        logging.info("String longer than maximum.")
+        logging.debug("String longer than maximum.")
         return False
     return True
 
@@ -346,46 +346,46 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
     # Lengthy code which could be written as a single regular expression.
     # However written in this way to provide useful error messages.
     if len(bucket_name) < 3:
-        logging.error(
+        logging.debug(
             'Any AWS bucket name has to be at least 3 characters long.')
         return False
     if len(bucket_name) > 63:
-        logging.error(
+        logging.debug(
             'The AWS bucket name exceeds the maximum length of 63 characters.')
         return False
     if not _AWS_S3_BUCKET_CHARS.match(bucket_name):
-        logging.error('The AWS bucket name contains invalid characters.')
+        logging.debug('The AWS bucket name contains invalid characters.')
         return False
     if _AWS_S3_BUCKET_IPV4.match(bucket_name):
         # Check if the bucket name resembles an IPv4 address.
         # No need to check IPv6 as the colon is not an allowed character.
-        logging.error('An AWS bucket name must not resemble an IP address.')
+        logging.debug('An AWS bucket name must not resemble an IP address.')
         return False
     # Check for invalid start/end characters
     if bucket_name.startswith('.') or bucket_name.startswith('-'):
-        logging.error('AWS bucket name cannot start with dot or hyphen.')
+        logging.debug('AWS bucket name cannot start with dot or hyphen.')
         return False
     if bucket_name.endswith('.') or bucket_name.endswith('-'):
-        logging.error('AWS bucket name cannot end with dot or hyphen.')
+        logging.debug('AWS bucket name cannot end with dot or hyphen.')
         return False
 
     # Check for forbidden prefixes
     forbidden_prefixes = ('xn--', 'sthree-', 'amzn-s3-demo-')
     if bucket_name.startswith(forbidden_prefixes):
-        logging.error('AWS bucket name cannot start with reserved prefixes: %s',
+        logging.debug('AWS bucket name cannot start with reserved prefixes: %s',
                       ', '.join(forbidden_prefixes))
         return False
 
     # Check for forbidden suffixes
     forbidden_suffixes = ('-s3alias', '--ol-s3', '.mrap', '--x-s3', '--table-s3')
     if bucket_name.endswith(forbidden_suffixes):
-        logging.error('AWS bucket name cannot end with reserved suffixes: %s',
+        logging.debug('AWS bucket name cannot end with reserved suffixes: %s',
                       ', '.join(forbidden_suffixes))
         return False
 
     # Check for consecutive dots or invalid dot-hyphen patterns
     if '..' in bucket_name or '.-' in bucket_name or '-.' in bucket_name:
-        logging.error('AWS bucket name cannot contain consecutive dots or dot-hyphen patterns.')
+        logging.debug('AWS bucket name cannot contain consecutive dots or dot-hyphen patterns.')
         return False
 
     # Final validation: Each label (part between dots) must:
@@ -396,7 +396,7 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
     if _AWS_S3_BUCKET_LABELS.match(bucket_name):
         return True
 
-    logging.error('Invalid AWS bucket name.')
+    logging.debug('Invalid AWS bucket name.')
     return False
 
 

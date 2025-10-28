@@ -45,12 +45,12 @@ def is_email(mailaddress: str) -> bool:
         raise TypeError('Email address must be a string')
 
     if not mailaddress or mailaddress == '':
-        logging.warning('No mail address supplied.')
+        logging.debug('No mail address supplied.')
         return False
 
     mailaddress = mailaddress.strip()
     if not _EMAIL_PATTERN.match(mailaddress):
-        logging.error(
+        logging.debug(
             'The supplied mailaddress %s has an unknown format.', mailaddress)
         return False
 
