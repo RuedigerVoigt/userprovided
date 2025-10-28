@@ -1,6 +1,6 @@
 # Changelog / History
 
-## Version 2.0.0 (2025-10-27)
+## Version 2.0.0 (2025-10-28)
 
 * Supported Python versions:
   * Dropped support for Python 3.8 and 3.9 (EOL).
