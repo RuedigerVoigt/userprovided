@@ -13,6 +13,7 @@
   * Replaced `setup.py` with a `pyproject.toml` managed by Poetry.
 * Security:
   * Security linter: Added [bandit](https://github.com/PyCQA/bandit) workflow.
+  * Publish to PyPI with a [Trusted Publisher / OIDC](https://docs.pypi.org/trusted-publishers/).
 * Quality:
   * Converted all docstrings to Google format.
   * Ensure with an automatic workflow that coverage is 95% or higher.
