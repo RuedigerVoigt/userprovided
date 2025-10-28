@@ -24,6 +24,12 @@ classifiers = [
 ]
 include = ["userprovided/py.typed"]
 
+[tool.poetry.urls]
+Homepage = "https://github.com/RuedigerVoigt/userprovided"
+Repository = "https://github.com/RuedigerVoigt/userprovided"
+Changelog = "https://github.com/RuedigerVoigt/userprovided/blob/master/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/RuedigerVoigt/userprovided/issues"
+
 [tool.poetry.dependencies]
 python = ">=3.10"
 
