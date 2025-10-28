@@ -72,7 +72,7 @@ The Python package userprovided checks input for validity and plausibility. It a
 * Run `flake8` to check style.
 * Run `mypy`.
 * REQUIRED: Run a static security analyzer (e.g. `bandit`) before submitting a PR and include results in the PR description.
-* Include code coverage data using `pytest --cov=userprovided`. Aim for >90% for new code unless justified.
+* Include code coverage data using `pytest --cov=userprovided`. Aim for >95% for new code unless justified.
 
 
 ###  Branching:
