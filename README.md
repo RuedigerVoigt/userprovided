@@ -29,6 +29,8 @@ Userprovided has functionality for the following inputs:
   * [Check](#check-urls) if a string is a URL.
   * [Check for shortened URLs](#check-for-shortened-urls) from known URL shortening services.
   * [Determine a file extension](#determine-a-file-extension) from a URL and the MIME-type sent by the server.
+  * [Extract domain from URL](#extract-domain-from-url) with optional subdomain removal, supporting 2-part TLDs.
+  * [Extract TLD from URL](#extract-tld-from-url) correctly identifying both standard and 2-part TLDs.
 * [hash](#hashes):
   * [Is the hash method available?](#check-hash-availability)
   * [Calculate a file hash](#calculate-a-file-hash) and (optionally) compare it to an expected value.
@@ -290,6 +292,58 @@ userprovided.url.determine_file_extension(
     'https://www.example.com/example.pdf',
     None
 )
+```
+
+### Extract Domain from URL
+
+Extract the domain (hostname) from a URL, with optional subdomain removal. Correctly handles 2-part TLDs like `.co.uk` and `.com.au`, and returns IP addresses and localhost unchanged.
+
+```python
+# Extract full domain with subdomain
+userprovided.url.extract_domain('https://www.example.com:8080/path')
+# => 'www.example.com'
+
+# Drop subdomain to get registrable domain
+userprovided.url.extract_domain('https://www.example.com', drop_subdomain=True)
+# => 'example.com'
+
+# Correctly handles 2-part TLDs
+userprovided.url.extract_domain('https://subdomain.example.co.uk/page', drop_subdomain=True)
+# => 'example.co.uk'
+
+userprovided.url.extract_domain('https://www.example.com.au/page', drop_subdomain=True)
+# => 'example.com.au'
+
+# IP addresses and localhost are returned as-is
+userprovided.url.extract_domain('http://192.168.1.1:8080/path', drop_subdomain=True)
+# => '192.168.1.1'
+
+userprovided.url.extract_domain('http://localhost:3000', drop_subdomain=True)
+# => 'localhost'
+```
+
+### Extract TLD from URL
+
+Extract the top-level domain (TLD) from a URL. Correctly identifies 2-part TLDs like `.co.uk` and `.com.au`, returning them as a single unit.
+
+```python
+# Standard single-part TLD
+userprovided.url.extract_tld('https://www.example.com/path')
+# => '.com'
+
+# 2-part TLD examples
+userprovided.url.extract_tld('https://example.co.uk')
+# => '.co.uk'
+
+userprovided.url.extract_tld('https://subdomain.example.com.au/page')
+# => '.com.au'
+
+# IP addresses and localhost have no TLD
+userprovided.url.extract_tld('http://192.168.1.1')
+# => ''
+
+userprovided.url.extract_tld('http://localhost')
+# => ''
 ```
 
 ## Check Email Addresses
