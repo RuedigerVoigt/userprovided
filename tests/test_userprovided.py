@@ -1078,3 +1078,61 @@ def test_extract_domain_ipv6_variations():
     # IPv6 with drop_subdomain should return unchanged
     assert userprovided.url.extract_domain('http://[::1]', drop_subdomain=True) == '::1'
     assert userprovided.url.extract_domain('http://[2001:db8::1]', drop_subdomain=True) == '2001:db8::1'
+
+
+@pytest.mark.parametrize("test_url,expected_tld", [
+    # Standard single-part TLDs
+    ('https://www.example.com/path', '.com'),
+    ('https://example.org', '.org'),
+    ('https://subdomain.example.net/page', '.net'),
+    ('https://example.edu', '.edu'),
+    ('https://example.gov', '.gov'),
+    # 2-part TLDs
+    ('https://www.example.co.uk/page', '.co.uk'),
+    ('https://subdomain.example.com.au', '.com.au'),
+    ('https://example.co.jp', '.co.jp'),
+    ('https://www.example.gov.uk', '.gov.uk'),
+    ('https://example.com.br', '.com.br'),
+    ('https://example.co.in', '.co.in'),
+    ('https://example.co.nz', '.co.nz'),
+    ('https://example.co.za', '.co.za'),
+    # With ports and paths
+    ('https://example.com:8080/path', '.com'),
+    ('https://www.example.co.uk:443/page?foo=bar', '.co.uk'),
+    # Case insensitivity
+    ('https://EXAMPLE.COM', '.com'),
+    ('https://Example.CO.UK', '.co.uk'),
+])
+def test_extract_tld_basic(test_url, expected_tld):
+    assert userprovided.url.extract_tld(test_url) == expected_tld
+
+
+def test_extract_tld_edge_cases():
+    # IP addresses should return empty string
+    assert userprovided.url.extract_tld('http://192.168.1.1') == ''
+    assert userprovided.url.extract_tld('http://192.168.1.1:8080/path') == ''
+    assert userprovided.url.extract_tld('http://[::1]') == ''
+    assert userprovided.url.extract_tld('http://[2001:db8::1]/path') == ''
+
+    # Localhost and single-word domains should return empty string
+    assert userprovided.url.extract_tld('http://localhost') == ''
+    assert userprovided.url.extract_tld('http://localhost:3000') == ''
+    assert userprovided.url.extract_tld('http://intranet/page') == ''
+
+    # Invalid URLs should return empty string (not raise)
+    assert userprovided.url.extract_tld('not-a-url') == ''
+
+
+def test_extract_tld_errors():
+    # Empty URL should raise ValueError
+    with pytest.raises(ValueError, match="URL cannot be empty"):
+        userprovided.url.extract_tld('')
+
+    with pytest.raises(ValueError, match="URL cannot be empty"):
+        userprovided.url.extract_tld('   ')
+
+
+def test_extract_tld_whitespace():
+    # Whitespace should be handled
+    assert userprovided.url.extract_tld('  https://example.com  ') == '.com'
+    assert userprovided.url.extract_tld('\thttps://example.co.uk\n') == '.co.uk'

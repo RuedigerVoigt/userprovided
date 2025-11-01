@@ -20,6 +20,53 @@ import urllib.parse
 from userprovided import err
 
 
+# Known 2-part TLDs (country code second-level domains)
+# Note: This is a subset of common 2-part TLDs. For comprehensive coverage,
+# consider using the Public Suffix List (https://publicsuffix.org/)
+TWO_PART_TLDS = {
+    # United Kingdom
+    'co.uk', 'gov.uk', 'ac.uk', 'org.uk', 'net.uk',
+    # Japan
+    'co.jp', 'ne.jp', 'or.jp', 'go.jp', 'ac.jp',
+    # Australia
+    'com.au', 'net.au', 'org.au', 'edu.au', 'gov.au',
+    # New Zealand
+    'co.nz', 'net.nz', 'org.nz', 'ac.nz', 'govt.nz',
+    # South Africa
+    'co.za', 'net.za', 'org.za', 'gov.za', 'ac.za',
+    # India
+    'co.in', 'net.in', 'org.in', 'gen.in', 'firm.in',
+    # Brazil
+    'com.br', 'net.br', 'org.br', 'gov.br', 'edu.br',
+    # China
+    'com.cn', 'net.cn', 'org.cn', 'gov.cn', 'edu.cn',
+    # Mexico
+    'com.mx', 'net.mx', 'org.mx', 'gob.mx', 'edu.mx',
+    # Singapore
+    'com.sg', 'net.sg', 'org.sg', 'gov.sg', 'edu.sg',
+    # Hong Kong
+    'com.hk', 'net.hk', 'org.hk', 'gov.hk', 'edu.hk',
+    # Turkey
+    'com.tr', 'net.tr', 'org.tr', 'gen.tr', 'edu.tr',
+    # Israel
+    'co.il', 'ac.il', 'org.il', 'net.il', 'gov.il',
+    # South Korea
+    'co.kr', 'ne.kr', 'or.kr', 're.kr', 'go.kr',
+    # Argentina
+    'com.ar', 'net.ar', 'org.ar', 'gov.ar', 'edu.ar',
+    # Poland
+    'com.pl', 'net.pl', 'org.pl', 'gov.pl', 'edu.pl',
+    # Thailand
+    'co.th', 'in.th', 'go.th', 'ac.th', 'or.th',
+    # Vietnam
+    'com.vn', 'net.vn', 'org.vn', 'gov.vn', 'edu.vn',
+    # Austria
+    'co.at', 'or.at', 'gv.at', 'ac.at',
+    # Hungary
+    'co.hu', 'org.hu', 'gov.hu', 'edu.hu',
+}
+
+
 def is_url(url: str,
            require_specific_schemes: Union[tuple, None] = None) -> bool:
     """Validates basic URL format without attempting connection.
@@ -362,53 +409,6 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
         >>> extract_domain('http://localhost:3000', drop_subdomain=True)
         'localhost'
     """
-
-    # Known 2-part TLDs (country code second-level domains)
-    # Note: This is a subset of common 2-part TLDs. For comprehensive coverage,
-    # consider using the Public Suffix List (https://publicsuffix.org/)
-    TWO_PART_TLDS = {
-        # United Kingdom
-        'co.uk', 'gov.uk', 'ac.uk', 'org.uk', 'net.uk',
-        # Japan
-        'co.jp', 'ne.jp', 'or.jp', 'go.jp', 'ac.jp',
-        # Australia
-        'com.au', 'net.au', 'org.au', 'edu.au', 'gov.au',
-        # New Zealand
-        'co.nz', 'net.nz', 'org.nz', 'ac.nz', 'govt.nz',
-        # South Africa
-        'co.za', 'net.za', 'org.za', 'gov.za', 'ac.za',
-        # India
-        'co.in', 'net.in', 'org.in', 'gen.in', 'firm.in',
-        # Brazil
-        'com.br', 'net.br', 'org.br', 'gov.br', 'edu.br',
-        # China
-        'com.cn', 'net.cn', 'org.cn', 'gov.cn', 'edu.cn',
-        # Mexico
-        'com.mx', 'net.mx', 'org.mx', 'gob.mx', 'edu.mx',
-        # Singapore
-        'com.sg', 'net.sg', 'org.sg', 'gov.sg', 'edu.sg',
-        # Hong Kong
-        'com.hk', 'net.hk', 'org.hk', 'gov.hk', 'edu.hk',
-        # Turkey
-        'com.tr', 'net.tr', 'org.tr', 'gen.tr', 'edu.tr',
-        # Israel
-        'co.il', 'ac.il', 'org.il', 'net.il', 'gov.il',
-        # South Korea
-        'co.kr', 'ne.kr', 'or.kr', 're.kr', 'go.kr',
-        # Argentina
-        'com.ar', 'net.ar', 'org.ar', 'gov.ar', 'edu.ar',
-        # Poland
-        'com.pl', 'net.pl', 'org.pl', 'gov.pl', 'edu.pl',
-        # Thailand
-        'co.th', 'in.th', 'go.th', 'ac.th', 'or.th',
-        # Vietnam
-        'com.vn', 'net.vn', 'org.vn', 'gov.vn', 'edu.vn',
-        # Austria
-        'co.at', 'or.at', 'gv.at', 'ac.at',
-        # Hungary
-        'co.hu', 'org.hu', 'gov.hu', 'edu.hu',
-    }
-
     if not url or not url.strip():
         raise ValueError("URL cannot be empty")
 
@@ -431,6 +431,81 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
 
     except AttributeError as e:
         raise ValueError(f"Invalid URL format: {url}") from e
+
+
+def extract_tld(url: str) -> str:
+    """
+    Extract the TLD (top-level domain) from a URL.
+
+    Correctly identifies 2-part TLDs (like .co.uk, .com.au) and returns them
+    as a single unit. For standard TLDs (like .com, .org), returns just the
+    single-part TLD.
+
+    Args:
+        url: Full URL string (e.g., 'https://www.example.com/path')
+
+    Returns:
+        TLD string with leading dot (e.g., '.com', '.co.uk', '.com.au').
+        Returns empty string if TLD cannot be determined (e.g., for IP
+        addresses, localhost, or invalid URLs).
+
+    Raises:
+        ValueError: If url is empty
+
+    Examples:
+        >>> extract_tld('https://www.example.com/path')
+        '.com'
+        >>> extract_tld('https://example.co.uk')
+        '.co.uk'
+        >>> extract_tld('https://subdomain.example.com.au/page')
+        '.com.au'
+        >>> extract_tld('http://192.168.1.1')
+        ''
+        >>> extract_tld('http://localhost')
+        ''
+    """
+    if not url or not url.strip():
+        raise ValueError("URL cannot be empty")
+
+    try:
+        parsed = urllib.parse.urlparse(url.strip())
+        domain = parsed.hostname
+
+        if not domain:
+            domain = parsed.netloc
+
+        if not domain:
+            return ''
+
+        domain = domain.lower().strip()
+
+        # Check if it's an IP address (IPv4 or IPv6)
+        try:
+            ipaddress.ip_address(domain)
+            # It's an IP address, no TLD
+            return ''
+        except ValueError:
+            # Not an IP address, continue
+            pass
+
+        parts = domain.split('.')
+
+        # Single-word domains (like localhost) have no TLD
+        if len(parts) == 1:
+            return ''
+
+        # Check for 2-part TLD
+        if len(parts) >= 2:
+            potential_2part_tld = '.'.join(parts[-2:])
+            if potential_2part_tld in TWO_PART_TLDS:
+                return '.' + potential_2part_tld
+
+        # Standard single-part TLD
+        return '.' + parts[-1]
+
+    except Exception:
+        # If parsing fails, return empty string
+        return ''
 
 
 def _extract_registrable_domain(domain: str, two_part_tlds: set) -> str:

@@ -9,6 +9,10 @@
       * Correctly handles many 2-part TLDs (country code second-level domains) such as `.co.uk`, `.com.au`, `.co.jp`, etc.
       * Properly handles edge cases: IPv4 addresses, IPv6 addresses, localhost, and single-word domains are returned unchanged.
       * Case-insensitive domain normalization (returns lowercase).
+    * Added `extract_tld` function to extract just the TLD from a URL.
+      * Returns 2-part TLDs as a single unit (e.g., `.co.uk`, `.com.au`).
+      * Returns empty string for IP addresses, localhost, or single-word domains.
+      * Includes leading dot in the result (e.g., `.com`, `.co.uk`).
 
 
 ## Version 2.0.0 (2025-10-28)
