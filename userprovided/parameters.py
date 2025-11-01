@@ -11,7 +11,7 @@ Released under the Apache License 2.0
 
 import logging
 import re
-from typing import Optional, Union
+from typing import Optional, Union, Set
 
 from userprovided import err
 
@@ -52,6 +52,110 @@ def convert_to_set(convert_this: Union[list, set, str, tuple]) -> set:
         raise TypeError('The function calling this expects a set.')
 
     return new_set
+
+
+def separated_string_to_set(
+    raw_string: Optional[str],
+    sep: str = ",",
+    allow_quotes: bool = True,
+    quote_char: str = '"',
+) -> Optional[Set[str]]:
+    r"""Parse a separated string into a set of trimmed, non-empty items.
+
+    Args:
+        raw_string: The string to parse. Returns None if None is provided.
+        sep: Separator character (single character, default ',').
+        allow_quotes: If True, text between quote_char is treated as a
+            single field.
+        quote_char: Quote character (single character, default '"').
+
+    Returns:
+        Set of non-empty trimmed strings, or None if raw_string is None.
+        Order not preserved, duplicates collapsed.
+
+    Raises:
+        ValueError: If sep or quote_char is not a single character,
+            if quote_char equals sep or backslash, or if quotes are
+            unclosed.
+
+    Notes:
+        - Separator: `sep` (single character, default ',').
+        - Quotes: when allow_quotes=True, text between `quote_char`
+          is a single field.
+        - Escaping: backslash (\\) escapes the next character
+          (works in/out of quotes), so `\\`, `\sep`, and `\quote_char`
+          become literal.
+        - Whitespace around fields is trimmed (inside quotes is
+          preserved, then trimmed).
+        - Empty fields are dropped after trimming.
+
+    Examples:
+        >>> separated_string_to_set("a, b, c")
+        {'a', 'b', 'c'}
+        >>> separated_string_to_set('"hello, world", foo')
+        {'hello, world', 'foo'}
+        >>> separated_string_to_set("a\\,b,c", sep=",")
+        {'a,b', 'c'}
+    """
+    if raw_string is None:
+        return None
+
+    if not isinstance(sep, str) or len(sep) != 1:
+        raise ValueError("sep must be a single character.")
+    if allow_quotes:
+        if not isinstance(quote_char, str) or len(quote_char) != 1:
+            raise ValueError("quote_char must be a single character.")
+        if quote_char == "\\":
+            raise ValueError(
+                "quote_char cannot be the backslash escape character.")
+        if quote_char == sep:
+            raise ValueError("quote_char cannot equal sep.")
+
+    result: Set[str] = set()
+    buf: list[str] = []
+    in_quotes = False
+    i = 0
+    n = len(raw_string)
+
+    def flush_token() -> None:
+        s = "".join(buf).strip()
+        if s:  # drop empty after trimming
+            result.add(s)
+        buf.clear()
+
+    while i < n:
+        ch = raw_string[i]
+
+        # Backslash escapes the next character (in/out of quotes)
+        if ch == "\\":
+            i += 1
+            if i < n:
+                buf.append(raw_string[i])
+                i += 1
+            else:
+                buf.append("\\")  # trailing backslash: treat as literal
+            continue
+
+        # Quote toggling
+        if allow_quotes and ch == quote_char:
+            in_quotes = not in_quotes
+            i += 1
+            continue
+
+        # Separator (only when not inside quotes)
+        if ch == sep and not in_quotes:
+            flush_token()
+            i += 1
+            continue
+
+        buf.append(ch)
+        i += 1
+
+    if in_quotes:
+        raise ValueError("Unclosed quoted field.")
+
+    flush_token()
+    return result
 
 
 def validate_dict_keys(dict_to_check: dict,

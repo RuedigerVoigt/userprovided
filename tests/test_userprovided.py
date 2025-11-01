@@ -773,6 +773,177 @@ def test_convert_to_set_exceptions():
         userprovided.parameters.convert_to_set(3)
 
 
+def test_separated_string_to_set_basic():
+    # None input returns None
+    assert userprovided.parameters.separated_string_to_set(None) is None
+
+    # Empty string returns empty set
+    assert userprovided.parameters.separated_string_to_set('') == set()
+
+    # Simple comma-separated values
+    assert userprovided.parameters.separated_string_to_set('a,b,c') == \
+        {'a', 'b', 'c'}
+
+    # Values with whitespace (should be trimmed)
+    assert userprovided.parameters.separated_string_to_set('a, b , c') == \
+        {'a', 'b', 'c'}
+
+    # Duplicates should be collapsed (set behavior)
+    assert userprovided.parameters.separated_string_to_set('a,b,a,c,b') == \
+        {'a', 'b', 'c'}
+
+    # Empty fields should be dropped
+    assert userprovided.parameters.separated_string_to_set('a,,b,  ,c') == \
+        {'a', 'b', 'c'}
+    assert userprovided.parameters.separated_string_to_set(',,a,,') == {'a'}
+
+
+def test_separated_string_to_set_quotes():
+    # Quoted field with separator inside
+    assert userprovided.parameters.separated_string_to_set(
+        '"hello, world",foo') == {'hello, world', 'foo'}
+
+    # Multiple quoted fields
+    assert userprovided.parameters.separated_string_to_set(
+        '"a,b","c,d"') == {'a,b', 'c,d'}
+
+    # Whitespace inside quotes is preserved, then trimmed
+    assert userprovided.parameters.separated_string_to_set(
+        '"  spaces  "') == {'spaces'}
+
+    # Empty quoted field is dropped after trimming
+    assert userprovided.parameters.separated_string_to_set(
+        '"",a') == {'a'}
+    assert userprovided.parameters.separated_string_to_set(
+        '"   ",a') == {'a'}
+
+    # Quotes disabled
+    assert userprovided.parameters.separated_string_to_set(
+        '"a,b",c', allow_quotes=False) == {'"a', 'b"', 'c'}
+
+
+def test_separated_string_to_set_escaping():
+    # Escaped separator
+    result = userprovided.parameters.separated_string_to_set('a\\,b,c')
+    assert result == {'a,b', 'c'}
+
+    # Escaped quote
+    result = userprovided.parameters.separated_string_to_set('a\\"b,c')
+    assert result == {'a"b', 'c'}
+
+    # Escaped backslash
+    result = userprovided.parameters.separated_string_to_set('a\\\\,b')
+    assert result == {'a\\', 'b'}
+
+    # Trailing backslash (treated as literal)
+    result = userprovided.parameters.separated_string_to_set('a\\')
+    assert result == {'a\\'}
+
+    # Escaping works inside quotes
+    result = userprovided.parameters.separated_string_to_set(
+        '"a\\,b",c')
+    assert result == {'a,b', 'c'}
+
+
+def test_separated_string_to_set_custom_separator():
+    # Pipe separator
+    assert userprovided.parameters.separated_string_to_set(
+        'a|b|c', sep='|') == {'a', 'b', 'c'}
+
+    # Semicolon separator
+    assert userprovided.parameters.separated_string_to_set(
+        'a;b;c', sep=';') == {'a', 'b', 'c'}
+
+    # Tab separator
+    assert userprovided.parameters.separated_string_to_set(
+        'a\tb\tc', sep='\t') == {'a', 'b', 'c'}
+
+
+def test_separated_string_to_set_custom_quote():
+    # Single quote as quote char
+    assert userprovided.parameters.separated_string_to_set(
+        "'a,b',c", quote_char="'") == {'a,b', 'c'}
+
+    # Pipe as quote char (unusual but valid)
+    assert userprovided.parameters.separated_string_to_set(
+        '|a,b|,c', sep=',', quote_char='|') == {'a,b', 'c'}
+
+
+def test_separated_string_to_set_errors():
+    # Multi-character separator
+    with pytest.raises(ValueError, match="sep must be a single character"):
+        userprovided.parameters.separated_string_to_set('a,b', sep=',,')
+
+    # Empty separator
+    with pytest.raises(ValueError, match="sep must be a single character"):
+        userprovided.parameters.separated_string_to_set('a,b', sep='')
+
+    # Multi-character quote
+    with pytest.raises(ValueError,
+                       match="quote_char must be a single character"):
+        userprovided.parameters.separated_string_to_set('a,b',
+                                                        quote_char='""')
+
+    # Empty quote char
+    with pytest.raises(ValueError,
+                       match="quote_char must be a single character"):
+        userprovided.parameters.separated_string_to_set('a,b', quote_char='')
+
+    # Quote char equals backslash
+    with pytest.raises(ValueError,
+                       match="quote_char cannot be the backslash"):
+        userprovided.parameters.separated_string_to_set(
+            'a,b', quote_char='\\')
+
+    # Quote char equals separator
+    with pytest.raises(ValueError, match="quote_char cannot equal sep"):
+        userprovided.parameters.separated_string_to_set(
+            'a,b', sep=',', quote_char=',')
+
+    # Unclosed quotes
+    with pytest.raises(ValueError, match="Unclosed quoted field"):
+        userprovided.parameters.separated_string_to_set('"a,b')
+
+    with pytest.raises(ValueError, match="Unclosed quoted field"):
+        userprovided.parameters.separated_string_to_set('a,"b,c')
+
+
+def test_separated_string_to_set_edge_cases():
+    # Only separators
+    assert userprovided.parameters.separated_string_to_set(',,,') == set()
+
+    # Only whitespace
+    assert userprovided.parameters.separated_string_to_set('   ') == set()
+
+    # Single value
+    assert userprovided.parameters.separated_string_to_set('single') == \
+        {'single'}
+
+    # Single quoted value
+    assert userprovided.parameters.separated_string_to_set(
+        '"single"') == {'single'}
+
+    # Complex combination
+    assert userprovided.parameters.separated_string_to_set(
+        ' "a,b" , c\\,d , , e ') == {'a,b', 'c,d', 'e'}
+
+
+@pytest.mark.parametrize("input_str,expected", [
+    ('a,b,c', {'a', 'b', 'c'}),
+    ('  a  ,  b  ,  c  ', {'a', 'b', 'c'}),
+    ('"a,b",c', {'a,b', 'c'}),
+    ('a\\,b,c', {'a,b', 'c'}),
+    ('a,a,b,c', {'a', 'b', 'c'}),  # duplicates
+    ('', set()),
+    ('a', {'a'}),
+    ('a,', {'a'}),
+    (',a', {'a'}),
+])
+def test_separated_string_to_set_parametrized(input_str, expected):
+    assert userprovided.parameters.separated_string_to_set(
+        input_str) == expected
+
+
 def test_validate_dict_keys():
     # not a dictionary
     with pytest.raises(AttributeError):

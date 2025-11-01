@@ -20,6 +20,7 @@ Userprovided has functionality for the following inputs:
   * [Check a dictionary](#check-a-parameter-dictionary) for valid, needed, and unknown keys.
   * [Avoid keys without value in a dictionary](#avoid-keys-without-value-in-a-dictionary) to ensure all values are present.
   * [Convert into a set](#convert-into-a-set) from lists, strings and tuples.
+  * [Parse separated strings into a set](#parse-separated-strings-into-a-set) with support for quotes and escaping.
   * [Check range of numbers and strings](#check-range-of-numbers-and-strings) to validate if values are in a specific range.
   * [Check integer range](#check-integer-range) with strict integer type enforcement.
   * [Enforce boolean type](#enforce-boolean-type) to reject truthy/falsy values.
@@ -99,6 +100,53 @@ Convert a string, a tuple, or a list into a set (i.e. no duplicates, unordered):
 ```python
 userprovided.parameters.convert_to_set(list)
 ```
+
+### Parse Separated Strings into a Set
+
+Parse comma-separated (or custom separator) strings into a set of trimmed, non-empty values. This function supports:
+- Custom separators (default: comma)
+- Quoted fields to include the separator character within values
+- Backslash escaping for special characters
+- Automatic trimming and deduplication
+
+```python
+# Basic comma-separated values
+userprovided.parameters.separated_string_to_set('a, b, c')
+# => {'a', 'b', 'c'}
+
+# Quoted fields with separator inside
+userprovided.parameters.separated_string_to_set('"hello, world", foo, bar')
+# => {'hello, world', 'foo', 'bar'}
+
+# Escaped separator
+userprovided.parameters.separated_string_to_set('a\\,b, c')
+# => {'a,b', 'c'}
+
+# Custom separator
+userprovided.parameters.separated_string_to_set('a|b|c', sep='|')
+# => {'a', 'b', 'c'}
+
+# Empty fields and whitespace are handled
+userprovided.parameters.separated_string_to_set('a, , b,  ,c')
+# => {'a', 'b', 'c'}
+
+# Disable quote parsing if needed
+userprovided.parameters.separated_string_to_set('"a,b",c', allow_quotes=False)
+# => {'"a', 'b"', 'c'}
+
+# Returns None for None input
+userprovided.parameters.separated_string_to_set(None)
+# => None
+```
+
+**Parameters:**
+- `raw_string`: The string to parse (or None)
+- `sep`: Separator character (default: `','`)
+- `allow_quotes`: Enable quote parsing (default: `True`)
+- `quote_char`: Quote character (default: `'"'`)
+
+**Raises:**
+- `ValueError`: If separator/quote_char is not a single character, if quote_char equals separator, or if quotes are unclosed
 
 ### Check Range of Numbers and Strings
 

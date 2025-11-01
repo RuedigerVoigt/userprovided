@@ -1,5 +1,17 @@
 # Changelog / History
 
+## Version 2.1.1 (2025-11-02)
+
+* New features:
+  * `parameters`:
+    * Added `separated_string_to_set` function to parse separated strings (CSV-like) into a set.
+      * Supports custom separators (default: comma).
+      * Quote support to include separators within fields.
+      * Backslash escaping for special characters.
+      * Automatic whitespace trimming and empty field removal.
+      * Returns None for None input, empty set for empty string.
+      * Comprehensive validation with helpful error messages.
+
 ## Version 2.1.0 (2025-11-01)
 
 * New features:
