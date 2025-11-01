@@ -1,5 +1,16 @@
 # Changelog / History
 
+## Version 2.1.0 (2025-11-01)
+
+* New features:
+  * `url`:
+    * Added `extract_domain` function to extract the domain (hostname) from a URL.
+      * Supports optional `drop_subdomain` parameter to extract only the registrable domain (e.g., `example.co.uk` from `www.subdomain.example.co.uk`).
+      * Correctly handles many 2-part TLDs (country code second-level domains) such as `.co.uk`, `.com.au`, `.co.jp`, etc.
+      * Properly handles edge cases: IPv4 addresses, IPv6 addresses, localhost, and single-word domains are returned unchanged.
+      * Case-insensitive domain normalization (returns lowercase).
+
+
 ## Version 2.0.0 (2025-10-28)
 
 * Supported Python versions:

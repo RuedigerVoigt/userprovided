@@ -11,6 +11,7 @@ Released under the Apache License 2.0
 
 
 # python standard library:
+import ipaddress
 import logging
 import mimetypes
 from typing import Dict, Optional, Union
@@ -327,3 +328,166 @@ def is_shortened_url(url: str) -> bool:
     except Exception:
         logging.debug('Error parsing URL for shortened URL detection')
         return False
+
+
+def extract_domain(url: str, drop_subdomain: bool = False) -> str:
+    """
+    Extract the domain (hostname) from a URL and handle most important two level TLDs.
+
+    Args:
+        url: Full URL string (e.g., 'https://www.example.com:8080/path')
+        drop_subdomain: If True, extracts only the registrable domain
+                        (domain + public suffix), removing subdomains.
+                        Handles multi-part TLDs correctly (e.g., .co.uk, .com.au).
+                        IP addresses and localhost are returned as-is.
+
+    Returns:
+        Domain string without port. For IP addresses (IPv4/IPv6) and localhost,
+        returns the address/hostname unchanged.
+
+    Raises:
+        ValueError: If url is empty or domain extraction fails
+
+    Example:
+        >>> extract_domain('https://www.example.com:8080/path')
+        'www.example.com'
+        >>> extract_domain('https://www.example.com', drop_subdomain=True)
+        'example.com'
+        >>> extract_domain('https://subdomain.example.co.uk/page', drop_subdomain=True)
+        'example.co.uk'
+        >>> extract_domain('https://www.example.com.au/page', drop_subdomain=True)
+        'example.com.au'
+        >>> extract_domain('http://192.168.1.1:8080/path', drop_subdomain=True)
+        '192.168.1.1'
+        >>> extract_domain('http://localhost:3000', drop_subdomain=True)
+        'localhost'
+    """
+
+    # Known 2-part TLDs (country code second-level domains)
+    # Note: This is a subset of common 2-part TLDs. For comprehensive coverage,
+    # consider using the Public Suffix List (https://publicsuffix.org/)
+    TWO_PART_TLDS = {
+        # United Kingdom
+        'co.uk', 'gov.uk', 'ac.uk', 'org.uk', 'net.uk',
+        # Japan
+        'co.jp', 'ne.jp', 'or.jp', 'go.jp', 'ac.jp',
+        # Australia
+        'com.au', 'net.au', 'org.au', 'edu.au', 'gov.au',
+        # New Zealand
+        'co.nz', 'net.nz', 'org.nz', 'ac.nz', 'govt.nz',
+        # South Africa
+        'co.za', 'net.za', 'org.za', 'gov.za', 'ac.za',
+        # India
+        'co.in', 'net.in', 'org.in', 'gen.in', 'firm.in',
+        # Brazil
+        'com.br', 'net.br', 'org.br', 'gov.br', 'edu.br',
+        # China
+        'com.cn', 'net.cn', 'org.cn', 'gov.cn', 'edu.cn',
+        # Mexico
+        'com.mx', 'net.mx', 'org.mx', 'gob.mx', 'edu.mx',
+        # Singapore
+        'com.sg', 'net.sg', 'org.sg', 'gov.sg', 'edu.sg',
+        # Hong Kong
+        'com.hk', 'net.hk', 'org.hk', 'gov.hk', 'edu.hk',
+        # Turkey
+        'com.tr', 'net.tr', 'org.tr', 'gen.tr', 'edu.tr',
+        # Israel
+        'co.il', 'ac.il', 'org.il', 'net.il', 'gov.il',
+        # South Korea
+        'co.kr', 'ne.kr', 'or.kr', 're.kr', 'go.kr',
+        # Argentina
+        'com.ar', 'net.ar', 'org.ar', 'gov.ar', 'edu.ar',
+        # Poland
+        'com.pl', 'net.pl', 'org.pl', 'gov.pl', 'edu.pl',
+        # Thailand
+        'co.th', 'in.th', 'go.th', 'ac.th', 'or.th',
+        # Vietnam
+        'com.vn', 'net.vn', 'org.vn', 'gov.vn', 'edu.vn',
+        # Austria
+        'co.at', 'or.at', 'gv.at', 'ac.at',
+        # Hungary
+        'co.hu', 'org.hu', 'gov.hu', 'edu.hu',
+    }
+
+    if not url or not url.strip():
+        raise ValueError("URL cannot be empty")
+
+    try:
+        parsed = urllib.parse.urlparse(url.strip())
+        domain = parsed.hostname
+
+        if not domain:
+            domain = parsed.netloc
+
+        if not domain:
+            raise ValueError(f"Could not extract domain from URL: {url}")
+
+        domain = domain.lower().strip()
+
+        if drop_subdomain:
+            domain = _extract_registrable_domain(domain, TWO_PART_TLDS)
+
+        return domain
+
+    except AttributeError as e:
+        raise ValueError(f"Invalid URL format: {url}") from e
+
+
+def _extract_registrable_domain(domain: str, two_part_tlds: set) -> str:
+    """
+    Extract the registrable domain (domain + public suffix) from a full hostname.
+
+    This removes subdomains while correctly handling 2-part TLDs, IP addresses,
+    and special cases like localhost.
+
+    Args:
+        domain: Full domain/hostname (e.g., 'www.example.co.uk')
+        two_part_tlds: Set of known 2-part TLDs (e.g., 'co.uk', 'com.au')
+
+    Returns:
+        Registrable domain (e.g., 'example.co.uk'), or the original domain
+        for IP addresses and localhost.
+
+    Algorithm:
+        1. Check if domain is an IP address (IPv4 or IPv6) - return as-is
+        2. Check if domain is localhost or single-word - return as-is
+        3. Check for 2-part TLD match (e.g., .co.uk, .com.au)
+        4. Fall back to simple single-part TLD (e.g., .com, .org)
+
+    Examples:
+        >>> _extract_registrable_domain('www.example.co.uk', TWO_PART_TLDS)
+        'example.co.uk'
+        >>> _extract_registrable_domain('subdomain.example.com', TWO_PART_TLDS)
+        'example.com'
+        >>> _extract_registrable_domain('deep.sub.example.com.au', TWO_PART_TLDS)
+        'example.com.au'
+        >>> _extract_registrable_domain('192.168.1.1', TWO_PART_TLDS)
+        '192.168.1.1'
+        >>> _extract_registrable_domain('localhost', TWO_PART_TLDS)
+        'localhost'
+    """
+    # Check if the domain is an IP address (IPv4 or IPv6)
+    try:
+        ipaddress.ip_address(domain)
+        # It's a valid IP address, return as-is
+        return domain
+    except ValueError:
+        # Not an IP address, continue with normal processing
+        pass
+
+    parts = domain.split('.')
+
+    if len(parts) <= 2:
+        # Already a registrable domain or less (e.g., 'example.com' or 'localhost')
+        return domain
+
+    # Check for 2-part TLD (e.g., co.uk, com.au)
+    if len(parts) >= 3:
+        potential_2part_tld = '.'.join(parts[-2:])
+        if potential_2part_tld in two_part_tlds:
+            # Return domain + 2-part TLD
+            return '.'.join(parts[-3:])
+
+    # Fall back to simple TLD (e.g., .com, .org)
+    # Return last 2 parts (domain + TLD)
+    return '.'.join(parts[-2:])

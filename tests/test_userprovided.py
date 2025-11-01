@@ -968,3 +968,113 @@ def test_enforce_boolean():
     # valid calls:
     userprovided.parameters.enforce_boolean(True)
     userprovided.parameters.enforce_boolean(False)
+
+
+@pytest.mark.parametrize("test_url,expected_domain", [
+    # Basic domain extraction without port
+    ('https://www.example.com/path', 'www.example.com'),
+    ('https://example.com', 'example.com'),
+    ('http://subdomain.example.com/page', 'subdomain.example.com'),
+    # Domain extraction with port
+    ('https://www.example.com:8080/path', 'www.example.com'),
+    ('http://example.com:3000', 'example.com'),
+    # Domain extraction with query parameters and fragments
+    ('https://www.example.com/path?foo=bar', 'www.example.com'),
+    ('https://example.com#fragment', 'example.com'),
+    ('https://www.example.com/path?foo=bar#fragment', 'www.example.com'),
+    # IP addresses
+    ('http://192.168.1.1/path', '192.168.1.1'),
+    ('http://192.168.1.1:8080', '192.168.1.1'),
+    ('http://[2001:db8::1]/path', '2001:db8::1'),
+    # Localhost
+    ('http://localhost/path', 'localhost'),
+    ('http://localhost:3000', 'localhost'),
+    # Case normalization
+    ('https://WWW.EXAMPLE.COM', 'www.example.com'),
+    ('HTTPS://Example.Com/Path', 'example.com'),
+])
+def test_extract_domain_basic(test_url, expected_domain):
+    assert userprovided.url.extract_domain(test_url) == expected_domain
+
+
+@pytest.mark.parametrize("test_url,expected_domain", [
+    # Simple TLDs - subdomains should be removed
+    ('https://www.example.com/path', 'example.com'),
+    ('https://subdomain.example.com', 'example.com'),
+    ('https://deep.subdomain.example.com', 'example.com'),
+    # 2-part TLDs - should preserve domain + 2-part TLD
+    ('https://www.example.co.uk/page', 'example.co.uk'),
+    ('https://subdomain.example.co.uk', 'example.co.uk'),
+    ('https://deep.sub.example.co.uk', 'example.co.uk'),
+    ('https://www.example.com.au/page', 'example.com.au'),
+    ('https://subdomain.example.com.au', 'example.com.au'),
+    ('https://www.example.co.jp', 'example.co.jp'),
+    ('https://www.example.gov.uk', 'example.gov.uk'),
+    ('https://www.example.com.br', 'example.com.br'),
+    ('https://www.example.co.in', 'example.co.in'),
+    # Already registrable domains
+    ('https://example.com', 'example.com'),
+    ('https://example.co.uk', 'example.co.uk'),
+    # IP addresses - should be returned unchanged
+    ('http://192.168.1.1:8080/path', '192.168.1.1'),
+    ('http://10.0.0.1', '10.0.0.1'),
+    ('http://[2001:db8::1]/path', '2001:db8::1'),
+    ('http://[::1]', '::1'),
+    # Localhost and single-word domains
+    ('http://localhost:3000', 'localhost'),
+    ('http://intranet/page', 'intranet'),
+])
+def test_extract_domain_drop_subdomain(test_url, expected_domain):
+    assert userprovided.url.extract_domain(test_url, drop_subdomain=True) == expected_domain
+
+
+def test_extract_domain_errors():
+    # Empty URL
+    with pytest.raises(ValueError, match="URL cannot be empty"):
+        userprovided.url.extract_domain('')
+
+    with pytest.raises(ValueError, match="URL cannot be empty"):
+        userprovided.url.extract_domain('   ')
+
+    # Invalid URL format - missing scheme
+    with pytest.raises(ValueError, match="Could not extract domain"):
+        userprovided.url.extract_domain('not-a-url')
+
+    # Invalid URL format - scheme only
+    with pytest.raises(ValueError, match="Could not extract domain"):
+        userprovided.url.extract_domain('http://')
+
+
+def test_extract_domain_edge_cases():
+    # URL with authentication info
+    result = userprovided.url.extract_domain('https://user:pass@example.com/path')
+    assert result == 'example.com'
+
+    # URL with authentication info and drop_subdomain
+    result = userprovided.url.extract_domain('https://user:pass@www.example.co.uk', drop_subdomain=True)
+    assert result == 'example.co.uk'
+
+    # Very deep subdomain hierarchy
+    result = userprovided.url.extract_domain('https://a.b.c.d.e.f.example.com', drop_subdomain=True)
+    assert result == 'example.com'
+
+    # Very deep subdomain with 2-part TLD
+    result = userprovided.url.extract_domain('https://a.b.c.d.e.f.example.co.uk', drop_subdomain=True)
+    assert result == 'example.co.uk'
+
+
+def test_extract_domain_whitespace():
+    # URL with leading/trailing whitespace
+    assert userprovided.url.extract_domain('  https://example.com  ') == 'example.com'
+    assert userprovided.url.extract_domain('\thttps://example.com\n') == 'example.com'
+
+
+def test_extract_domain_ipv6_variations():
+    # Various IPv6 formats (urlparse returns them as-is, doesn't compress)
+    assert userprovided.url.extract_domain('http://[::1]:8080') == '::1'
+    assert userprovided.url.extract_domain('http://[fe80::1]') == 'fe80::1'
+    assert userprovided.url.extract_domain('http://[2001:0db8:0000:0000:0000:0000:0000:0001]') == '2001:0db8:0000:0000:0000:0000:0000:0001'
+
+    # IPv6 with drop_subdomain should return unchanged
+    assert userprovided.url.extract_domain('http://[::1]', drop_subdomain=True) == '::1'
+    assert userprovided.url.extract_domain('http://[2001:db8::1]', drop_subdomain=True) == '2001:db8::1'
