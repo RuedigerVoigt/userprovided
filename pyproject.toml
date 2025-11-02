@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "userprovided"
-version = "2.1.0"
+version = "2.1.1"
 description = "A library to check user input for validity and / or plausibility"
 authors = ["Rüdiger Voigt <projects@ruediger-voigt.eu>"]
 readme = "README.md"
