@@ -1307,3 +1307,29 @@ def test_extract_tld_whitespace():
     # Whitespace should be handled
     assert userprovided.url.extract_tld('  https://example.com  ') == '.com'
     assert userprovided.url.extract_tld('\thttps://example.co.uk\n') == '.co.uk'
+
+
+def test_aws_s3_bucket_label_regex_fallback():
+    """Cover the final regex fallback (parameters.py lines 503-504).
+
+    The preceding checks already reject all inputs that would fail the
+    label regex, making this path effectively unreachable under normal
+    conditions.  We patch the regex to force the fallback path."""
+    with patch('userprovided.parameters._AWS_S3_BUCKET_LABELS') as mock_re:
+        mock_re.match.return_value = None
+        assert userprovided.parameters.is_aws_s3_bucket_name('valid') is False
+
+
+def test_extract_domain_attribute_error():
+    """Cover the AttributeError handler in extract_domain (url.py line 433)."""
+    with patch('userprovided.url.urllib.parse.urlparse',
+               side_effect=AttributeError('mocked')):
+        with pytest.raises(ValueError, match="Invalid URL format"):
+            userprovided.url.extract_domain('https://example.com')
+
+
+def test_extract_tld_generic_exception():
+    """Cover the generic Exception handler in extract_tld (url.py lines 506-508)."""
+    with patch('userprovided.url.urllib.parse.urlparse',
+               side_effect=RuntimeError('mocked')):
+        assert userprovided.url.extract_tld('https://example.com') == ''

@@ -4,7 +4,7 @@
 ![pypi version](https://img.shields.io/pypi/v/userprovided)
 ![Last commit](https://img.shields.io/github/last-commit/RuedigerVoigt/userprovided)
 [![Downloads](https://pepy.tech/badge/userprovided)](https://pepy.tech/project/userprovided)
-![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
 
 *"Never trust user input!"* is also true outside the security context: You cannot be sure users always provide you with valid and well-formatted data.
 For a wide range of data, the Python package `userprovided`:
@@ -64,6 +64,13 @@ To upgrade to the latest version accordingly:
 ```bash
 sudo pip install userprovided --upgrade
 ```
+
+## Tested and Used in Production
+
+`userprovided` has 100% test coverage, no external dependencies, and is used in production by projects such as:
+
+* [salted](https://github.com/RuedigerVoigt/salted) — a link checker and scraping tool
+* [exoskeleton](https://github.com/RuedigerVoigt/exoskeleton) — a web scraping framework
 
 ## Handle Parameters
 

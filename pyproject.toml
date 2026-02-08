@@ -1,11 +1,12 @@
 [tool.poetry]
 name = "userprovided"
 version = "2.1.1"
-description = "A library to check user input for validity and / or plausibility"
+description = "Validate, normalize, and convert user input: URLs, emails, dates, hashes, parameters — pure stdlib, no dependencies"
 authors = ["Rüdiger Voigt <projects@ruediger-voigt.eu>"]
 readme = "README.md"
 license = "Apache-2.0"
 packages = [{include = "userprovided"}]
+keywords = ["validation", "input", "sanitization", "url", "normalize", "hashing", "email", "parameters", "user-input", "type-checking"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -26,6 +27,7 @@ include = ["userprovided/py.typed"]
 
 [tool.poetry.urls]
 Homepage = "https://github.com/RuedigerVoigt/userprovided"
+Documentation = "https://github.com/RuedigerVoigt/userprovided#readme"
 Repository = "https://github.com/RuedigerVoigt/userprovided"
 Changelog = "https://github.com/RuedigerVoigt/userprovided/blob/master/CHANGELOG.md"
 "Bug Tracker" = "https://github.com/RuedigerVoigt/userprovided/issues"
