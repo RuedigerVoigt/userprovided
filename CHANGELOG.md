@@ -1,5 +1,11 @@
 # Changelog / History
 
+## Version 2.2.0 (unreleased)
+
+* New features:
+  * New module `finance`:
+    * Function `is_isin` to check if a string has the correct format for an ISIN, including Luhn checksum verification.
+
 ## Version 2.1.1 (2025-11-02)
 
 * New features:

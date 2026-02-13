@@ -41,6 +41,8 @@ Userprovided has functionality for the following inputs:
   * Convert English and German [long format dates to ISO](#normalize-long-form-dates) strings.
 * [mail](#check-email-addresses):
   * Check if a string is a valid email address.
+* [finance](#finance):
+  * [Validate ISIN](#validate-isin) (International Securities Identification Number).
 * [geo](#validate-geographic-coordinates):
   * [Validate coordinates](#validate-geographic-coordinates) to check if latitude and longitude are within valid Earth ranges.
 
@@ -399,6 +401,39 @@ userprovided.url.extract_tld('http://192.168.1.1')
 
 userprovided.url.extract_tld('http://localhost')
 # => ''
+```
+
+## Finance
+
+### Validate ISIN
+
+Check if a string has the correct format for an International Securities Identification Number (ISO 6166). An ISIN has 12 characters: a 2-letter country code, 9 alphanumeric characters, and a Luhn check digit. This validates the format and checksum, but does not verify the ISIN is actually registered. Accepts both upper and lowercase input.
+
+```python
+userprovided.finance.is_isin('DE0007236101')
+# => True (Siemens)
+
+userprovided.finance.is_isin('US5949181045')
+# => True (Microsoft)
+
+userprovided.finance.is_isin('INVALID')
+# => False
+
+# Skip checksum verification (format check only)
+userprovided.finance.is_isin('DE0007236102', verify_checksum=False)
+# => True (valid format, but wrong check digit)
+```
+
+### Normalize ISIN
+
+Validate and normalize an ISIN string. Returns the uppercased ISIN on success, or `None` on failure. This combines validation and normalization in a single call.
+
+```python
+userprovided.finance.normalize_isin('de0007236101')
+# => 'DE0007236101'
+
+userprovided.finance.normalize_isin('INVALID')
+# => None
 ```
 
 ## Check Email Addresses

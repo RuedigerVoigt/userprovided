@@ -13,6 +13,7 @@ Released under the Apache License 2.0
 from importlib.metadata import version
 
 from userprovided import date
+from userprovided import finance
 from userprovided import geo
 from userprovided import hashing
 from userprovided import mail
