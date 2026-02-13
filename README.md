@@ -23,6 +23,7 @@ Userprovided has functionality for the following inputs:
   * [Parse separated strings into a set](#parse-separated-strings-into-a-set) with support for quotes and escaping.
   * [Check range of numbers and strings](#check-range-of-numbers-and-strings) to validate if values are in a specific range.
   * [Check integer range](#check-integer-range) with strict integer type enforcement.
+  * [Clean and trim strings](#clean-and-trim-strings) by stripping whitespace and converting empty input to None or a custom value.
   * [Enforce boolean type](#enforce-boolean-type) to reject truthy/falsy values.
   * [Validate AWS S3 bucket names](#validate-aws-s3-bucket-names) against AWS naming rules.
 * [url](#handle-urls):
@@ -217,6 +218,39 @@ userprovided.parameters.int_in_range(
 ```
 
 The function validates that minimum ≤ maximum and that the fallback value is within the allowed range.
+
+### Clean and Trim Strings
+
+Strip leading and trailing whitespace from strings. Empty or whitespace-only strings are converted to `None` by default, or to a custom value via the `empty_as` parameter. This is a trivial operation, but it is a repeating input normalization pattern in web applications: HTML forms submit empty fields as `''` rather than omitting them. Before storing form data in a database, empty strings should be converted to `None` so that the column is `NULL` instead of an empty string.
+
+```python
+userprovided.parameters.clean_trim('')
+# => None
+
+userprovided.parameters.clean_trim('   ')
+# => None
+
+userprovided.parameters.clean_trim('  hello  ')
+# => 'hello'
+
+userprovided.parameters.clean_trim(None)
+# => None
+```
+
+**Parameters:**
+- `value`: The input string or `None`.
+- `empty_as`: The value to return when input is `None`, empty, or whitespace-only. Defaults to `None`. Set to `''` to keep empty strings, or use a custom placeholder.
+
+```python
+userprovided.parameters.clean_trim('', empty_as='N/A')
+# => 'N/A'
+
+userprovided.parameters.clean_trim('   ', empty_as='')
+# => ''
+```
+
+**Raises:**
+- `TypeError`: If `value` is not a string or `None`.
 
 ### Enforce Boolean Type
 

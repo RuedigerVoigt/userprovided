@@ -1126,6 +1126,51 @@ def test_string_in_range():
         userprovided.parameters.string_in_range(None, 1, 5)
 
 
+@pytest.mark.parametrize("value,expected", [
+    # None passthrough:
+    (None, None),
+    # Empty string:
+    ('', None),
+    # Whitespace-only strings:
+    ('   ', None),
+    ('\t', None),
+    ('\n', None),
+    ('  \t\n  ', None),
+    # Non-empty strings return stripped:
+    ('hello', 'hello'),
+    ('  hello  ', 'hello'),
+    ('\thello\n', 'hello'),
+    ('  some value  ', 'some value'),
+    # Single character:
+    ('a', 'a'),
+    (' a ', 'a'),
+])
+def test_clean_trim(value, expected):
+    assert userprovided.parameters.clean_trim(value) == expected
+
+
+def test_clean_trim_empty_as():
+    # empty_as='' returns empty string instead of None
+    assert userprovided.parameters.clean_trim('', empty_as='') == ''
+    assert userprovided.parameters.clean_trim('   ', empty_as='') == ''
+    assert userprovided.parameters.clean_trim(None, empty_as='') == ''
+    # empty_as with custom placeholder
+    assert userprovided.parameters.clean_trim('', empty_as='N/A') == 'N/A'
+    assert userprovided.parameters.clean_trim('   ', empty_as='N/A') == 'N/A'
+    assert userprovided.parameters.clean_trim(None, empty_as='N/A') == 'N/A'
+    # Non-empty strings still return stripped, regardless of empty_as
+    assert userprovided.parameters.clean_trim('  hello  ', empty_as='N/A') == 'hello'
+
+
+def test_clean_trim_type_error():
+    with pytest.raises(TypeError):
+        userprovided.parameters.clean_trim(123)
+    with pytest.raises(TypeError):
+        userprovided.parameters.clean_trim([])
+    with pytest.raises(TypeError):
+        userprovided.parameters.clean_trim(False)
+
+
 def test_enforce_boolean():
     # string instead of boolean
     with pytest.raises(ValueError):

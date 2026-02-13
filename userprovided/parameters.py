@@ -504,6 +504,41 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
     return False
 
 
+def clean_trim(value: Union[str, None],
+               empty_as: Union[str, None] = None) -> Union[str, None]:
+    """Strip whitespace and convert empty or whitespace-only strings.
+
+    This is a trivial operation, but it is a repeating input normalization
+    pattern in web applications: HTML forms submit empty fields as ``''``
+    rather than omitting them. Before storing form data in a database,
+    empty strings should be converted to ``None`` so that the column is
+    ``NULL`` instead of an empty string. Custom values are possible.
+    Non-empty strings are stripped of leading and trailing whitespace.
+
+    Args:
+        value: The input value. Typically a string from a web form.
+            None is accepted and returned as ``empty_as``.
+        empty_as: The value to return when the input is None, empty,
+            or whitespace-only. Defaults to None. Set to ``''`` to
+            keep empty strings, or to a placeholder like ``'N/A'``.
+
+    Returns:
+        ``empty_as`` if value is None, empty, or whitespace-only.
+        The stripped string otherwise.
+
+    Raises:
+        TypeError: If value is not a string or None.
+    """
+    if value is None:
+        return empty_as
+    if not isinstance(value, str):
+        raise TypeError('clean_trim expects a string or None.')
+    stripped = value.strip()
+    if stripped == '':
+        return empty_as
+    return stripped
+
+
 def enforce_boolean(parameter_value: bool,
                     parameter_name: Optional[str] = None) -> None:
     """Validates that a parameter is a boolean type.
