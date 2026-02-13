@@ -5,6 +5,8 @@
 * New features:
   * New module `finance`:
     * Function `is_isin` to check if a string has the correct format for an ISIN, including Luhn checksum verification.
+  * `url`:
+    * Added `url_matches_domain` function to check if a URL belongs to a specific domain, with subdomain matching.
 
 ## Version 2.1.1 (2025-11-02)
 

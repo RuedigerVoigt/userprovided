@@ -32,6 +32,7 @@ Userprovided has functionality for the following inputs:
   * [Determine a file extension](#determine-a-file-extension) from a URL and the MIME-type sent by the server.
   * [Extract domain from URL](#extract-domain-from-url) with optional subdomain removal, supporting 2-part TLDs.
   * [Extract TLD from URL](#extract-tld-from-url) correctly identifying both standard and 2-part TLDs.
+  * [Check if a URL belongs to a domain](#check-url-domain) with subdomain matching.
 * [hash](#hashes):
   * [Is the hash method available?](#check-hash-availability)
   * [Calculate a file hash](#calculate-a-file-hash) and (optionally) compare it to an expected value.
@@ -401,6 +402,23 @@ userprovided.url.extract_tld('http://192.168.1.1')
 
 userprovided.url.extract_tld('http://localhost')
 # => ''
+```
+
+### Check URL Domain
+
+Check if a URL belongs to a specific domain, with subdomain matching. All subdomains (including `www.`) are resolved to the registrable domain before comparison. This means `www.example.com`, `sub.example.com`, and `example.com` all match `example.com`. Correctly handles 2-part TLDs like `.co.uk`.
+
+Note: Because all subdomains are collapsed to the registrable domain, this function cannot distinguish `www.example.com` from `sub.example.com`. If you need to match a specific subdomain, use `extract_domain` directly and compare the full hostname.
+
+```python
+userprovided.url.url_matches_domain('https://en.wikipedia.org/wiki/Test', 'wikipedia.org')
+# => True
+
+userprovided.url.url_matches_domain('https://www.example.co.uk/page', 'example.co.uk')
+# => True
+
+userprovided.url.url_matches_domain('https://evil.com', 'wikipedia.org')
+# => False
 ```
 
 ## Finance

@@ -1366,6 +1366,39 @@ def test_finance_luhn_check_isin_invalid_char():
     assert userprovided.finance._luhn_check_isin('DE00072#6101') is False
 
 
+@pytest.mark.parametrize("url,domain,expected", [
+    # Exact match:
+    ('https://example.com/page', 'example.com', True),
+    ('https://wikipedia.org/wiki/Test', 'wikipedia.org', True),
+    # Subdomain match (www):
+    ('https://www.example.com/page', 'example.com', True),
+    ('https://www.wikipedia.org/wiki', 'wikipedia.org', True),
+    # Subdomain match (other):
+    ('https://en.wikipedia.org/wiki', 'wikipedia.org', True),
+    ('https://deep.sub.example.com/page', 'example.com', True),
+    # 2-part TLDs:
+    ('https://www.example.co.uk/page', 'example.co.uk', True),
+    ('https://sub.example.com.au', 'example.com.au', True),
+    # Case insensitivity:
+    ('https://WWW.EXAMPLE.COM', 'example.com', True),
+    ('https://example.com', 'EXAMPLE.COM', True),
+    # Domain with whitespace:
+    ('https://example.com', '  example.com  ', True),
+    # Non-matching domains:
+    ('https://example.com/page', 'other.com', False),
+    ('https://evil.com', 'wikipedia.org', False),
+    # Subdomain that looks similar but different registrable domain:
+    ('https://example.com.evil.com', 'example.com', False),
+    # Malformed URLs:
+    ('not-a-url', 'example.com', False),
+    ('', 'example.com', False),
+    # IP addresses don't match domain names:
+    ('http://192.168.1.1', 'example.com', False),
+])
+def test_url_matches_domain(url, domain, expected):
+    assert userprovided.url.url_matches_domain(url, domain) is expected
+
+
 def test_aws_s3_bucket_label_regex_fallback():
     """Cover the final regex fallback (parameters.py lines 503-504).
 

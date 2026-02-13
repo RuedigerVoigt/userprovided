@@ -566,3 +566,37 @@ def _extract_registrable_domain(domain: str, two_part_tlds: set) -> str:
     # Fall back to simple TLD (e.g., .com, .org)
     # Return last 2 parts (domain + TLD)
     return '.'.join(parts[-2:])
+
+
+def url_matches_domain(url: str, domain: str) -> bool:
+    """Check if a URL belongs to the specified domain.
+
+    Extracts the registrable domain from the URL using ``extract_domain``
+    with ``drop_subdomain=True`` and compares it to the given domain.
+    This means all subdomains (including ``www.``) are resolved to the
+    registrable domain before comparison.
+
+    Trade-off / Security: Because all subdomains are collapsed, this function cannot
+    distinguish ``www.example.com`` from ``sub.example.com`` — both match
+    ``example.com``. If you need to match a specific subdomain, use
+    ``extract_domain`` directly and compare the full hostname.
+
+    Args:
+        url: The URL to check. Must be a valid URL with a scheme and
+            network location.
+        domain: The domain to match against (e.g., ``'wikipedia.org'``).
+            Should not include a scheme or path. Compared case-insensitively.
+
+    Returns:
+        True if the URL's registrable domain matches, False otherwise.
+        Returns False for malformed URLs.
+    """
+    domain = domain.strip().lower()
+
+    try:
+        url_domain = extract_domain(url, drop_subdomain=True)
+    except ValueError:
+        logging.debug('Could not extract domain from URL: %s', url)
+        return False
+
+    return url_domain == domain
