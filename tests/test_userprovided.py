@@ -114,6 +114,19 @@ def test_calculate_file_hash_mocked_permission():
             assert "insufficient permissions" in str(excinfo.value)
 
 
+def test_calculate_file_hash_alias_bypass():
+    # Simulate a platform alias that resolves to a deprecated algorithm.
+    # Patch hash_available to let the alias pass the availability check,
+    # then verify the post-construction canonical name check catches it.
+    with patch('userprovided.hashing.hash_available', return_value=True), \
+         patch('hashlib.new') as mock_new:
+        mock_hash = mock_new.return_value
+        mock_hash.name = 'md5'
+        with pytest.raises(userprovided.err.DeprecatedHashAlgorithm,
+                           match="resolves to deprecated"):
+            userprovided.hashing.calculate_file_hash('testfile', 'some-alias')
+
+
 def test_calculate_file_hash_hashlib_error():
     # Test exception handling when hashlib.new raises ValueError
     # This shouldn't normally happen as hash_available checks first,
@@ -198,6 +211,19 @@ def test_calculate_string_hash_encoding():
     # Test invalid encoding
     with pytest.raises(UnicodeEncodeError):
         userprovided.hashing.calculate_string_hash("héllo", encoding='ascii')
+
+
+def test_calculate_string_hash_alias_bypass():
+    # Simulate a platform alias that resolves to a deprecated algorithm.
+    # Patch hash_available to let the alias pass the availability check,
+    # then verify the post-construction canonical name check catches it.
+    with patch('userprovided.hashing.hash_available', return_value=True), \
+         patch('hashlib.new') as mock_new:
+        mock_hash = mock_new.return_value
+        mock_hash.name = 'sha1'
+        with pytest.raises(userprovided.err.DeprecatedHashAlgorithm,
+                           match="resolves to deprecated"):
+            userprovided.hashing.calculate_string_hash('test', 'some-alias')
 
 
 def test_calculate_string_hash_hashlib_error():

@@ -7,6 +7,8 @@
     * Function `is_isin` to check if a string has the correct format for an ISIN, including Luhn checksum verification.
   * `parameters`:
     * Added `clean_trim` function to strip whitespace and convert empty or whitespace-only strings to None or a custom value. Trivial, but often needed in web applications.
+  * `hashing`:
+    * Strengthened deprecated hash algorithm check: post-construction verification of canonical name catches platform-specific aliases that bypass the string blocklist.
   * `url`:
     * Added `url_matches_domain` function to check if a URL belongs to a specific domain, with subdomain matching.
 

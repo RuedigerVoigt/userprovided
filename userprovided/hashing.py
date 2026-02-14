@@ -112,6 +112,12 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
     except ValueError as e:
         raise ValueError(f"Hash method {hash_method} not supported: {e}") from e
 
+    # Check canonical name to catch platform-specific aliases
+    # (e.g., 'sha' resolving to 'sha1')
+    if _hash_is_deprecated(h.name):
+        raise err.DeprecatedHashAlgorithm(
+            f"Hash method '{hash_method}' resolves to deprecated algorithm '{h.name}'")
+
     try:
         with open(pathlib.Path(file_path), 'rb') as file:
             while chunk := file.read(65536):
@@ -189,6 +195,12 @@ def calculate_string_hash(data: str,
             h = hashlib.new(hash_method)
         except ValueError as e:
             raise ValueError(f"Hash method {hash_method} not supported: {e}") from e
+
+        # Check canonical name to catch platform-specific aliases
+        # (e.g., 'sha' resolving to 'sha1')
+        if _hash_is_deprecated(h.name):
+            raise err.DeprecatedHashAlgorithm(
+                f"Hash method '{hash_method}' resolves to deprecated algorithm '{h.name}'")
 
         h.update(byte_data)
         calculated_hash = h.hexdigest()
