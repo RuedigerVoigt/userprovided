@@ -98,6 +98,11 @@ def calculate_file_hash(file_path: Union[pathlib.Path, str],
             doesn't match expected_hash.
         FileNotFoundError: If the specified file doesn't exist.
         PermissionError: If insufficient permissions to read the file.
+
+    Note:
+        This function does not restrict which files can be hashed. The
+        caller is responsible for ensuring file_path points to an
+        intended file and does not contain path traversal sequences.
     """
 
     if _hash_is_deprecated(hash_method):
