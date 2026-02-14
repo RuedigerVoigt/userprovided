@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "userprovided"
-version = "2.1.1"
+version = "2.2.0"
 description = "Validate, normalize, and convert user input: URLs, emails, dates, hashes, parameters — pure stdlib, no dependencies"
 authors = ["Rüdiger Voigt <projects@ruediger-voigt.eu>"]
 readme = "README.md"
 license = "Apache-2.0"
 packages = [{include = "userprovided"}]
-keywords = ["validation", "input", "sanitization", "url", "normalize", "hashing", "email", "parameters", "user-input", "type-checking"]
+keywords = ["validation", "input", "sanitization", "url", "normalize", "hashing", "email", "parameters", "user-input", "type-checking", "finance", "data-cleaning", "no-dependencies"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",

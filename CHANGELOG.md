@@ -1,6 +1,6 @@
 # Changelog / History
 
-## Version 2.2.0 (unreleased)
+## Version 2.2.0 (2026-02-14)
 
 * New features:
   * New module `finance`:
