@@ -11,6 +11,7 @@
 * Security fixes:
   * `mail`: enforce RFC 5321 length limits (254 chars total, 64 chars for local part) before regex matching.
   * `url`: reject strings exceeding 2048 characters in `is_url`, `extract_domain`, `extract_tld`, and `_host_from_url` (used by the `ip` module).
+  * `url`: remove raw URL from `ValueError` messages in `extract_domain` to prevent log injection and XSS in calling applications.
 * Bug fixes:
   * `hashing`: simplified convoluted `None`/empty guard in `hash_available` — replaced two-step conditional with a single clean check.
 

@@ -443,7 +443,7 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
             domain = parsed.netloc
 
         if not domain:
-            raise ValueError(f"Could not extract domain from URL: {url}")
+            raise ValueError("Could not extract domain from URL.")
 
         domain = domain.lower().strip()
 
@@ -453,7 +453,7 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
         return domain
 
     except AttributeError as e:
-        raise ValueError(f"Invalid URL format: {url}") from e
+        raise ValueError("Invalid URL format.") from e
 
 
 def extract_tld(url: str) -> str:
