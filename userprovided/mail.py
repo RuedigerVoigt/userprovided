@@ -49,6 +49,16 @@ def is_email(mailaddress: str) -> bool:
         return False
 
     mailaddress = mailaddress.strip()
+
+    # RFC 5321: max 254 characters total, max 64 for the local part
+    if len(mailaddress) > 254:
+        logging.debug('Email address exceeds RFC 5321 maximum of 254 characters.')
+        return False
+    local_part = mailaddress.split('@')[0]
+    if len(local_part) > 64:
+        logging.debug('Email local part exceeds RFC 5321 maximum of 64 characters.')
+        return False
+
     if not _EMAIL_PATTERN.match(mailaddress):
         logging.debug(
             'The supplied mailaddress %s has an unknown format.', mailaddress)

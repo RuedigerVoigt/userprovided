@@ -1,5 +1,19 @@
 # Changelog / History
 
+## Version 2.3.0 (unreleased)
+
+* New features:
+  * New module `ip`:
+    * `is_loopback`: check whether a URL's host is a loopback address (127.0.0.0/8, ::1, localhost).
+    * `is_private`: check whether a URL's host is a private address (RFC 1918, IPv6 unique-local fc00::/7).
+    * `is_link_local`: check whether a URL's host is a link-local address (169.254.0.0/16, fe80::/10, .local hostnames).
+    * `is_potential_ssrf_target`: preflight guard combining all three checks.
+* Security fixes:
+  * `mail`: enforce RFC 5321 length limits (254 chars total, 64 chars for local part) before regex matching.
+  * `url`: reject strings exceeding 2048 characters in `is_url`, `extract_domain`, `extract_tld`, and `_host_from_url` (used by the `ip` module).
+* Bug fixes:
+  * `hashing`: simplified convoluted `None`/empty guard in `hash_available` — replaced two-step conditional with a single clean check.
+
 ## Version 2.2.0 (2026-02-14)
 
 * New features:

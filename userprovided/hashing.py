@@ -53,11 +53,9 @@ def hash_available(hash_method: str,
             fail_on_deprecated is True.
     """
 
-    if hash_method:
-        hash_method = hash_method.strip()
-
-    if hash_method == '' or hash_method is None:
+    if not hash_method or not hash_method.strip():
         raise ValueError('No hash method provided')
+    hash_method = hash_method.strip()
 
     # Is the chosen method available and supported?
 

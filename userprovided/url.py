@@ -20,6 +20,11 @@ import urllib.parse
 from userprovided import err
 
 
+# Practical upper bound for URL length. No hard RFC limit exists, but most
+# HTTP servers and browsers reject URLs beyond 2048–8192 characters.
+# Accepting arbitrarily long strings risks slow regex processing and memory use.
+_MAX_URL_LENGTH = 2048
+
 # Known 2-part TLDs (country code second-level domains)
 # Note: This is a subset of common 2-part TLDs. For comprehensive coverage,
 # consider using the Public Suffix List (https://publicsuffix.org/)
@@ -67,6 +72,17 @@ TWO_PART_TLDS = {
 }
 
 
+def _host_from_url(url: str) -> Optional[str]:
+    """Extract the lowercase hostname from a URL, or None on failure."""
+    if len(url) > _MAX_URL_LENGTH:
+        return None
+    try:
+        host = urllib.parse.urlparse(url.strip()).hostname
+        return host.lower() if host else None
+    except Exception:
+        return None
+
+
 def is_url(url: str,
            require_specific_schemes: Union[tuple, None] = None) -> bool:
     """Validates basic URL format without attempting connection.
@@ -82,6 +98,10 @@ def is_url(url: str,
     Returns:
         True if URL has valid basic structure, False otherwise.
     """
+    if len(url) > _MAX_URL_LENGTH:
+        logging.debug('URL exceeds maximum length of %d characters.', _MAX_URL_LENGTH)
+        return False
+
     parsed = urllib.parse.urlparse(url)
 
     if parsed.scheme == '':
@@ -412,6 +432,9 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
     if not url or not url.strip():
         raise ValueError("URL cannot be empty")
 
+    if len(url) > _MAX_URL_LENGTH:
+        raise ValueError(f"URL exceeds maximum length of {_MAX_URL_LENGTH} characters.")
+
     try:
         parsed = urllib.parse.urlparse(url.strip())
         domain = parsed.hostname
@@ -466,6 +489,9 @@ def extract_tld(url: str) -> str:
     """
     if not url or not url.strip():
         raise ValueError("URL cannot be empty")
+
+    if len(url) > _MAX_URL_LENGTH:
+        raise ValueError(f"URL exceeds maximum length of {_MAX_URL_LENGTH} characters.")
 
     try:
         parsed = urllib.parse.urlparse(url.strip())

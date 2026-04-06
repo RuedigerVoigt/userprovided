@@ -14,6 +14,7 @@ from importlib.metadata import version
 
 from userprovided import date
 from userprovided import finance
+from userprovided import ip
 from userprovided import geo
 from userprovided import hashing
 from userprovided import mail

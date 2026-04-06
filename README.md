@@ -34,6 +34,11 @@ Userprovided has functionality for the following inputs:
   * [Extract domain from URL](#extract-domain-from-url) with optional subdomain removal, supporting 2-part TLDs.
   * [Extract TLD from URL](#extract-tld-from-url) correctly identifying both standard and 2-part TLDs.
   * [Check if a URL belongs to a domain](#check-url-domain) with subdomain matching.
+* [ip](#check-ip-addresses):
+  * [Check for loopback addresses](#check-for-loopback-addresses) (127.0.0.0/8, ::1, localhost).
+  * [Check for private addresses](#check-for-private-addresses) (RFC 1918, IPv6 unique-local).
+  * [Check for link-local addresses](#check-for-link-local-addresses) (169.254.0.0/16 incl. cloud metadata, fe80::/10, .local).
+  * [Check for potential SSRF targets](#check-for-potential-ssrf-targets) combining all three checks.
 * [hash](#hashes):
   * [Is the hash method available?](#check-hash-availability)
   * [Calculate a file hash](#calculate-a-file-hash) and (optionally) compare it to an expected value.
@@ -453,6 +458,49 @@ userprovided.url.url_matches_domain('https://www.example.co.uk/page', 'example.c
 
 userprovided.url.url_matches_domain('https://evil.com', 'wikipedia.org')
 # => False
+```
+
+## Check IP Addresses
+
+These functions extract the host from a URL and check its IP address properties. They do **not** perform DNS resolution — hostnames that are not IP addresses are only matched by name (e.g., `localhost`, `.local`).
+
+### Check for Loopback Addresses
+
+Returns `True` for IPv4 loopback (`127.0.0.0/8`), IPv6 loopback (`::1`), and the hostname `localhost`.
+
+```python
+userprovided.ip.is_loopback('http://127.0.0.1/')    # => True
+userprovided.ip.is_loopback('http://localhost/')     # => True
+userprovided.ip.is_loopback('https://example.com/') # => False
+```
+
+### Check for Private Addresses
+
+Returns `True` for RFC 1918 ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) and IPv6 unique-local (`fc00::/7`).
+
+```python
+userprovided.ip.is_private('http://192.168.1.1/')   # => True
+userprovided.ip.is_private('http://8.8.8.8/')       # => False
+```
+
+### Check for Link-Local Addresses
+
+Returns `True` for IPv4 link-local (`169.254.0.0/16`, including the cloud metadata endpoint `169.254.169.254`), IPv6 link-local (`fe80::/10`), and hostnames ending with `.local` (mDNS).
+
+```python
+userprovided.ip.is_link_local('http://169.254.169.254/')  # => True (AWS/GCP/Azure metadata)
+userprovided.ip.is_link_local('http://myprinter.local/')  # => True
+userprovided.ip.is_link_local('https://example.com/')     # => False
+```
+
+### Check for Potential SSRF Targets
+
+Combines `is_loopback`, `is_private`, and `is_link_local`. Use this as a preflight guard before fetching a user-supplied URL.
+
+```python
+userprovided.ip.is_potential_ssrf_target('http://169.254.169.254/') # => True
+userprovided.ip.is_potential_ssrf_target('http://192.168.1.1/')     # => True
+userprovided.ip.is_potential_ssrf_target('https://example.com/')    # => False
 ```
 
 ## Finance
