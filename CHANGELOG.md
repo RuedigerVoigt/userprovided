@@ -1,6 +1,6 @@
 # Changelog / History
 
-## Version 2.3.0 (unreleased)
+## Version 2.3.0 (2026-04-06)
 
 * New features:
   * New module `ip`:
