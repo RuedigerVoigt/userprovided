@@ -5,7 +5,7 @@
 Checking and normalizing dates for the userprovided library
 ~~~~~~~~~~~~~~~~~~~~~
 Source: https://github.com/RuedigerVoigt/userprovided
-Copyright (c) 2020-2025 Rüdiger Voigt and contributors
+Copyright (c) 2020-2026 Rüdiger Voigt and contributors
 Released under the Apache License 2.0
 """
 
