@@ -19,4 +19,4 @@ jobs:
         pip install bandit
 
     - name: Run Bandit Security Analysis
-      run: bandit -r userprovided/ -ll --exclude tests/
+      run: bandit -r userprovided/ --exclude tests/
