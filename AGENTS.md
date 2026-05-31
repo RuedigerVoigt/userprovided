@@ -14,8 +14,15 @@ The Python package userprovided checks input for validity and plausibility. It a
 * userprovided          # top-level project directory
   * .github
     * /workflows        # GitHub workflows used for testing every commit
-  * tests               # test files
-    * test_userprovided.py  # tests to run with pytest
+  * tests               # test files (one test_<module>.py per source module)
+    * test_date.py
+    * test_finance.py
+    * test_geo.py
+    * test_hashing.py
+    * test_ip.py
+    * test_mail.py
+    * test_parameters.py
+    * test_url.py
   * userprovided        # source code of the python package
     * date.py
     * err.py
@@ -59,7 +66,7 @@ The Python package userprovided checks input for validity and plausibility. It a
 
 ### Test driven development:
 
-* **MANDATORY**: Add tests for new code in [tests/test_userprovided.py](tests/test_userprovided.py) - agents must do this automatically, not wait to be asked.
+* **MANDATORY**: Add tests for new code in the matching `tests/test_<module>.py` file (e.g. `tests/test_url.py` for `userprovided/url.py`) - agents must do this automatically, not wait to be asked.
 * **Tests are required before code submission** - incomplete PRs will be rejected.
 * **Verify tests pass**: Run `pytest -q` to confirm all tests pass before considering the task complete.
 * **Document new features**: Add new functions, classes, or significant changes to [CHANGELOG.md](CHANGELOG.md) under the "Upcoming" section.
@@ -127,7 +134,7 @@ Before submitting a pull request, ensure all of the following pass (these comman
 - [ ] **Type checking**: `mypy userprovided/` (must show no errors)
 - [ ] **Security scan**: `bandit -r userprovided/ -ll --exclude tests/` (must show no issues)
 - [ ] **Documentation**: New features added to CHANGELOG.md under "Upcoming" section
-- [ ] **Tests added**: New functionality has tests in `tests/test_userprovided.py`
+- [ ] **Tests added**: New functionality has tests in the matching `tests/test_<module>.py`
 - [ ] **Branch target**: Pull request targets `develop` branch (not `main` or `master`)
 - [ ] **PR description includes**: Agent name (e.g., "Claude Code", "GPT-5", "Codex")
 

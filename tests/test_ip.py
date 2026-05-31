@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Tests for the ip module of userprovided.
+~~~~~~~~~~~~~~~~~~~~~
+Source: https://github.com/RuedigerVoigt/userprovided
+Released under the Apache License 2.0
+"""
+
+# flake8: noqa
+
+import userprovided
+
+
+def test_ip_is_loopback():
+    # IPv4 loopback range
+    assert userprovided.ip.is_loopback('http://127.0.0.1/') is True
+    assert userprovided.ip.is_loopback('http://127.0.0.2/') is True
+    assert userprovided.ip.is_loopback('http://127.255.255.255/') is True
+    # IPv6 loopback
+    assert userprovided.ip.is_loopback('http://[::1]/') is True
+    # localhost hostname
+    assert userprovided.ip.is_loopback('http://localhost/') is True
+    assert userprovided.ip.is_loopback('http://localhost:8080/path') is True
+    # Not loopback
+    assert userprovided.ip.is_loopback('http://192.168.1.1/') is False
+    assert userprovided.ip.is_loopback('http://10.0.0.1/') is False
+    assert userprovided.ip.is_loopback('http://example.com/') is False
+    assert userprovided.ip.is_loopback('http://8.8.8.8/') is False
+    # Malformed
+    assert userprovided.ip.is_loopback('not-a-url') is False
+    assert userprovided.ip.is_loopback('') is False
+
+
+def test_ip_is_private():
+    # RFC 1918 ranges
+    assert userprovided.ip.is_private('http://10.0.0.1/') is True
+    assert userprovided.ip.is_private('http://10.255.255.255/') is True
+    assert userprovided.ip.is_private('http://172.16.0.1/') is True
+    assert userprovided.ip.is_private('http://172.31.255.255/') is True
+    assert userprovided.ip.is_private('http://192.168.0.1/') is True
+    assert userprovided.ip.is_private('http://192.168.255.255/') is True
+    # IPv6 unique-local
+    assert userprovided.ip.is_private('http://[fc00::1]/') is True
+    assert userprovided.ip.is_private('http://[fd00::1]/') is True
+    # Not private
+    assert userprovided.ip.is_private('http://8.8.8.8/') is False
+    assert userprovided.ip.is_private('http://172.32.0.1/') is False  # outside 172.16/12
+    assert userprovided.ip.is_private('http://example.com/') is False
+    # Malformed
+    assert userprovided.ip.is_private('not-a-url') is False
+    assert userprovided.ip.is_private('') is False
+
+
+def test_ip_is_link_local():
+    # IPv4 link-local range (includes cloud metadata endpoint)
+    assert userprovided.ip.is_link_local('http://169.254.0.1/') is True
+    assert userprovided.ip.is_link_local('http://169.254.169.254/') is True  # AWS/GCP/Azure metadata
+    assert userprovided.ip.is_link_local('http://169.254.255.255/') is True
+    # IPv6 link-local
+    assert userprovided.ip.is_link_local('http://[fe80::1]/') is True
+    # .local hostnames (mDNS)
+    assert userprovided.ip.is_link_local('http://myprinter.local/') is True
+    assert userprovided.ip.is_link_local('http://nas.local:8080/') is True
+    # Not link-local
+    assert userprovided.ip.is_link_local('http://8.8.8.8/') is False
+    assert userprovided.ip.is_link_local('http://192.168.1.1/') is False
+    assert userprovided.ip.is_link_local('http://example.com/') is False
+    # Malformed
+    assert userprovided.ip.is_link_local('not-a-url') is False
+    assert userprovided.ip.is_link_local('') is False
+
+
+def test_ip_is_potential_ssrf_target():
+    # Loopback
+    assert userprovided.ip.is_potential_ssrf_target('http://127.0.0.1/') is True
+    assert userprovided.ip.is_potential_ssrf_target('http://localhost/') is True
+    assert userprovided.ip.is_potential_ssrf_target('http://[::1]/') is True
+    # Private
+    assert userprovided.ip.is_potential_ssrf_target('http://10.0.0.1/') is True
+    assert userprovided.ip.is_potential_ssrf_target('http://172.16.0.1/') is True
+    assert userprovided.ip.is_potential_ssrf_target('http://192.168.1.1/') is True
+    assert userprovided.ip.is_potential_ssrf_target('http://[fc00::1]/') is True
+    # Link-local
+    assert userprovided.ip.is_potential_ssrf_target('http://169.254.169.254/') is True
+    assert userprovided.ip.is_potential_ssrf_target('http://[fe80::1]/') is True
+    assert userprovided.ip.is_potential_ssrf_target('http://myhost.local/') is True
+    # Safe public addresses
+    assert userprovided.ip.is_potential_ssrf_target('https://example.com/') is False
+    assert userprovided.ip.is_potential_ssrf_target('http://8.8.8.8/') is False
+    assert userprovided.ip.is_potential_ssrf_target('https://www.example.co.uk/') is False
+    # Malformed
+    assert userprovided.ip.is_potential_ssrf_target('not-a-url') is False
+    assert userprovided.ip.is_potential_ssrf_target('') is False
