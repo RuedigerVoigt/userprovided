@@ -17,7 +17,8 @@ import re
 
 # Compiled regex patterns for performance optimization
 _REGEX_LONG_DATE_EN = re.compile(
-    r"(?P<monthL>[a-zA-Z\.]{3,9})\s+(?P<day>\d{1,2})(?:st|nd|rd|th)?,\s*(?P<year>\d\d\d\d)")
+    r"(?P<monthL>[a-zA-Z\.]{3,9})\s+(?P<day>\d{1,2})(?:st|nd|rd|th)?"
+    r",\s*(?P<year>\d\d\d\d)")
 _REGEX_LONG_DATE_DE = re.compile(
     r"(?P<day>\d{1,2})\.\s+(?P<monthL>[a-zA-ZÄä\.]{3,9})\s+(?P<year>\d{4})")
 

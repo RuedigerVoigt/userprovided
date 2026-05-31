@@ -19,7 +19,9 @@ from userprovided import err
 # Compiled regex patterns for performance optimization
 _AWS_S3_BUCKET_CHARS = re.compile(r"^[a-z0-9\-\.]*$")
 _AWS_S3_BUCKET_IPV4 = re.compile(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
-_AWS_S3_BUCKET_LABELS = re.compile(r"^([a-z0-9]([a-z0-9\-]*[a-z0-9])?\.)*[a-z0-9]([a-z0-9\-]*[a-z0-9])?$")
+_AWS_S3_BUCKET_LABELS = re.compile(
+    r"^([a-z0-9]([a-z0-9\-]*[a-z0-9])?\.)*"
+    r"[a-z0-9]([a-z0-9\-]*[a-z0-9])?$")
 
 
 def convert_to_set(convert_this: Union[list, set, str, tuple]) -> set:
@@ -416,7 +418,8 @@ def string_in_range(string_to_check: str,
         raise TypeError('string_to_check must be a string.')
 
     if minimum_length > maximum_length:
-        raise err.ContradictoryParameters("Minimum must not be larger than maximum value.")
+        raise err.ContradictoryParameters(
+            "Minimum must not be larger than maximum value.")
     enforce_boolean(strip_string)
 
     if strip_string:
@@ -489,7 +492,8 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
 
     # Check for consecutive dots or invalid dot-hyphen patterns
     if '..' in bucket_name or '.-' in bucket_name or '-.' in bucket_name:
-        logging.debug('AWS bucket name cannot contain consecutive dots or dot-hyphen patterns.')
+        logging.debug('AWS bucket name cannot contain consecutive dots '
+                      'or dot-hyphen patterns.')
         return False
 
     # Final validation: Each label (part between dots) must:

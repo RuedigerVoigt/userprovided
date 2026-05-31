@@ -21,7 +21,8 @@ _EMAIL_PATTERN = re.compile(
     r"@"  # @
     r"[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?"  # Domain label
     r"(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*"  # More domain labels
-    r"\.(?:[a-zA-Z0-9]{2,}|[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9])$"  # TLD (minimum 2 chars, alphanumeric+hyphen for IDN)
+    # TLD: min 2 chars; alphanumeric + hyphen for IDN
+    r"\.(?:[a-zA-Z0-9]{2,}|[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9])$"
 )
 
 

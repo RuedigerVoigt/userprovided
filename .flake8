@@ -1,0 +1,4 @@
+[flake8]
+# Match the line length enforced in .github/workflows/flake8-test.yml so a
+# local `flake8` run does not flag lines that CI accepts.
+max-line-length = 127

@@ -61,7 +61,8 @@ def hash_available(hash_method: str,
 
     if fail_on_deprecated:
         if _hash_is_deprecated(hash_method):
-            raise err.DeprecatedHashAlgorithm(f'The supplied hash method {hash_method} is deprecated!')
+            raise err.DeprecatedHashAlgorithm(
+                f'The supplied hash method {hash_method} is deprecated!')
 
     if hash_method in hashlib.algorithms_available:
         logging.debug('Hash method %s is available.', hash_method)
@@ -155,7 +156,7 @@ def calculate_string_hash(data: str,
 
     This is a generic hash utility for non-security use cases such as
     fingerprints, cache keys, or content de-duplication.
-    
+
     Do NOT use it for:
       - Password storage
       - Message integrity/authenticity
@@ -203,7 +204,8 @@ def calculate_string_hash(data: str,
         # (e.g., 'sha' resolving to 'sha1')
         if _hash_is_deprecated(h.name):
             raise err.DeprecatedHashAlgorithm(
-                f"Hash method '{hash_method}' resolves to deprecated algorithm '{h.name}'")
+                f"Hash method '{hash_method}' resolves to "
+                f"deprecated algorithm '{h.name}'")
 
         h.update(byte_data)
         calculated_hash = h.hexdigest()

@@ -108,5 +108,5 @@ def is_isin(isin_candidate: str) -> bool:
     if not _luhn_check_isin(isin_candidate):
         logging.debug('ISIN Luhn checksum verification failed.')
         return False
-    
+
     return True
