@@ -28,5 +28,5 @@ jobs:
     - name: Install package
       run: pip install -e .
 
-    - name: Run tests with coverage check (minimum 95%)
-      run: pytest --cov=userprovided --cov-fail-under=95 tests/
+    - name: Run tests with coverage check (100% enforced)
+      run: pytest --cov=userprovided --cov-fail-under=100 tests/

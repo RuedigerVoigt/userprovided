@@ -1,5 +1,10 @@
 # Changelog / History
 
+## Unreleased
+
+* Tooling:
+  * CI: coverage gate raised from 95% to 100% (enforced) to match the release standard.
+
 ## Version 2.3.0 (2026-04-06)
 
 * New features:
