@@ -15,8 +15,6 @@ class UserprovidedException(Exception):
 
     All custom exceptions in the userprovided library inherit from this class.
     """
-    def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
-        Exception.__init__(self, *args, **kwargs)
 
 
 class QueryKeyConflict(UserprovidedException):
