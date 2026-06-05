@@ -7,6 +7,7 @@
 * Tooling:
   * CI: coverage gate raised from 95% to 100% (enforced) to match the release standard.
   * CI: bumped GitHub Actions to current major versions.
+  * CI: added Python 3.15 beta to the test matrices (ubuntu/windows/macOS/mypy) as a non-blocking, allow-prereleases job.
 
 ## Version 2.3.0 (2026-04-06)
 
