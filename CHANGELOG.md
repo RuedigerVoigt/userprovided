@@ -2,8 +2,11 @@
 
 ## Unreleased
 
+* Tests:
+  * Tests split into multiple files.
 * Tooling:
   * CI: coverage gate raised from 95% to 100% (enforced) to match the release standard.
+  * CI: bumped GitHub Actions to current major versions.
 
 ## Version 2.3.0 (2026-04-06)
 
