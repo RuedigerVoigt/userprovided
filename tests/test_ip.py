@@ -13,6 +13,22 @@ Released under the Apache License 2.0
 import userprovided
 
 
+def test_parse_ip():
+    import ipaddress
+    # Standard dotted notation
+    assert userprovided.ip._parse_ip('127.0.0.1') == ipaddress.ip_address('127.0.0.1')
+    # Decimal integer encoding
+    assert userprovided.ip._parse_ip('2130706433') == ipaddress.ip_address('127.0.0.1')
+    # Hex encoding
+    assert userprovided.ip._parse_ip('0x7f000001') == ipaddress.ip_address('127.0.0.1')
+    # Old-style octal encoding
+    assert userprovided.ip._parse_ip('017700000001') == ipaddress.ip_address('127.0.0.1')
+    # Octal string too large to be a valid IP address — exercises the except branch
+    assert userprovided.ip._parse_ip('0' + '7' * 44) is None
+    # Plain hostname — not an IP in any encoding
+    assert userprovided.ip._parse_ip('example.com') is None
+
+
 def test_ip_is_loopback():
     # IPv4 loopback range
     assert userprovided.ip.is_loopback('http://127.0.0.1/') is True
@@ -93,3 +109,16 @@ def test_ip_is_potential_ssrf_target():
     # Malformed
     assert userprovided.ip.is_potential_ssrf_target('not-a-url') is False
     assert userprovided.ip.is_potential_ssrf_target('') is False
+    # Alternate IP encodings that bypass naive ipaddress.ip_address() checks:
+    # Decimal integer encoding of 127.0.0.1
+    assert userprovided.ip.is_potential_ssrf_target('http://2130706433/') is True
+    # Hex encoding of 127.0.0.1
+    assert userprovided.ip.is_potential_ssrf_target('http://0x7f000001/') is True
+    # Old-style octal encoding of 127.0.0.1
+    assert userprovided.ip.is_potential_ssrf_target('http://017700000001/') is True
+    # Decimal integer encoding of 192.168.1.1 (private)
+    assert userprovided.ip.is_potential_ssrf_target('http://3232235777/') is True
+    # Decimal integer encoding of 169.254.169.254 (link-local / cloud metadata)
+    assert userprovided.ip.is_potential_ssrf_target('http://2852039166/') is True
+    # A large integer that is not a valid IP address
+    assert userprovided.ip.is_potential_ssrf_target('http://99999999999999/') is False

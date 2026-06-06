@@ -16,6 +16,49 @@ import logging
 from userprovided.url import _host_from_url
 
 
+def _parse_ip(host: str):
+    """Try to parse a host string as an IP address, including alternate encodings.
+
+    ``ipaddress.ip_address()`` only accepts standard dotted-decimal notation.
+    However, many HTTP clients and operating-system network stacks also accept
+    alternate integer encodings of IPv4 addresses:
+
+    * Decimal integer: ``2130706433`` == 127.0.0.1
+    * 0x-prefixed hex: ``0x7f000001`` == 127.0.0.1
+    * Old-style octal:  ``017700000001`` == 127.0.0.1
+
+    An attacker can use any of these to bypass a guard that only calls
+    ``ipaddress.ip_address(host)`` directly, because that call raises
+    ``ValueError`` for non-dotted strings and the guard then returns False
+    (not an SSRF target).  This function tries all three encodings before
+    giving up, so the SSRF check is not bypassable by encoding tricks.
+
+    Known limitation: mixed per-octet encodings such as ``0x7f.0.0.1`` or
+    ``0177.0.0.1`` are not handled, as they require per-octet base detection.
+    Some HTTP clients (e.g. curl) accept these forms, so callers should be
+    aware the guard is not exhaustive.
+
+    Returns an IPv4Address/IPv6Address on success, None if the host is not
+    a recognised IP address in any encoding.
+    """
+    try:
+        return ipaddress.ip_address(host)
+    except ValueError:
+        pass
+    # Decimal integer or 0x-prefixed hex
+    try:
+        return ipaddress.ip_address(int(host, 0))
+    except (ValueError, OverflowError):
+        pass
+    # Old-style octal: starts with 0, remaining chars are octal digits
+    if len(host) > 1 and host[0] == '0' and all(c in '01234567' for c in host[1:]):
+        try:
+            return ipaddress.ip_address(int(host, 8))
+        except (ValueError, OverflowError):
+            pass
+    return None
+
+
 def is_loopback(url: str) -> bool:
     """Check whether the host in a URL resolves to a loopback address.
 
@@ -34,10 +77,8 @@ def is_loopback(url: str) -> bool:
         return False
     if host == 'localhost':
         return True
-    try:
-        return ipaddress.ip_address(host).is_loopback
-    except ValueError:
-        return False
+    ip = _parse_ip(host)
+    return ip.is_loopback if ip is not None else False
 
 
 def is_private(url: str) -> bool:
@@ -61,10 +102,8 @@ def is_private(url: str) -> bool:
     host = _host_from_url(url)
     if host is None:
         return False
-    try:
-        return ipaddress.ip_address(host).is_private
-    except ValueError:
-        return False
+    ip = _parse_ip(host)
+    return ip.is_private if ip is not None else False
 
 
 def is_link_local(url: str) -> bool:
@@ -86,10 +125,8 @@ def is_link_local(url: str) -> bool:
         return False
     if host.endswith('.local'):
         return True
-    try:
-        return ipaddress.ip_address(host).is_link_local
-    except ValueError:
-        return False
+    ip = _parse_ip(host)
+    return ip.is_link_local if ip is not None else False
 
 
 def is_potential_ssrf_target(url: str) -> bool:

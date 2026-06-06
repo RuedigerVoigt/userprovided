@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Improvements:
+  * `ip`: improved SSRF guard to detect alternate IP encodings (decimal integer, hex, old-style octal).
 * Bug fixes:
   * Fixed documentation drift in README.
   * `parameters`: replaced `logging.exception` with `logging.error` outside except blocks.
