@@ -78,6 +78,8 @@ def test_normalize_query_part():
     assert userprovided.url._normalize_query_part('redirect=https://site.com?param=value') == 'redirect=https://site.com?param=value'
     assert userprovided.url._normalize_query_part('formula=x=2*y+3') == 'formula=x=2*y+3'
     assert userprovided.url._normalize_query_part('token=abc=def&name=john') == 'name=john&token=abc=def'
+    # All params dropped: keep is empty, returns empty string
+    assert userprovided.url._normalize_query_part('foo=1', drop_keys=['foo']) == ''
 
 
 @pytest.mark.parametrize("test_url,normalized_url", [

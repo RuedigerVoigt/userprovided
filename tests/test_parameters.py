@@ -319,6 +319,10 @@ def test_validate_dict_keys():
             {'a', 'b', 'c'},
             {'a', 'b'},
             'name') is True
+    # Valid with no necessary_keys (default None):
+    assert userprovided.parameters.validate_dict_keys(
+            {'a': 1},
+            {'a', 'b'}) is True
 
 
 @pytest.mark.parametrize("dict_to_check,truth_value", [

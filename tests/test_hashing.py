@@ -46,6 +46,8 @@ def test_hash_available():
     assert userprovided.hashing.hash_available('blake2s', True) is True
     # Non-existent algorithm
     assert userprovided.hashing.hash_available('NonExistentHash', True) is False
+    # Deprecated algorithm with fail_on_deprecated=False: available but not rejected
+    assert userprovided.hashing.hash_available('md5', False) is True
 
 testfile_sha224 = '0808f64e60d58979fcb676c96ec938270dea42445aeefcd3a4e6f8db'
 testfile_sha256 = '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'

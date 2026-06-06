@@ -7,6 +7,7 @@
   * `parameters`: replaced `logging.exception` with `logging.error` outside except blocks.
 * Tests:
   * Tests split into multiple files.
+  * Enabled branch coverage.
 * Tooling:
   * CI: coverage gate raised from 95% to 100% (enforced) to match the release standard.
   * CI: bumped GitHub Actions to current major versions.

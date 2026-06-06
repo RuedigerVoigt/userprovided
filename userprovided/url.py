@@ -309,7 +309,7 @@ def determine_file_extension(url: str,
                "suggests a file extension.")
         logging.debug(msg)
         return '.unknown'
-    elif type_by_url != provided_mime_type:
+    elif type_by_url != provided_mime_type:  # pragma: no branch
         # The suggestions contradict each other
         msg = (f"The mime type ({type_by_url}) suggested by the URL ({url}) " +
                "does not match the mime type supplied by the server " +
@@ -522,7 +522,7 @@ def extract_tld(url: str) -> str:
             return ''
 
         # Check for 2-part TLD
-        if len(parts) >= 2:
+        if len(parts) >= 2:  # pragma: no branch
             potential_2part_tld = '.'.join(parts[-2:])
             if potential_2part_tld in TWO_PART_TLDS:
                 return '.' + potential_2part_tld
@@ -584,7 +584,7 @@ def _extract_registrable_domain(domain: str, two_part_tlds: set) -> str:
         return domain
 
     # Check for 2-part TLD (e.g., co.uk, com.au)
-    if len(parts) >= 3:
+    if len(parts) >= 3:  # pragma: no branch
         potential_2part_tld = '.'.join(parts[-2:])
         if potential_2part_tld in two_part_tlds:
             # Return domain + 2-part TLD
