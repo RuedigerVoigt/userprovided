@@ -1,6 +1,6 @@
 # Changelog / History
 
-## Unreleased
+## Version 2.4.0 (2026-06-06)
 
 * New features:
   * `finance`: added `is_iban` to check whether a string has a valid IBAN format and ISO 7064 mod-97 checksum.
