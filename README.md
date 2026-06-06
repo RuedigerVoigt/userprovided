@@ -518,22 +518,6 @@ userprovided.finance.is_isin('US5949181045')
 
 userprovided.finance.is_isin('INVALID')
 # => False
-
-# Skip checksum verification (format check only)
-userprovided.finance.is_isin('DE0007236102', verify_checksum=False)
-# => True (valid format, but wrong check digit)
-```
-
-### Normalize ISIN
-
-Validate and normalize an ISIN string. Returns the uppercased ISIN on success, or `None` on failure. This combines validation and normalization in a single call.
-
-```python
-userprovided.finance.normalize_isin('de0007236101')
-# => 'DE0007236101'
-
-userprovided.finance.normalize_isin('INVALID')
-# => None
 ```
 
 ## Check Email Addresses
@@ -557,10 +541,10 @@ userprovided.mail.is_email('invalid.email')
 You can check whether a specific hash method is available. This will raise a DeprecatedHashAlgorithm exception for `MD5` and `SHA1` *even if they are available*, because they are deprecated.
 
 ```python
-print(userprovided.hash.hash_available('md5'))
+print(userprovided.hashing.hash_available('md5'))
 # => DeprecatedHashAlgorithm exception because md5 is deprecated
 
-print(userprovided.hash.hash_available('sha256'))
+print(userprovided.hashing.hash_available('sha256'))
 # => True on almost any system
 ```
 
@@ -570,13 +554,13 @@ You can calculate hash sums for files. If you do not provide the method, this de
 
 ```python
 # returns the hash of the file as a string:
-userprovided.hash.calculate_file_hash(pathlib.Path('./foo.txt'))
+userprovided.hashing.calculate_file_hash(pathlib.Path('./foo.txt'))
 ```
 
 If you provide an expected value for the hash you can check for file changes or tampering. In the case the provided value and the calculated hash do *not* match, a ValueError exception is raised.
 
 ```python
-userprovided.hash.calculate_file_hash(
+userprovided.hashing.calculate_file_hash(
     file_path = pathlib.Path('./foo.txt'),
     hash_method = 'sha512',
     expected_hash = 'not_the_right_value')
@@ -588,13 +572,13 @@ userprovided.hash.calculate_file_hash(
 Compute a deterministic hash of string data for non-security use cases such as fingerprints, cache keys, or content de-duplication.
 
 ```python
-userprovided.hash.calculate_string_hash('example data')
+userprovided.hashing.calculate_string_hash('example data')
 # => returns the SHA256 hash as a string
 
-userprovided.hash.calculate_string_hash('example data', hash_method='sha512')
+userprovided.hashing.calculate_string_hash('example data', hash_method='sha512')
 # => returns the SHA512 hash as a string
 
-userprovided.hash.calculate_string_hash('example data', encoding='utf-8')
+userprovided.hashing.calculate_string_hash('example data', encoding='utf-8')
 # => specify encoding (defaults to utf-8)
 ```
 

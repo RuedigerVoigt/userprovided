@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Bug fixes:
+  * Fixed documentation drift in README.
 * Tests:
   * Tests split into multiple files.
 * Tooling:
