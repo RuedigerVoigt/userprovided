@@ -68,36 +68,36 @@ def test_calculate_file_hash():
         userprovided.hashing.calculate_file_hash(pathlib.Path('.'),
                                               'non-existent-hash')
     # Default is fallback to SHA256
-    assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile')) == testfile_sha256
-    assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha256') == testfile_sha256
+    assert userprovided.hashing.calculate_file_hash(pathlib.Path('tests/testfile')) == testfile_sha256
+    assert userprovided.hashing.calculate_file_hash(pathlib.Path('tests/testfile'), 'sha256') == testfile_sha256
     # SHA224
-    assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha224') == testfile_sha224
+    assert userprovided.hashing.calculate_file_hash(pathlib.Path('tests/testfile'), 'sha224') == testfile_sha224
     # SHA512
-    assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha512') == testfile_sha512
+    assert userprovided.hashing.calculate_file_hash(pathlib.Path('tests/testfile'), 'sha512') == testfile_sha512
     # SHA384 (now supported with dynamic algorithm selection)
-    result_sha384 = userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha384')
+    result_sha384 = userprovided.hashing.calculate_file_hash(pathlib.Path('tests/testfile'), 'sha384')
     assert len(result_sha384) == 96  # SHA384 produces 96-char hex string
     # SHA3-256 (guaranteed in Python 3.10+)
-    result_sha3_256 = userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha3_256')
+    result_sha3_256 = userprovided.hashing.calculate_file_hash(pathlib.Path('tests/testfile'), 'sha3_256')
     assert len(result_sha3_256) == 64  # SHA3-256 produces 64-char hex string
     # BLAKE2b (guaranteed in Python 3.10+)
-    result_blake2b = userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'blake2b')
+    result_blake2b = userprovided.hashing.calculate_file_hash(pathlib.Path('tests/testfile'), 'blake2b')
     assert len(result_blake2b) == 128  # BLAKE2b produces 128-char hex string
 
 
 def test_calculate_file_hash_with_expected_value():
     # expected and calculated hash match:
-    assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha512', testfile_sha512) == testfile_sha512
+    assert userprovided.hashing.calculate_file_hash(pathlib.Path('tests/testfile'), 'sha512', testfile_sha512) == testfile_sha512
     # expected and calculated hash DO NOT match:
     with pytest.raises(ValueError):
-        assert userprovided.hashing.calculate_file_hash(pathlib.Path('testfile'), 'sha512', 'foo') == testfile_sha512
+        assert userprovided.hashing.calculate_file_hash(pathlib.Path('tests/testfile'), 'sha512', 'foo') == testfile_sha512
 
 # mock a PermissionError exception
 # see: https://stackoverflow.com/questions/1289894/#answer-34677735
 def test_calculate_file_hash_mocked_permission():
     with patch('builtins.open', side_effect=PermissionError):
         with pytest.raises(PermissionError) as excinfo:
-            userprovided.hashing.calculate_file_hash('testfile')
+            userprovided.hashing.calculate_file_hash('tests/testfile')
             assert "insufficient permissions" in str(excinfo.value)
 
 
@@ -111,7 +111,7 @@ def test_calculate_file_hash_alias_bypass():
         mock_hash.name = 'md5'
         with pytest.raises(userprovided.err.DeprecatedHashAlgorithm,
                            match="resolves to deprecated"):
-            userprovided.hashing.calculate_file_hash('testfile', 'some-alias')
+            userprovided.hashing.calculate_file_hash('tests/testfile','some-alias')
 
 
 def test_calculate_file_hash_hashlib_error():
@@ -120,7 +120,7 @@ def test_calculate_file_hash_hashlib_error():
     # but tests the fallback error handling
     with patch('hashlib.new', side_effect=ValueError('Invalid hash')):
         with pytest.raises(ValueError, match='Hash method sha256 not supported'):
-            userprovided.hashing.calculate_file_hash('testfile', 'sha256')
+            userprovided.hashing.calculate_file_hash('tests/testfile','sha256')
 
 
 def test_calculate_string_hash():
