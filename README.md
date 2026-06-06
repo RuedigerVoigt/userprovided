@@ -50,6 +50,7 @@ Userprovided has functionality for the following inputs:
   * Check if a string is a valid email address.
 * [finance](#finance):
   * [Validate ISIN](#validate-isin) (International Securities Identification Number).
+  * [Validate IBAN](#validate-iban) (International Bank Account Number).
 * [geo](#validate-geographic-coordinates):
   * [Validate coordinates](#validate-geographic-coordinates) to check if latitude and longitude are within valid Earth ranges.
 
@@ -518,6 +519,23 @@ userprovided.finance.is_isin('US5949181045')
 
 userprovided.finance.is_isin('INVALID')
 # => False
+```
+
+### Validate IBAN
+
+Check if a string has the format of a valid International Bank Account Number (ISO 13616). This validates the structure (2-letter country code, 2 check digits, alphanumeric BBAN) and the ISO 7064 mod-97 checksum. Accepts both upper and lowercase input as well as the printed format with spaces.
+
+This only checks the format and checksum. It does **not** verify that the IBAN belongs to a real, open account. It also does not check the country-specific length (so a checksum-valid number with the wrong length for its country is not rejected) nor the country-specific BBAN structure — for those you need a bank-data provider or per-country rules.
+
+```python
+userprovided.finance.is_iban('DE89370400440532013000')
+# => True
+
+userprovided.finance.is_iban('DE89 3704 0044 0532 0130 00')
+# => True (printed format with spaces accepted)
+
+userprovided.finance.is_iban('DE89370400440532013001')
+# => False (wrong checksum)
 ```
 
 ## Check Email Addresses

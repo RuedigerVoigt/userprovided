@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* New features:
+  * `finance`: added `is_iban` to check whether a string has a valid IBAN format and ISO 7064 mod-97 checksum.
 * Improvements:
   * `ip`: improved SSRF guard to detect alternate IP encodings (decimal integer, hex, old-style octal).
 * Bug fixes:
