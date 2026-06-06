@@ -300,8 +300,8 @@ def numeric_in_range(parameter_name: str,
     if not parameter_name:
         parameter_name = ''
 
-    for param in {given_value, minimum_value, maximum_value, fallback_value}:
-        if not isinstance(param, (int, float)):
+    for param in (given_value, minimum_value, maximum_value, fallback_value):
+        if isinstance(param, bool) or not isinstance(param, (int, float)):
             raise ValueError('Value must be numeric.')
 
     if minimum_value > maximum_value:

@@ -5,6 +5,7 @@
 * Bug fixes:
   * Fixed documentation drift in README.
   * `parameters`: replaced `logging.exception` with `logging.error` outside except blocks.
+  * `parameters`: `numeric_in_range` now rejects bool values.
 * Tests:
   * Tests split into multiple files.
   * Enabled branch coverage.

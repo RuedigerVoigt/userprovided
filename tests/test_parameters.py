@@ -422,6 +422,24 @@ def test_numeric_in_range():
             1.0,
             'some string')
 
+    # bool must be rejected even though bool is a subclass of int
+    with pytest.raises(ValueError):
+        userprovided.parameters.numeric_in_range('example', True, 0, 10, 5)
+    with pytest.raises(ValueError):
+        userprovided.parameters.numeric_in_range('example', False, 0, 10, 5)
+    with pytest.raises(ValueError):
+        userprovided.parameters.numeric_in_range('example', 5, True, 10, 5)
+    with pytest.raises(ValueError):
+        userprovided.parameters.numeric_in_range('example', 5, False, 10, 5)
+    with pytest.raises(ValueError):
+        userprovided.parameters.numeric_in_range('example', 5, 0, True, 5)
+    with pytest.raises(ValueError):
+        userprovided.parameters.numeric_in_range('example', 5, 0, False, 5)
+    with pytest.raises(ValueError):
+        userprovided.parameters.numeric_in_range('example', 5, 0, 10, True)
+    with pytest.raises(ValueError):
+        userprovided.parameters.numeric_in_range('example', 5, 0, 10, False)
+
     # given value within range
     assert userprovided.parameters.numeric_in_range('example', 10.0, 1, 100, 50) == 10.0
 
