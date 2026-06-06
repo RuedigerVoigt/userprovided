@@ -200,7 +200,7 @@ def validate_dict_keys(dict_to_check: dict,
         if len(necessary_keys - allowed_keys) != 0:
             msg = ("Contradiction: Not all necessary keys " +
                    "are in the allowed keys set!")
-            logging.exception(msg)
+            logging.error(msg)
             raise ValueError(msg)
 
     # Get all keys in the dictionary:
@@ -214,7 +214,7 @@ def validate_dict_keys(dict_to_check: dict,
     for key in found_keys:
         if key not in allowed_keys:
             msg = f"Unknown key {key} in {dict_name}"
-            logging.exception(msg)
+            logging.error(msg)
             raise ValueError(msg)
     logging.debug('No unknown keys found.')
 
@@ -223,7 +223,7 @@ def validate_dict_keys(dict_to_check: dict,
         for key in necessary_keys:
             if key not in found_keys:
                 msg = f"Necessary key {key} missing in {dict_name}!"
-                logging.exception(msg)
+                logging.error(msg)
                 raise ValueError(msg)
         logging.debug('All necessary keys found.')
 
