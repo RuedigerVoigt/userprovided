@@ -30,6 +30,12 @@ def test_is_url():
     assert userprovided.url.is_url('https://example.com', ('https')) is True
     assert userprovided.url.is_url('https://subdomain.example.com') is True
     assert userprovided.url.is_url('https://example.com/index.php?id=42') is True
+    # A plain string is treated as a single scheme name, not matched as
+    # a substring: ('https') is a string, not a tuple, and 'http' in 'https'
+    # is True — this must not let http URLs pass an https-only check.
+    assert userprovided.url.is_url('http://example.com', ('https')) is False
+    assert userprovided.url.is_url('http://example.com', 'https') is False
+    assert userprovided.url.is_url('https://example.com', 'https') is True
 
 
 def test_url_length_limits():
@@ -122,7 +128,20 @@ def test_normalize_query_part():
     ('https://www.example.com/forums/forumdisplay.php?example-forum',
      'https://www.example.com/forums/forumdisplay.php?example-forum'),
     # Empty query, but '?' indicating one
-    ('https://www.example.com/index.php?', 'https://www.example.com/index.php')
+    ('https://www.example.com/index.php?', 'https://www.example.com/index.php'),
+    # IPv6 host: keep the square brackets (urlparse strips them on parsing)
+    ('http://[::1]/', 'http://[::1]/'),
+    # IPv6 host: lowercase the hex digits
+    ('https://[2001:DB8::1]/path', 'https://[2001:db8::1]/path'),
+    # IPv6 host: remove standard port for scheme (http)
+    ('http://[::1]:80/', 'http://[::1]/'),
+    # IPv6 host: remove standard port for scheme (https)
+    ('https://[2001:db8::1]:443/index.html', 'https://[2001:db8::1]/index.html'),
+    # IPv6 host: keep non-standard port
+    ('http://[::1]:8080/path', 'http://[::1]:8080/path'),
+    # IPv6 host: query part is still normalized
+    ('https://[2001:db8::1]/index.py?c=3&a=1&b=2',
+     'https://[2001:db8::1]/index.py?a=1&b=2&c=3')
 ])
 def test_normalize_url(test_url, normalized_url):
     assert userprovided.url.normalize_url(test_url) == normalized_url

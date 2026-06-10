@@ -1,5 +1,15 @@
 # Changelog / History
 
+## Upcoming Version
+
+* Security fixes:
+  * `url`: `is_url` no longer applies substring matching when a plain string is passed to `require_specific_schemes`. Previously `is_url('http://...', ('https'))` returned `True` because `('https')` is a string, not a tuple, and `'http' in 'https'` holds. A bare string is now treated as a single scheme name. The README example that demonstrated the string-instead-of-tuple pattern was corrected.
+* Bug fixes:
+  * `url`: `normalize_url` no longer corrupts URLs with IPv6 hosts. `urllib.parse` strips the square brackets from IPv6 literals and the reassembly did not restore them, so `http://[::1]:8080/path` became the invalid `http://::1:8080/path`.
+* Tests:
+  * Added IPv6 cases for `normalize_url`: brackets preserved, hex digits lowercased, standard port removal, non-standard port kept, query normalization.
+  * Added scheme-restriction regression cases for `is_url` (plain string vs. tuple).
+
 ## Version 2.4.0 (2026-06-06)
 
 * New features:

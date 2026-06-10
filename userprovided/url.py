@@ -84,7 +84,7 @@ def _host_from_url(url: str) -> Optional[str]:
 
 
 def is_url(url: str,
-           require_specific_schemes: Union[tuple, None] = None) -> bool:
+           require_specific_schemes: Union[tuple, str, None] = None) -> bool:
     """Validates basic URL format without attempting connection.
 
     Performs basic structural validation of a URL including scheme and
@@ -93,6 +93,7 @@ def is_url(url: str,
     Args:
         url: The URL string to validate.
         require_specific_schemes: Tuple of allowed schemes (e.g., ('http', 'https')).
+            A plain string is treated as a single scheme name.
             If None, any scheme is allowed. Defaults to None.
 
     Returns:
@@ -108,6 +109,11 @@ def is_url(url: str,
         logging.debug('The URL has no scheme (like http or https)')
         return False
     if require_specific_schemes:
+        if isinstance(require_specific_schemes, str):
+            # A bare string would be checked with substring matching:
+            # 'http' in 'https' is True, so ('https') — a string, not a
+            # tuple — would accept http URLs. Treat it as one scheme name.
+            require_specific_schemes = (require_specific_schemes,)
         if parsed.scheme not in require_specific_schemes:
             logging.debug('Scheme %s not supported.', parsed.scheme)
             return False
@@ -226,18 +232,24 @@ def normalize_url(url: str,
     reassemble = list()
     reassemble.append(parsed.scheme.lower())
 
+    host = parsed.hostname
+    if host and ':' in host:
+        # urlparse strips the square brackets from IPv6 literals.
+        # Restore them, otherwise the reassembled URL is invalid.
+        host = f"[{host}]"
+
     if not parsed.port:
         # There is no port to begin with
         # hostname is lowercase without port
-        reassemble.append(parsed.hostname)  # type: ignore[arg-type]
+        reassemble.append(host)  # type: ignore[arg-type]
     elif (parsed.scheme in standard_ports and
             parsed.port == standard_ports[parsed.scheme]):
         # There is a port and it equals the standard.
         # That means it is redundant.
-        reassemble.append(parsed.hostname)  # type: ignore[arg-type]
+        reassemble.append(host)  # type: ignore[arg-type]
     else:
         # There is a port but it is not in the list or not standard
-        reassemble.append(f"{parsed.hostname}:{parsed.port}")
+        reassemble.append(f"{host}:{parsed.port}")
 
     # remove common typo (// in path element):
     reassemble.append(parsed.path.replace('//', '/'))

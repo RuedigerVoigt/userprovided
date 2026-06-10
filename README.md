@@ -341,15 +341,17 @@ userprovided.url.is_url('www.example.com')
 # => False
 ```
 
-You can insist on a specific scheme:
+You can insist on specific schemes:
 
 ```python
-userprovided.url.is_url('https://www.example.com', ('ftp'))
+userprovided.url.is_url('https://www.example.com', ('ftp',))
 # => False (Schema is not permitted)
 
-userprovided.url.is_url('ftp://www.example.com', ('ftp'))
+userprovided.url.is_url('ftp://www.example.com', ('ftp',))
 # => True
 ```
+
+Note the trailing comma: `('ftp',)` is a tuple, while `('ftp')` is just the string `'ftp'`. A single scheme may also be passed as a plain string, e.g. `'https'`.
 
 To check the URL with an actual connection attempt, you could use the [salted library](https://github.com/RuedigerVoigt/salted).
 
