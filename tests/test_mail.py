@@ -107,6 +107,22 @@ def test_mail_is_email_type_validation():
         userprovided.mail.is_email(['not', 'a', 'string'])
 
 
+def test_mail_is_email_log_injection(caplog):
+    # A rejected address with an embedded newline must not be able to forge
+    # a second log line: %r escapes the newline so the log record stays on
+    # one line.
+    malicious = 'a\n2026-06-14 ERROR forged log line@example.com'
+    with caplog.at_level('DEBUG', logger='root'):
+        assert userprovided.mail.is_email(malicious) is False
+    messages = [rec.getMessage() for rec in caplog.records]
+    assert any('has an unknown format' in m for m in messages)
+    # No formatted log message may contain a literal newline from the input.
+    for m in messages:
+        assert '\n' not in m
+    # The newline survives in escaped form, proving the value was still logged.
+    assert any('\\n' in m for m in messages)
+
+
 @settings(max_examples=1000,
           suppress_health_check=[HealthCheck.too_slow])
 @given(x=emails())

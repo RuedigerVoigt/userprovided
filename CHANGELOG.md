@@ -5,6 +5,7 @@
 * Security fixes:
   * `url`: `is_url` no longer applies substring matching when a plain string is passed to `require_specific_schemes`. Previously `is_url('http://...', ('https'))` returned `True` because `('https')` is a string, not a tuple, and `'http' in 'https'` holds. A bare string is now treated as a single scheme name. The README example that demonstrated the string-instead-of-tuple pattern was corrected.
   * `ip`: `is_potential_ssrf_target` now flags the RFC 6598 carrier-grade NAT range (100.64.0.0/10). Python's `ipaddress` does not consider it private, so it previously slipped past the SSRF guard despite being a realistic internal target in cloud and carrier networks.
+  * `mail`: `is_email` now logs the rejected address with `%r` instead of `%s`. A rejected address is attacker-controlled and may contain newlines or control characters; `repr()` escapes them and prevents log injection / forged log lines.
 * Changed behavior:
   * String-validating predicates now share one contract: a non-string argument raises `TypeError`; a boolean is returned only for string input. This covers `finance.is_isin`/`is_iban` (previously returned `False` for non-strings), `url.is_url`/`is_shortened_url`, `parameters.is_aws_s3_bucket_name`, and `ip.is_loopback`/`is_private`/`is_link_local`/`is_potential_ssrf_target` (these previously raised an unhelpful `len()` error on `None`, yet returned `False` for some other non-strings). (`mail.is_email` already behaved this way.)
 * Bug fixes:

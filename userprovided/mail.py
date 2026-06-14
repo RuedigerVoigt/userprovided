@@ -61,9 +61,12 @@ def is_email(mailaddress: str) -> bool:
         return False
 
     if not _EMAIL_PATTERN.match(mailaddress):
+        # Use %r, not %s: this is rejected, attacker-controlled input that
+        # may contain newlines or control characters. repr() escapes them
+        # and prevents log injection / forged log lines.
         logging.debug(
-            'The supplied mailaddress %s has an unknown format.', mailaddress)
+            'The supplied mailaddress %r has an unknown format.', mailaddress)
         return False
 
-    logging.debug('%s seems to have a valid format', mailaddress)
+    logging.debug('%r seems to have a valid format', mailaddress)
     return True

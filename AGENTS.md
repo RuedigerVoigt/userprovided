@@ -68,6 +68,7 @@ The Python package userprovided checks input for validity and plausibility. It a
   * `logging.debug` for handled validation failures and other expected, recoverable conditions (the default for nearly everything here). If a traceback is useful, pass `exc_info=True` to `debug` rather than using `logging.exception`.
   * `logging.error` only for caller contradictions that also raise (e.g. mutually exclusive arguments).
   * Do **not** use `logging.exception` (it logs at ERROR with a traceback and is reserved for genuinely unexpected faults — the library currently uses it nowhere).
+  * **Log user-provided values with `%r`, not `%s`** (e.g. `logging.debug('bad value %r', value)`). `repr()` escapes newlines and control characters, preventing log injection / forged log lines from attacker-controlled input. Use lazy `%`-args (`logging.debug('msg %r', value)`), never f-strings or string concatenation, so the formatting only happens when the message is emitted.
 
 ### Test driven development:
 
