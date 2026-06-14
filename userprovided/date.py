@@ -23,18 +23,19 @@ _REGEX_LONG_DATE_DE = re.compile(
     r"(?P<day>\d{1,2})\.\s+(?P<monthL>[a-zA-ZÄä\.]{3,9})\s+(?P<year>\d{4})")
 
 
-def date_exists(year: int,
-                month: int,
-                day: int) -> bool:
+def date_exists(year: int | str,
+                month: int | str,
+                day: int | str) -> bool:
     """Validates if a date exists in the calendar.
 
     Checks whether the given year, month, and day combination represents
     a valid date, including leap year considerations.
 
     Args:
-        year: The year as an integer.
-        month: The month as an integer (1-12).
-        day: The day as an integer (1-31).
+        year: The year as an integer, or a string convertible to one.
+        month: The month (1-12) as an integer, or a string convertible
+            to one (e.g. ``'01'``).
+        day: The day (1-31) as an integer, or a string convertible to one.
 
     Returns:
         True if the date exists in the calendar, False otherwise.

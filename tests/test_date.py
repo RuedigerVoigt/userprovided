@@ -25,6 +25,16 @@ def test_date_exists_non_numeric():
     assert userprovided.date.date_exists('a', '01', '01') is False
 
 
+def test_date_exists_string_input():
+    # Strings (incl. zero-padded) are accepted and converted, matching the
+    # int | str type hint.
+    assert userprovided.date.date_exists('2020', '02', '29') is True  # leap day
+    assert userprovided.date.date_exists('2021', '02', '29') is False  # not a leap year
+    assert userprovided.date.date_exists('1990', '10', '03') is True
+    # Mixed int and string parts also work.
+    assert userprovided.date.date_exists(2020, '2', 29) is True
+
+
 @settings(print_blob=True,
           verbosity=Verbosity.normal)
 @given(x=dates())
