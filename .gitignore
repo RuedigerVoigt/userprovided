@@ -130,3 +130,7 @@ dmypy.json
 
 # Plan
 TODO.md
+
+# Local AI agent files
+.claude/
+CLAUDE.md
