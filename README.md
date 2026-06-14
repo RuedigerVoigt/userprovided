@@ -61,18 +61,28 @@ Userprovided has functionality for the following inputs:
 
 ## Installation
 
-Install userprovided using `pip` or `pip3`. For example:
+The recommended way is to install `userprovided` into a [virtual environment](https://docs.python.org/3/library/venv.html). This keeps it isolated from your system Python and avoids permission problems. (Do not use `sudo pip`: installing into the system Python as root can break packages managed by your operating system, and recent Linux distributions block it by default.)
+
+On **Linux / macOS**:
 
 ```bash
-sudo pip3 install userprovided
+python3 -m venv .venv
+source .venv/bin/activate
+pip install userprovided
 ```
 
-You may consider using a [virtualenv](https://virtualenv.pypa.io/en/latest/ "Documentation").
+On **Windows** (`py` is the [Python launcher](https://docs.python.org/3/using/windows.html#python-launcher-for-windows) that ships with the official Python installer):
 
-To upgrade to the latest version accordingly:
+```powershell
+py -m venv .venv
+.venv\Scripts\activate
+pip install userprovided
+```
+
+To upgrade to the latest version (with the virtual environment activated):
 
 ```bash
-sudo pip install userprovided --upgrade
+pip install userprovided --upgrade
 ```
 
 ## Tested and Used in Production
