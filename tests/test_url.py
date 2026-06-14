@@ -141,7 +141,16 @@ def test_normalize_query_part():
     ('http://[::1]:8080/path', 'http://[::1]:8080/path'),
     # IPv6 host: query part is still normalized
     ('https://[2001:db8::1]/index.py?c=3&a=1&b=2',
-     'https://[2001:db8::1]/index.py?a=1&b=2&c=3')
+     'https://[2001:db8::1]/index.py?a=1&b=2&c=3'),
+    # Userinfo is dropped by design (username and password)
+    ('https://user:pass@www.example.com/', 'https://www.example.com/'),
+    # Userinfo is dropped by design (username only)
+    ('https://user@www.example.com/', 'https://www.example.com/'),
+    # Userinfo dropped while host, port and query are still normalized
+    ('http://user:pass@www.Example.com:8080/p?b=2&a=1',
+     'http://www.example.com:8080/p?a=1&b=2'),
+    # Userinfo dropped for an IPv6 host
+    ('http://user:pass@[::1]:8080/', 'http://[::1]:8080/')
 ])
 def test_normalize_url(test_url, normalized_url):
     assert userprovided.url.normalize_url(test_url) == normalized_url
