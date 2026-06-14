@@ -144,7 +144,7 @@ def date_de_long_to_iso(date_string: str) -> str:
         else:
             raise AttributeError('No date provided')
     except AttributeError:
-        logging.exception('Malformed date')
+        logging.debug('Malformed date')
         raise
 
     # add a zero to day if <10
@@ -169,7 +169,7 @@ def date_de_long_to_iso(date_string: str) -> str:
     except KeyError:
         # String for month matched the regular expression but is no
         # recognized month.
-        logging.exception('Do not recognize month.')
+        logging.debug('Do not recognize month.')
         raise
 
     if not date_exists(int(match_year), int(match_month), int(match_day)):
