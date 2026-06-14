@@ -74,10 +74,12 @@ def is_iban(iban_candidate: str) -> bool:
     Returns:
         True if the string has a valid IBAN format and checksum,
         False otherwise.
+
+    Raises:
+        TypeError: If iban_candidate is not a string.
     """
     if not isinstance(iban_candidate, str):
-        logging.debug('IBAN must be a string.')
-        return False
+        raise TypeError('IBAN must be a string.')
 
     # Accept the printed format (groups separated by spaces) and any case.
     iban = ''.join(iban_candidate.split()).upper()
@@ -176,11 +178,13 @@ def is_isin(isin_candidate: str) -> bool:
     Returns:
         True if the string has the correct ISIN format and checksum,
         False otherwise.
+
+    Raises:
+        TypeError: If isin_candidate is not a string.
     """
 
     if not isinstance(isin_candidate, str):
-        logging.debug('ISIN must be a string.')
-        return False
+        raise TypeError('ISIN must be a string.')
 
     isin_candidate = isin_candidate.strip().upper()
 

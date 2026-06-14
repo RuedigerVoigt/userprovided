@@ -5,6 +5,8 @@
 * Security fixes:
   * `url`: `is_url` no longer applies substring matching when a plain string is passed to `require_specific_schemes`. Previously `is_url('http://...', ('https'))` returned `True` because `('https')` is a string, not a tuple, and `'http' in 'https'` holds. A bare string is now treated as a single scheme name. The README example that demonstrated the string-instead-of-tuple pattern was corrected.
   * `ip`: `is_potential_ssrf_target` now flags the RFC 6598 carrier-grade NAT range (100.64.0.0/10). Python's `ipaddress` does not consider it private, so it previously slipped past the SSRF guard despite being a realistic internal target in cloud and carrier networks.
+* Changed behavior:
+  * String-validating predicates now share one contract: a non-string argument raises `TypeError`; a boolean is returned only for string input. `is_isin`/`is_iban` previously returned `False` for non-strings; `is_url`/`is_shortened_url` previously raised an unhelpful `len()` error. (`is_email` already behaved this way.)
 * Bug fixes:
   * `url`: `normalize_url` no longer corrupts URLs with IPv6 hosts. `urllib.parse` strips the square brackets from IPv6 literals and the reassembly did not restore them, so `http://[::1]:8080/path` became the invalid `http://::1:8080/path`.
 * Tests:

@@ -91,9 +91,13 @@ def test_finance_is_isin(isin, expected):
 
 
 def test_finance_is_isin_non_string():
-    assert userprovided.finance.is_isin(123) is False
-    assert userprovided.finance.is_isin(None) is False
-    assert userprovided.finance.is_isin(['DE0007236101']) is False
+    # Non-string input is a caller error and raises TypeError.
+    with pytest.raises(TypeError):
+        userprovided.finance.is_isin(123)
+    with pytest.raises(TypeError):
+        userprovided.finance.is_isin(None)
+    with pytest.raises(TypeError):
+        userprovided.finance.is_isin(['DE0007236101'])
 
 
 def test_finance_luhn_check_isin_invalid_char():
@@ -140,9 +144,13 @@ def test_finance_is_iban(iban, expected):
 
 
 def test_finance_is_iban_non_string():
-    assert userprovided.finance.is_iban(123) is False
-    assert userprovided.finance.is_iban(None) is False
-    assert userprovided.finance.is_iban(['DE89370400440532013000']) is False
+    # Non-string input is a caller error and raises TypeError.
+    with pytest.raises(TypeError):
+        userprovided.finance.is_iban(123)
+    with pytest.raises(TypeError):
+        userprovided.finance.is_iban(None)
+    with pytest.raises(TypeError):
+        userprovided.finance.is_iban(['DE89370400440532013000'])
 
 
 @given(_valid_ibans())

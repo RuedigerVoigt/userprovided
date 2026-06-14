@@ -97,7 +97,13 @@ def is_url(url: str,
 
     Returns:
         True if URL has valid basic structure, False otherwise.
+
+    Raises:
+        TypeError: If url is not a string.
     """
+    if not isinstance(url, str):
+        raise TypeError('URL must be a string.')
+
     if len(url) > _MAX_URL_LENGTH:
         logging.debug('URL exceeds maximum length of %d characters.', _MAX_URL_LENGTH)
         return False
@@ -355,6 +361,9 @@ def is_shortened_url(url: str) -> bool:
 
     Returns:
         True if the URL is from a shortening service in the list, False otherwise.
+
+    Raises:
+        TypeError: If url is not a string.
 
     Note:
         This function checks against a list of popular URL shortening

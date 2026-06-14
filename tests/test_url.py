@@ -38,6 +38,18 @@ def test_is_url():
     assert userprovided.url.is_url('https://example.com', 'https') is True
 
 
+def test_is_url_non_string():
+    # Non-string input is a caller error and raises TypeError, not a leaky
+    # error from len() and not a silent False.
+    with pytest.raises(TypeError):
+        userprovided.url.is_url(None)
+    with pytest.raises(TypeError):
+        userprovided.url.is_url(123)
+    # is_shortened_url calls is_url first, so it propagates the same contract.
+    with pytest.raises(TypeError):
+        userprovided.url.is_shortened_url(None)
+
+
 def test_url_length_limits():
     long_url = 'https://example.com/' + 'a' * 2048
     # is_url rejects over-long URLs
