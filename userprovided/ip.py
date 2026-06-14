@@ -16,6 +16,13 @@ import logging
 from userprovided.url import _host_from_url
 
 
+# RFC 6598 carrier-grade NAT ("shared address space"). Python's
+# ``ipaddress.is_private`` does NOT classify this range as private, but it is
+# routinely used inside cloud and carrier networks, so it is a realistic
+# internal target for SSRF. The guard below therefore treats it as unsafe.
+_CGNAT_NETWORK = ipaddress.ip_network('100.64.0.0/10')
+
+
 def _parse_ip(host: str):
     """Try to parse a host string as an IP address, including alternate encodings.
 
@@ -141,6 +148,10 @@ def is_potential_ssrf_target(url: str) -> bool:
     * Link-local: 169.254.0.0/16 (incl. cloud metadata at 169.254.169.254),
       fe80::/10, ``.local`` hostnames
 
+    It also flags the RFC 6598 carrier-grade NAT range (100.64.0.0/10),
+    which ``ipaddress`` does not consider private but which is a realistic
+    internal target inside cloud and carrier networks.
+
     This function does **not** perform DNS resolution. Hostnames that are
     not IP addresses (other than ``localhost`` and ``.local``) are not
     flagged even if they might resolve to a private address.
@@ -152,7 +163,16 @@ def is_potential_ssrf_target(url: str) -> bool:
         True if the URL should be treated as a potential SSRF target,
         False otherwise.
     """
-    result = is_loopback(url) or is_private(url) or is_link_local(url)
-    if result:
+    if is_loopback(url) or is_private(url) or is_link_local(url):
         logging.debug('Potential SSRF target detected: %s', url)
-    return result
+        return True
+
+    # RFC 6598 carrier-grade NAT is not covered by is_private above.
+    host = _host_from_url(url)
+    if host is not None:
+        ip = _parse_ip(host)
+        if ip is not None and ip in _CGNAT_NETWORK:
+            logging.debug('Potential SSRF target detected (CGNAT): %s', url)
+            return True
+
+    return False

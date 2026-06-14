@@ -102,6 +102,14 @@ def test_ip_is_potential_ssrf_target():
     assert userprovided.ip.is_potential_ssrf_target('http://169.254.169.254/') is True
     assert userprovided.ip.is_potential_ssrf_target('http://[fe80::1]/') is True
     assert userprovided.ip.is_potential_ssrf_target('http://myhost.local/') is True
+    # RFC 6598 carrier-grade NAT (not "private" per ipaddress, but internal)
+    assert userprovided.ip.is_potential_ssrf_target('http://100.64.0.1/') is True
+    assert userprovided.ip.is_potential_ssrf_target('http://100.127.255.255/') is True
+    # Decimal integer encoding of 100.64.0.1 (CGNAT)
+    assert userprovided.ip.is_potential_ssrf_target('http://1681915905/') is True
+    # Just outside the CGNAT range stays safe
+    assert userprovided.ip.is_potential_ssrf_target('http://100.63.255.255/') is False
+    assert userprovided.ip.is_potential_ssrf_target('http://100.128.0.0/') is False
     # Safe public addresses
     assert userprovided.ip.is_potential_ssrf_target('https://example.com/') is False
     assert userprovided.ip.is_potential_ssrf_target('http://8.8.8.8/') is False
