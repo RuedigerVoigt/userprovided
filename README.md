@@ -48,7 +48,7 @@ Userprovided has functionality for the following inputs:
   * [Does a given date exist?](#check-date-existence)
   * Convert English and German [long format dates to ISO](#normalize-long-form-dates) strings.
 * [mail](#check-email-addresses):
-  * Check if a string is a valid email address.
+  * [Check if a string is a valid email address](#check-email-addresses).
 * [finance](#finance):
   * [Validate ISIN](#validate-isin) (International Securities Identification Number).
   * [Validate IBAN](#validate-iban) (International Bank Account Number).
@@ -345,6 +345,7 @@ Normalizing a URL means:
   * remove ports if they are the standard port for the scheme,
   * remove duplicate slashes from the path,
   * remove fragments (like #foo),
+  * drop any embedded credentials (`user:password@`),
   * remove empty elements of the query part,
   * order the elements in the query part alphabetically
 

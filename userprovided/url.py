@@ -210,7 +210,7 @@ def normalize_url(url: str,
     - Remove empty query parameters
     - Sort query parameters alphabetically
     - Optionally remove specified query keys (e.g., tracking parameters)
-    - Drop any userinfo (``user:password@``)
+    - Drop any embedded credentials (``user:password@`` userinfo)
 
     Args:
         url: The URL to normalize.
