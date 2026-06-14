@@ -1,6 +1,6 @@
 # Changelog / History
 
-## Upcoming Version
+## Version 2.5.0 (2026-06-14)
 
 * New features:
   * `parameters`: added `parse_boolean` to convert the boolean spellings from config files, environment variables, and HTML forms (`1`/`yes`/`true`/`on` and `0`/`no`/`false`/`off`, case-insensitive and trimmed, mirroring `configparser.BOOLEAN_STATES`) into a real `bool`. Unrecognized values raise; the optional `name`/`source` keywords produce an actionable, source-aware error message.
