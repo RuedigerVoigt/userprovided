@@ -21,6 +21,7 @@
   * Tooling: added a Dependabot config to keep the GitHub Actions up to date automatically.
   * Security: pinned all GitHub Actions to full commit SHAs (with a version comment) instead of mutable tags, so a re-pointed upstream tag cannot inject code into the workflows — most importantly the PyPI publish job. Dependabot keeps the pins current.
   * Security: set least-privilege `permissions: contents: read` on the test, lint, and build workflows, so their `GITHUB_TOKEN` cannot write to the repository. The OIDC publishing capability (`id-token: write`) remains exclusive to the release workflow.
+  * Security: Enabled release immutability
 
 ## Version 2.4.0 (2026-06-06)
 
