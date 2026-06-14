@@ -14,7 +14,6 @@ Released under the Apache License 2.0
 import ipaddress
 import logging
 import mimetypes
-from typing import Dict, Optional, Union
 import urllib.parse
 
 from userprovided import err
@@ -72,7 +71,7 @@ TWO_PART_TLDS = {
 }
 
 
-def _host_from_url(url: str) -> Optional[str]:
+def _host_from_url(url: str) -> str | None:
     """Extract the lowercase hostname from a URL, or None on failure."""
     if len(url) > _MAX_URL_LENGTH:
         return None
@@ -84,7 +83,7 @@ def _host_from_url(url: str) -> Optional[str]:
 
 
 def is_url(url: str,
-           require_specific_schemes: Union[tuple, str, None] = None) -> bool:
+           require_specific_schemes: tuple | str | None = None) -> bool:
     """Validates basic URL format without attempting connection.
 
     Performs basic structural validation of a URL including scheme and
@@ -126,7 +125,7 @@ def is_url(url: str,
 
 
 def _normalize_query_part(query: str,
-                          drop_keys: Union[list, tuple, set, None] = None) -> str:
+                          drop_keys: list | tuple | set | None = None) -> str:
     """Normalizes URL query parameters for consistent formatting.
 
     Processes query parameters by removing empty values, sorting alphabetically,
@@ -156,7 +155,7 @@ def _normalize_query_part(query: str,
         return query
 
     chunks = query.split('&')
-    keep: Dict[str, str] = dict()
+    keep: dict[str, str] = dict()
     for chunk in chunks:
         if chunk != '' and '=' in chunk:
             split_chunk = chunk.split('=', 1)
@@ -184,7 +183,7 @@ def _normalize_query_part(query: str,
 
 
 def normalize_url(url: str,
-                  drop_keys: Union[list, tuple, set, None] = None,
+                  drop_keys: list | tuple | set | None = None,
                   do_not_change_query_part: bool = False) -> str:
     """Normalizes a URL to a canonical format.
 
@@ -272,7 +271,7 @@ def normalize_url(url: str,
 
 
 def determine_file_extension(url: str,
-                             provided_mime_type: Optional[str] = None) -> str:
+                             provided_mime_type: str | None = None) -> str:
     """Determines appropriate file extension from URL and/or MIME type.
 
     Attempts to guess the correct file extension by analyzing the URL path
@@ -294,8 +293,8 @@ def determine_file_extension(url: str,
     if provided_mime_type == '':
         provided_mime_type = None
 
-    extension: Optional[str] = None
-    type_by_url: Optional[str] = None
+    extension: str | None = None
+    type_by_url: str | None = None
     parsed_url = urllib.parse.urlparse(url)
     if parsed_url.path not in ('', '/'):
         type_by_url = mimetypes.guess_type(parsed_url.path)[0]

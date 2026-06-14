@@ -11,7 +11,6 @@ Released under the Apache License 2.0
 
 import logging
 import re
-from typing import Optional, Union, Set
 
 from userprovided import err
 
@@ -24,7 +23,7 @@ _AWS_S3_BUCKET_LABELS = re.compile(
     r"[a-z0-9]([a-z0-9\-]*[a-z0-9])?$")
 
 
-def convert_to_set(convert_this: Union[list, set, str, tuple]) -> set:
+def convert_to_set(convert_this: list | set | str | tuple) -> set:
     """Converts various iterable types to a set.
 
     Takes a string, tuple, list, or existing set and converts it to a set,
@@ -57,11 +56,11 @@ def convert_to_set(convert_this: Union[list, set, str, tuple]) -> set:
 
 
 def separated_string_to_set(
-    raw_string: Optional[str],
+    raw_string: str | None,
     sep: str = ",",
     allow_quotes: bool = True,
     quote_char: str = '"',
-) -> Optional[Set[str]]:
+) -> set[str] | None:
     r"""Parse a separated string into a set of trimmed, non-empty items.
 
     Args:
@@ -113,7 +112,7 @@ def separated_string_to_set(
         if quote_char == sep:
             raise ValueError("quote_char cannot equal sep.")
 
-    result: Set[str] = set()
+    result: set[str] = set()
     buf: list[str] = []
     in_quotes = False
     i = 0
@@ -162,8 +161,8 @@ def separated_string_to_set(
 
 def validate_dict_keys(dict_to_check: dict,
                        allowed_keys: set,
-                       necessary_keys: Optional[set] = None,
-                       dict_name: Optional[str] = None) -> bool:
+                       necessary_keys: set | None = None,
+                       dict_name: str | None = None) -> bool:
     """Validates dictionary keys against allowed and required sets.
 
     Checks if all keys in a dictionary are permitted and whether all
@@ -272,11 +271,11 @@ def keys_neither_none_nor_empty(dict_to_check: dict) -> bool:
 
 
 def numeric_in_range(parameter_name: str,
-                     given_value: Union[int, float],
-                     minimum_value: Union[int, float],
-                     maximum_value: Union[int, float],
-                     fallback_value: Union[int, float]
-                     ) -> Union[int, float]:
+                     given_value: int | float,
+                     minimum_value: int | float,
+                     maximum_value: int | float,
+                     fallback_value: int | float
+                     ) -> int | float:
     """Validates numeric value within range, returning fallback if outside.
 
     Checks if a numeric value falls within the specified range. If not,
@@ -508,8 +507,8 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
     return False
 
 
-def clean_trim(value: Union[str, None],
-               empty_as: Union[str, None] = None) -> Union[str, None]:
+def clean_trim(value: str | None,
+               empty_as: str | None = None) -> str | None:
     """Strip whitespace and convert empty or whitespace-only strings.
 
     This is a trivial operation, but it is a repeating input normalization
@@ -544,7 +543,7 @@ def clean_trim(value: Union[str, None],
 
 
 def enforce_boolean(parameter_value: bool,
-                    parameter_name: Optional[str] = None) -> None:
+                    parameter_name: str | None = None) -> None:
     """Validates that a parameter is a boolean type.
 
     Ensures the provided parameter is exactly of type bool (not truthy/falsy

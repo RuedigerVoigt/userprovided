@@ -13,7 +13,6 @@ Released under the Apache License 2.0
 import hashlib
 import logging
 import pathlib
-from typing import Optional, Union
 
 from userprovided import err
 
@@ -70,9 +69,9 @@ def hash_available(hash_method: str,
     return False
 
 
-def calculate_file_hash(file_path: Union[pathlib.Path, str],
+def calculate_file_hash(file_path: pathlib.Path | str,
                         hash_method: str = 'sha256',
-                        expected_hash: Optional[str] = None) -> str:
+                        expected_hash: str | None = None) -> str:
     """Calculates cryptographic hash of a file.
 
     Computes the hash digest of a file using the specified algorithm.

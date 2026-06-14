@@ -11,11 +11,10 @@ Released under the Apache License 2.0
 
 import logging
 import math
-from typing import Union
 
 
-def is_valid_coordinates(latitude: Union[float, int, str],
-                         longitude: Union[float, int, str]) -> bool:
+def is_valid_coordinates(latitude: float | int | str,
+                         longitude: float | int | str) -> bool:
     """Validate if latitude and longitude are within possible Earth ranges.
 
     Args:
