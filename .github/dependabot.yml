@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # Keep the GitHub Actions used in the workflows up to date.
+  # The library itself has no runtime dependencies, so there is no
+  # pip/poetry ecosystem to watch here.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
