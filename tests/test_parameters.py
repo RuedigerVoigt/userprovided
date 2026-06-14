@@ -564,6 +564,68 @@ def test_enforce_boolean():
     userprovided.parameters.enforce_boolean(False)
 
 
+@pytest.mark.parametrize("value,expected", [
+    # real booleans pass through unchanged:
+    (True, True),
+    (False, False),
+    # truthy spellings:
+    ('1', True), ('yes', True), ('true', True), ('on', True),
+    # falsy spellings:
+    ('0', False), ('no', False), ('false', False), ('off', False),
+    # case-insensitive and whitespace-trimmed:
+    ('YES', True), ('Off', False), ('  on  ', True), ('\tTrue\n', True),
+])
+def test_parse_boolean_valid(value, expected):
+    assert userprovided.parameters.parse_boolean(value) is expected
+
+
+def test_parse_boolean_invalid_string():
+    # An unrecognized spelling raises ValidationError ...
+    with pytest.raises(userprovided.err.ValidationError):
+        userprovided.parameters.parse_boolean('maybe')
+    # ... which is also a ValueError (backward-compatible handling) ...
+    with pytest.raises(ValueError):
+        userprovided.parameters.parse_boolean('maybe')
+    # ... and a UserprovidedException.
+    with pytest.raises(userprovided.err.UserprovidedException):
+        userprovided.parameters.parse_boolean('')
+
+
+def test_parse_boolean_non_string():
+    # Neither bool nor string is a caller error -> TypeError, not ValidationError.
+    for bad in (None, 1, 0, 1.0, ['yes']):
+        with pytest.raises(TypeError):
+            userprovided.parameters.parse_boolean(bad)
+
+
+def test_parse_boolean_error_message():
+    # The message names the value, the parameter, the source, and the rule.
+    with pytest.raises(userprovided.err.ValidationError) as excinfo:
+        userprovided.parameters.parse_boolean(
+            'nope', name='verbose', source='in config.ini')
+    msg = str(excinfo.value)
+    assert "'nope'" in msg
+    assert 'for verbose' in msg
+    assert 'in config.ini' in msg
+    assert 'true/false, yes/no, on/off, 1/0' in msg
+    # Without name/source the extra clauses are absent.
+    with pytest.raises(userprovided.err.ValidationError) as excinfo2:
+        userprovided.parameters.parse_boolean('nope')
+    bare = str(excinfo2.value)
+    assert ' for ' not in bare
+    assert bare.startswith("Invalid value 'nope' -")
+
+
+def test_parse_boolean_message_no_log_injection():
+    # A value with an embedded newline must not be able to forge a second
+    # log line: repr() escapes it, so the message stays on one line.
+    with pytest.raises(userprovided.err.ValidationError) as excinfo:
+        userprovided.parameters.parse_boolean('a\nFAKE LOG LINE')
+    msg = str(excinfo.value)
+    assert '\n' not in msg
+    assert '\\n' in msg
+
+
 def test_aws_s3_bucket_label_regex_fallback():
     """Cover the final regex fallback (parameters.py lines 503-504).
 

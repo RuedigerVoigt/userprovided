@@ -25,6 +25,7 @@ Userprovided has functionality for the following inputs:
   * [Check integer range](#check-integer-range) with strict integer type enforcement.
   * [Clean and trim strings](#clean-and-trim-strings) by stripping whitespace and converting empty input to None or a custom value.
   * [Enforce boolean type](#enforce-boolean-type) to reject truthy/falsy values.
+  * [Parse a boolean](#parse-a-boolean) from config/env/form spellings (yes/no/on/off/1/0) into a real `bool`.
   * [Validate AWS S3 bucket names](#validate-aws-s3-bucket-names) against AWS naming rules.
 * [url](#handle-urls):
   * [Normalize a URL](#normalize-urls) and drop specific keys from the query part of it.
@@ -287,6 +288,24 @@ userprovided.parameters.enforce_boolean(1)
 userprovided.parameters.enforce_boolean('true')
 # => ValueError: Value of parameter must be boolean, i.e True / False
 ```
+
+### Parse a Boolean
+
+Where `enforce_boolean` rejects anything that is not already a `bool`, `parse_boolean` *converts* the boolean spellings delivered by config files, environment variables, and HTML forms into a real `bool`. It accepts `1` / `yes` / `true` / `on` (→ `True`) and `0` / `no` / `false` / `off` (→ `False`), case-insensitively and after trimming whitespace (mirroring `configparser.BOOLEAN_STATES`). Real booleans pass through unchanged. Unlike the tolerant helpers, it never falls back to a default — an unrecognized value raises `userprovided.err.ValidationError` (a subclass of `ValueError`).
+
+```python
+userprovided.parameters.parse_boolean('yes')      # => True
+userprovided.parameters.parse_boolean('  Off  ')   # => False
+userprovided.parameters.parse_boolean(True)        # => True
+
+# Unrecognized values raise, with an actionable, source-aware message:
+userprovided.parameters.parse_boolean(
+    'nope', name='verbose', source='in config.ini')
+# => ValidationError: Invalid value 'nope' for verbose in config.ini -
+#    must be a boolean (true/false, yes/no, on/off, 1/0).
+```
+
+The optional `name` and `source` keywords are used only to build the error message, so a user learns *which* value to fix and *where*. A non-string, non-bool argument (e.g. `None`) raises `TypeError`.
 
 ### Validate AWS S3 Bucket Names
 

@@ -22,6 +22,14 @@ _AWS_S3_BUCKET_LABELS = re.compile(
     r"^([a-z0-9]([a-z0-9\-]*[a-z0-9])?\.)*"
     r"[a-z0-9]([a-z0-9\-]*[a-z0-9])?$")
 
+# Boolean spellings accepted by parse_boolean (lowercased keys). Mirrors
+# configparser.BOOLEAN_STATES, the de-facto standard for config files,
+# environment variables, and HTML forms.
+_BOOLEAN_STATES = {
+    '1': True, 'yes': True, 'true': True, 'on': True,
+    '0': False, 'no': False, 'false': False, 'off': False,
+}
+
 
 def convert_to_set(convert_this: list | set | str | tuple) -> set:
     """Converts various iterable types to a set.
@@ -566,3 +574,84 @@ def enforce_boolean(parameter_value: bool,
         parameter_name = parameter_name or 'parameter'
         raise ValueError(f"Value of {parameter_name} must be boolean," +
                          "i.e True / False (without quotation marks).")
+
+
+def _validation_message(value: object,
+                        requirement: str,
+                        name: str | None = None,
+                        source: str | None = None) -> str:
+    """Compose a source-aware validation error message.
+
+    Produces ``Invalid value <value> for <name> <source> - <requirement>.``
+    The ``for <name>`` and ``<source>`` clauses are omitted when not given.
+
+    The value is rendered with ``repr()`` (``%r``-style) so that newlines
+    and control characters in untrusted input cannot forge or corrupt log
+    lines or break a message rendered in a web page.
+
+    Args:
+        value: The offending value, shown via repr().
+        requirement: What the value should have been (e.g.
+            ``'must be an integer >= 0'``).
+        name: Optional parameter name.
+        source: Optional origin clause (e.g. ``'in config.ini'``).
+
+    Returns:
+        The formatted message, ending with a period.
+    """
+    message = f"Invalid value {value!r}"
+    if name:
+        message += f" for {name}"
+    if source:
+        message += f" {source}"
+    return f"{message} - {requirement}."
+
+
+def parse_boolean(value: str | bool,
+                  *,
+                  name: str | None = None,
+                  source: str | None = None) -> bool:
+    """Parse a user-supplied boolean value, raising on anything unrecognized.
+
+    Real booleans are returned unchanged. Strings are matched
+    case-insensitively (after stripping surrounding whitespace) against the
+    spellings delivered by config files, environment variables, and HTML
+    forms: ``1`` / ``yes`` / ``true`` / ``on`` become ``True`` and ``0`` /
+    ``no`` / ``false`` / ``off`` become ``False`` (mirrors
+    ``configparser.BOOLEAN_STATES``).
+
+    Unlike ``enforce_boolean`` (which only checks that a value is already a
+    ``bool``), this function converts the string spellings. Unlike a tolerant
+    helper, it never falls back to a default — an unrecognized value raises.
+
+    Args:
+        value: A ``bool``, or a string spelling of one.
+        name: Optional parameter name, used only in the error message.
+        source: Optional origin of the value (e.g. ``'in config.ini'`` or
+            ``'on the command line (--verbose)'``), used only in the error
+            message.
+
+    Returns:
+        The parsed boolean.
+
+    Raises:
+        ValidationError: If value is a string that is not a recognized
+            boolean spelling.
+        TypeError: If value is neither a bool nor a string.
+    """
+    # bool must be checked before str (it is not a str, but be explicit) and
+    # before the int-like spellings, so a real bool is returned untouched.
+    if isinstance(value, bool):
+        return value
+    if not isinstance(value, str):
+        raise TypeError('parse_boolean expects a bool or a string.')
+
+    parsed = _BOOLEAN_STATES.get(value.strip().lower())
+    if parsed is None:
+        raise err.ValidationError(
+            _validation_message(
+                value,
+                'must be a boolean (true/false, yes/no, on/off, 1/0)',
+                name=name,
+                source=source))
+    return parsed

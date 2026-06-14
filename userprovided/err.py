@@ -39,3 +39,14 @@ class ContradictoryParameters(UserprovidedException, ValueError):
     This exception is thrown when function parameters or configuration settings
     contradict each other and cannot be used simultaneously.
     """
+
+
+class ValidationError(UserprovidedException, ValueError):
+    """Raised when a user-supplied value violates a validation rule.
+
+    Subclasses ``ValueError`` so existing ``except ValueError`` handlers keep
+    working, and ``UserprovidedException`` so it is caught by handlers for the
+    library's own exceptions. Used by the strict validators (e.g.
+    ``parameters.parse_boolean``) that convert input or raise rather than
+    falling back to a default.
+    """

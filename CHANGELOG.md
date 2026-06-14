@@ -2,6 +2,9 @@
 
 ## Upcoming Version
 
+* New features:
+  * `parameters`: added `parse_boolean` to convert the boolean spellings from config files, environment variables, and HTML forms (`1`/`yes`/`true`/`on` and `0`/`no`/`false`/`off`, case-insensitive and trimmed, mirroring `configparser.BOOLEAN_STATES`) into a real `bool`. Unrecognized values raise; the optional `name`/`source` keywords produce an actionable, source-aware error message.
+  * `err`: added `ValidationError` (subclass of both `UserprovidedException` and `ValueError`) for strict validators that raise rather than fall back.
 * Security fixes:
   * `url`: `is_url` no longer applies substring matching when a plain string is passed to `require_specific_schemes`. Previously `is_url('http://...', ('https'))` returned `True` because `('https')` is a string, not a tuple, and `'http' in 'https'` holds. A bare string is now treated as a single scheme name. The README example that demonstrated the string-instead-of-tuple pattern was corrected.
   * `ip`: `is_potential_ssrf_target` now flags the RFC 6598 carrier-grade NAT range (100.64.0.0/10). Python's `ipaddress` does not consider it private, so it previously slipped past the SSRF guard despite being a realistic internal target in cloud and carrier networks.
