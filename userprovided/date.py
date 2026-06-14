@@ -38,7 +38,12 @@ def date_exists(year: int | str,
         day: The day (1-31) as an integer, or a string convertible to one.
 
     Returns:
-        True if the date exists in the calendar, False otherwise.
+        True if the date exists in the calendar, False otherwise. A string
+        that does not represent an integer (e.g. ``'abc'``) yields False.
+
+    Raises:
+        TypeError: If a part is of a type ``int()`` cannot convert
+            (e.g. ``None`` or a list).
     """
     try:
         # int() will convert something like '01' to 1

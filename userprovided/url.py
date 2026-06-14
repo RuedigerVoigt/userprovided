@@ -445,7 +445,7 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
     Raises:
         ValueError: If url is empty or domain extraction fails
 
-    Example:
+    Examples:
         >>> extract_domain('https://www.example.com:8080/path')
         'www.example.com'
         >>> extract_domain('https://www.example.com', drop_subdomain=True)

@@ -87,7 +87,7 @@ def separated_string_to_set(
             if quote_char equals sep or backslash, or if quotes are
             unclosed.
 
-    Notes:
+    Note:
         - Separator: `sep` (single character, default ',').
         - Quotes: when allow_quotes=True, text between `quote_char`
           is a single field.
@@ -287,7 +287,7 @@ def numeric_in_range(parameter_name: str,
     """Validates numeric value within range, returning fallback if outside.
 
     Checks if a numeric value falls within the specified range. If not,
-    returns the fallback value and logs a warning message.
+    returns the fallback value and logs a debug message.
 
     Args:
         parameter_name: Name of the parameter for logging purposes.
