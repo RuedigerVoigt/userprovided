@@ -16,6 +16,7 @@
 * CI:
   * Tooling: replaced flake8 with an enforcing ruff workflow (configured in `pyproject.toml`). The previous flake8 style pass ran with `--exit-zero` and could never fail CI; ruff enforces.
   * Tooling: added a Dependabot config to keep the GitHub Actions up to date automatically.
+  * Security: pinned all GitHub Actions to full commit SHAs (with a version comment) instead of mutable tags, so a re-pointed upstream tag cannot inject code into the workflows — most importantly the PyPI publish job. Dependabot keeps the pins current.
 
 ## Version 2.4.0 (2026-06-06)
 
