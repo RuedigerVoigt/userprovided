@@ -57,12 +57,17 @@ The Python package userprovided checks input for validity and plausibility. It a
 
 * Use consistent naming conventions that match the rest of the codebase.
 * Respect PEP 8 style guidelines.
-* Write code with comprehensive type hints (PEP 484) for all function signatures, parameters, and return values.
+* Write code with comprehensive type hints for all function signatures, parameters, and return values. Use modern syntax (PEP 604 / PEP 585): `X | None` instead of `Optional[X]`, `int | float` instead of `Union[int, float]`, and the built-in generics `list`, `dict`, `set`, `tuple` instead of `typing.List`/`Dict`/`Set`/`Tuple`. Do not import from `typing` for these.
 * Write docstrings using the Google format.
 * Error handling:
   * Use specific exception types (ValueError, TypeError, etc.).
   * Provide helpful error messages that guide users toward solutions.
   * Follow existing error message patterns in the codebase.
+  * **Non-string input to a string-validating `is_*` predicate raises `TypeError`** (with a clear message), it does not return `False`. A boolean result is reserved for actual string input — `False` means "a string that is not valid", never "wrong type". This applies to `is_isin`, `is_iban`, `is_email`, `is_url`, `is_shortened_url`, `is_aws_s3_bucket_name`, and the `ip.is_*` predicates. (`is_port` and `is_valid_coordinates` are deliberately different: they accept non-string domains.)
+* Logging levels — the package must not spam the logs of the application using it:
+  * `logging.debug` for handled validation failures and other expected, recoverable conditions (the default for nearly everything here). If a traceback is useful, pass `exc_info=True` to `debug` rather than using `logging.exception`.
+  * `logging.error` only for caller contradictions that also raise (e.g. mutually exclusive arguments).
+  * Do **not** use `logging.exception` (it logs at ERROR with a traceback and is reserved for genuinely unexpected faults — the library currently uses it nowhere).
 
 ### Test driven development:
 

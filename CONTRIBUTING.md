@@ -26,8 +26,8 @@ Specific instructions for these agents are found in the [AGENTS.md](AGENTS.md) f
 ## Coding Style
 
 * Respect [PEP 8](https://peps.python.org/pep-0008/) style guidelines.
-* The use of type hints ([PEP 484](https://peps.python.org/pep-0484/)) is encouraged.
-* Please provide useful log and error messages.
+* The use of type hints ([PEP 484](https://peps.python.org/pep-0484/)) is encouraged. Use modern [PEP 604](https://peps.python.org/pep-0604/) / [PEP 585](https://peps.python.org/pep-0585/) syntax (`X | None`, built-in generics like `list[str]`) rather than `typing.Optional`/`Union`/`List`.
+* Please provide useful log and error messages. Use `logging.debug` for handled validation failures so the library does not spam the host application's logs.
 * Docstrings are required for all functions and classes using [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings).
 
 This project supports Python 3.10 to 3.14 and uses [Poetry](https://python-poetry.org/) for packaging and dependency management.

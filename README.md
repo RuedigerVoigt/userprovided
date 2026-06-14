@@ -13,7 +13,7 @@ For a wide range of data, the Python package `userprovided`:
 * converts into standardized formats
 * performs basic security checks
 
-The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/)) and provides useful log and error messages.
+The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/), using modern [PEP 604](https://peps.python.org/pep-0604/) `X | Y` syntax) and provides useful log and error messages.
 
 Userprovided has functionality for the following inputs:
 * [parameters](#handle-parameters):
@@ -183,7 +183,7 @@ def numeric_in_range(parameter_name,
                      given_value,
                      minimum_value,
                      maximum_value,
-                     fallback_value) -> Union[int, float]
+                     fallback_value) -> int | float
 
 
 
