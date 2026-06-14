@@ -444,10 +444,15 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
     Returns:
         True if the bucket name is valid for AWS S3, False otherwise.
 
+    Raises:
+        TypeError: If bucket_name is not a string.
+
     Note:
         Applies rules from:
         https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
     """
+    if not isinstance(bucket_name, str):
+        raise TypeError('Bucket name must be a string.')
 
     # Lengthy code which could be written as a single regular expression.
     # However written in this way to provide useful error messages.

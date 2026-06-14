@@ -72,7 +72,15 @@ TWO_PART_TLDS = {
 
 
 def _host_from_url(url: str) -> str | None:
-    """Extract the lowercase hostname from a URL, or None on failure."""
+    """Extract the lowercase hostname from a URL, or None on failure.
+
+    Raises:
+        TypeError: If url is not a string. A non-string is a caller error,
+            not a URL that failed to parse, so it is surfaced rather than
+            swallowed into a None return.
+    """
+    if not isinstance(url, str):
+        raise TypeError('URL must be a string.')
     if len(url) > _MAX_URL_LENGTH:
         return None
     try:

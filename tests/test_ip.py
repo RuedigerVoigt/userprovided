@@ -10,6 +10,8 @@ Released under the Apache License 2.0
 
 # ruff: noqa
 
+import pytest
+
 import userprovided
 
 
@@ -27,6 +29,22 @@ def test_parse_ip():
     assert userprovided.ip._parse_ip('0' + '7' * 44) is None
     # Plain hostname — not an IP in any encoding
     assert userprovided.ip._parse_ip('example.com') is None
+
+
+def test_ip_non_string():
+    # Every public ip predicate shares the string-validator contract:
+    # a non-string argument raises TypeError, not a leaky len() error and
+    # not a silent False.
+    predicates = (
+        userprovided.ip.is_loopback,
+        userprovided.ip.is_private,
+        userprovided.ip.is_link_local,
+        userprovided.ip.is_potential_ssrf_target,
+    )
+    for predicate in predicates:
+        for bad in (None, 123, ['http://127.0.0.1/']):
+            with pytest.raises(TypeError):
+                predicate(bad)
 
 
 def test_ip_is_loopback():

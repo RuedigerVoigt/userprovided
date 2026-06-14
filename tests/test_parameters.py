@@ -88,6 +88,16 @@ def test_cloud_is_aws_s3_bucket_name(bucket_name, truth_value):
     assert userprovided.parameters.is_aws_s3_bucket_name(bucket_name) is truth_value
 
 
+def test_is_aws_s3_bucket_name_non_string():
+    # Non-string input is a caller error and raises TypeError.
+    with pytest.raises(TypeError):
+        userprovided.parameters.is_aws_s3_bucket_name(None)
+    with pytest.raises(TypeError):
+        userprovided.parameters.is_aws_s3_bucket_name(123)
+    with pytest.raises(TypeError):
+        userprovided.parameters.is_aws_s3_bucket_name(['my-bucket'])
+
+
 def test_parameters_is_port():
     assert userprovided.parameters.is_port(443) is True
     assert userprovided.parameters.is_port(65536) is False

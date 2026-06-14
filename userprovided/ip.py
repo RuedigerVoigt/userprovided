@@ -78,6 +78,9 @@ def is_loopback(url: str) -> bool:
     Returns:
         True if the host is a loopback address or ``localhost``,
         False otherwise (including malformed URLs).
+
+    Raises:
+        TypeError: If url is not a string.
     """
     host = _host_from_url(url)
     if host is None:
@@ -105,6 +108,9 @@ def is_private(url: str) -> bool:
     Returns:
         True if the host is a private IP address, False otherwise
         (including malformed URLs and hostnames that are not IP addresses).
+
+    Raises:
+        TypeError: If url is not a string.
     """
     host = _host_from_url(url)
     if host is None:
@@ -126,6 +132,9 @@ def is_link_local(url: str) -> bool:
     Returns:
         True if the host is link-local or a ``.local`` hostname, False
         otherwise (including malformed URLs).
+
+    Raises:
+        TypeError: If url is not a string.
     """
     host = _host_from_url(url)
     if host is None:
@@ -162,6 +171,9 @@ def is_potential_ssrf_target(url: str) -> bool:
     Returns:
         True if the URL should be treated as a potential SSRF target,
         False otherwise.
+
+    Raises:
+        TypeError: If url is not a string.
     """
     if is_loopback(url) or is_private(url) or is_link_local(url):
         logging.debug('Potential SSRF target detected: %s', url)
