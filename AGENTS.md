@@ -76,7 +76,7 @@ The Python package userprovided checks input for validity and plausibility. It a
 * Required testing dependencies: `pytest` and `hypothesis`
 * Additional testing dependencies are allowed (see dependency policy above)
 * Run `pytest -q` for the test suite (or `python -m pytest -q` if pytest command not found).
-* Run `flake8` to check style.
+* Run `ruff check .` to check style and lint.
 * Run `mypy`.
 * REQUIRED: Run a static security analyzer (e.g. `bandit`) before submitting a PR and include results in the PR description.
 * Include code coverage data using `pytest --cov=userprovided`. Aim for >95% for new code unless justified.
@@ -129,8 +129,7 @@ Before submitting a pull request, ensure all of the following pass (these comman
 
 - [ ] **Tests pass**: `pytest tests/`
 - [ ] **Code coverage** >90% for new code: `pytest --cov=userprovided`
-- [ ] **Style check (strict)**: `flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics`
-- [ ] **Style check (lenient)**: `flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics`
+- [ ] **Style and lint check**: `ruff check .` (must show no errors)
 - [ ] **Type checking**: `mypy userprovided/` (must show no errors)
 - [ ] **Security scan**: `bandit -r userprovided/ -ll --exclude tests/` (must show no issues)
 - [ ] **Documentation**: New features added to CHANGELOG.md under "Upcoming" section

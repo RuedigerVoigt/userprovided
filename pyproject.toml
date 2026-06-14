@@ -38,7 +38,7 @@ python = ">=3.10"
 [tool.poetry.group.dev.dependencies]
 hypothesis = "*"
 pytest = "*"
-flake8 = "*"
+ruff = "*"
 mypy = "*"
 bandit = "*"
 
@@ -46,6 +46,20 @@ bandit = "*"
 # Type-check the library only. Tests are deliberately not type-checked
 # (matches CI, which runs mypy on userprovided/ only).
 files = ["userprovided"]
+
+[tool.ruff]
+# Match the line length previously enforced via .flake8.
+line-length = 127
+
+[tool.ruff.lint]
+# pycodestyle (E/W), pyflakes (F) and mccabe (C90) — the checks flake8
+# provided, now from a single tool.
+select = ["E", "W", "F", "C90"]
+
+[tool.ruff.lint.mccabe]
+# Several validators are inherently branchy. This threshold passes today
+# and still flags future regressions; lower it deliberately, not by accident.
+max-complexity = 15
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]

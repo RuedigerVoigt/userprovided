@@ -9,6 +9,8 @@
 * Tests:
   * Added IPv6 cases for `normalize_url`: brackets preserved, hex digits lowercased, standard port removal, non-standard port kept, query normalization.
   * Added scheme-restriction regression cases for `is_url` (plain string vs. tuple).
+* CI:
+  * Tooling: replaced flake8 with an enforcing ruff workflow (configured in `pyproject.toml`). The previous flake8 style pass ran with `--exit-zero` and could never fail CI; ruff enforces.
 
 ## Version 2.4.0 (2026-06-06)
 

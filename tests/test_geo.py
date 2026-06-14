@@ -8,7 +8,7 @@ Source: https://github.com/RuedigerVoigt/userprovided
 Released under the Apache License 2.0
 """
 
-# flake8: noqa
+# ruff: noqa
 
 import userprovided
 
