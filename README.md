@@ -29,10 +29,12 @@ Userprovided has functionality for the following inputs:
   * [Validate AWS S3 bucket names](#validate-aws-s3-bucket-names) against AWS naming rules.
 * [url](#handle-urls):
   * [Normalize a URL](#normalize-urls) and drop specific keys from the query part of it.
+  * [Normalize a hostname](#normalize-hostnames) to one canonical form (trailing dots, punycode, IPv6 spellings).
   * [Check](#check-urls) if a string is a URL.
   * [Check for shortened URLs](#check-for-shortened-urls) from known URL shortening services.
   * [Determine a file extension](#determine-a-file-extension) from a URL and the MIME-type sent by the server.
   * [Extract domain from URL](#extract-domain-from-url) with optional subdomain removal, supporting 2-part TLDs.
+  * [Extract domain from a hostname](#extract-domain-from-a-hostname) for callers that already hold a bare hostname instead of a URL.
   * [Extract TLD from URL](#extract-tld-from-url) correctly identifying both standard and 2-part TLDs.
   * [Check if a URL belongs to a domain](#check-url-domain) with subdomain matching.
 * [ip](#check-ip-addresses):
@@ -359,6 +361,31 @@ userprovided.url.normalize_url(url, drop_keys=['c'])
 # returns: https://www.example.com/index.py?a=1&b=2
 ```
 
+### Normalize Hostnames
+
+Different spellings of the same host — a trailing root-label dot (`example.com.`), an internationalized name versus its punycode form (`münchen.example` vs. `xn--mnchen-3ya.example`), or equivalent IPv6 literals (`::1` vs. `0:0:0:0:0:0:0:1`) — all identify the same machine. `normalize_hostname` reduces a bare hostname or IP literal (not a URL) to one canonical form, suitable as an identity key for tasks like rate limiting or deduplication. Normalization is idempotent: feeding the result back in returns it unchanged.
+
+Note that `normalize_url` deliberately does *not* canonicalize hosts this way, as its output serves as an identity key in existing downstream databases.
+
+```python
+userprovided.url.normalize_hostname('Example.COM.')
+# => 'example.com'
+
+# Internationalized names are canonicalized to punycode
+# (stdlib IDNA codec, i.e. IDNA 2003):
+userprovided.url.normalize_hostname('MÜNCHEN.example')
+# => 'xn--mnchen-3ya.example'
+
+# Equivalent IP spellings converge; IPv6 is accepted with or
+# without brackets and returned without them:
+userprovided.url.normalize_hostname('[0:0:0:0:0:0:0:1]')
+# => '::1'
+
+userprovided.url.normalize_hostname('2001:DB8::1')
+# => '2001:db8::1'
+```
+
+A non-string raises `TypeError`; empty input and input longer than 2048 characters raise `ValueError`. Everything else is normalized best-effort — this is a normalizer, not a validator.
 
 ### Check URLs
 
@@ -450,6 +477,25 @@ userprovided.url.extract_domain('http://192.168.1.1:8080/path', drop_subdomain=T
 
 userprovided.url.extract_domain('http://localhost:3000', drop_subdomain=True)
 # => 'localhost'
+```
+
+Note that `extract_domain` deliberately does *not* canonicalize the host (trailing dots, punycode, IPv6 spellings stay as given), as its output serves as an identity key in existing downstream databases. If you hold a bare hostname and want a canonical form, use `extract_domain_from_host`.
+
+### Extract Domain from a Hostname
+
+`extract_domain_from_host` is the host-level sibling of `extract_domain` for callers that already hold a bare hostname and would otherwise have to fabricate a URL around it. Unlike `extract_domain`, it normalizes its input via `normalize_hostname` first (trailing dot, punycode, IP canonicalization).
+
+```python
+userprovided.url.extract_domain_from_host('www.example.co.uk', drop_subdomain=True)
+# => 'example.co.uk'
+
+userprovided.url.extract_domain_from_host('MÜNCHEN.example.')
+# => 'xn--mnchen-3ya.example'
+
+# IP literals have no subdomains or public suffix and are
+# returned in canonical form regardless of drop_subdomain:
+userprovided.url.extract_domain_from_host('[::1]', drop_subdomain=True)
+# => '::1'
 ```
 
 ### Extract TLD from URL

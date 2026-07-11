@@ -12,6 +12,7 @@ Released under the Apache License 2.0
 
 from unittest.mock import patch
 
+from hypothesis import given, assume, strategies as st
 import pytest
 
 import userprovided
@@ -502,3 +503,87 @@ def test_host_from_url_exception():
     with patch('userprovided.url.urllib.parse.urlparse',
                side_effect=RuntimeError('mocked')):
         assert userprovided.url._host_from_url('https://example.com') is None
+
+
+@pytest.mark.parametrize("host,expected", [
+    # lowercasing and trailing root-label dots:
+    ('Example.COM.', 'example.com'),
+    ('example.com..', 'example.com'),
+    ('  example.com  ', 'example.com'),
+    # IDNA: unicode, punycode, and upper-case unicode spellings converge:
+    ('münchen.example', 'xn--mnchen-3ya.example'),
+    ('xn--mnchen-3ya.example', 'xn--mnchen-3ya.example'),
+    ('MÜNCHEN.example', 'xn--mnchen-3ya.example'),
+    # IPv6 equivalence — bracketed, unbracketed, expanded, upper-case:
+    ('::1', '::1'),
+    ('0:0:0:0:0:0:0:1', '::1'),
+    ('[::1]', '::1'),
+    ('[0:0:0:0:0:0:0:1]', '::1'),
+    ('2001:DB8::1', '2001:db8::1'),
+    # IPv4 unchanged:
+    ('192.168.1.1', '192.168.1.1'),
+    # ASCII hostnames pass through — normalizer, not validator:
+    ('localhost', 'localhost'),
+])
+def test_normalize_hostname(host, expected):
+    assert userprovided.url.normalize_hostname(host) == expected
+
+
+@pytest.mark.parametrize("not_a_string", [None, 123, b'example.com'])
+def test_normalize_hostname_type_error(not_a_string):
+    with pytest.raises(TypeError):
+        userprovided.url.normalize_hostname(not_a_string)
+
+
+@pytest.mark.parametrize("empty_host", ['', '   ', '.', '[]'])
+def test_normalize_hostname_value_error(empty_host):
+    with pytest.raises(ValueError):
+        userprovided.url.normalize_hostname(empty_host)
+
+
+def test_normalize_hostname_rejects_overlong_input():
+    with pytest.raises(ValueError):
+        userprovided.url.normalize_hostname('a' * 2049)
+
+
+def test_normalize_hostname_idna_fallback():
+    # An empty label makes the IDNA codec raise UnicodeError
+    # ("label empty") => best-effort fallback to the lowercased
+    # unicode form instead of raising.
+    assert userprovided.url.normalize_hostname('Ä..b') == 'ä..b'
+
+
+@given(host=st.text(max_size=100))
+def test_normalize_hostname_idempotent(host):
+    try:
+        normalized = userprovided.url.normalize_hostname(host)
+    except ValueError:
+        assume(False)
+    assert userprovided.url.normalize_hostname(normalized) == normalized
+
+
+@pytest.mark.parametrize("host,drop_subdomain,expected", [
+    ('www.example.co.uk', True, 'example.co.uk'),
+    ('deep.sub.example.com', True, 'example.com'),
+    # normalization applies before the registrable domain is extracted:
+    ('www.MÜNCHEN.example.', True, 'xn--mnchen-3ya.example'),
+    # without drop_subdomain only the normalization happens:
+    ('www.example.co.uk', False, 'www.example.co.uk'),
+    # IP literals returned canonicalized regardless of drop_subdomain:
+    ('192.168.1.1', True, '192.168.1.1'),
+    ('[::1]', True, '::1'),
+    ('[::1]', False, '::1'),
+    # single-word hosts:
+    ('localhost', True, 'localhost'),
+    ('localhost', False, 'localhost'),
+])
+def test_extract_domain_from_host(host, drop_subdomain, expected):
+    assert userprovided.url.extract_domain_from_host(
+        host, drop_subdomain=drop_subdomain) == expected
+
+
+def test_extract_domain_from_host_propagates_errors():
+    with pytest.raises(TypeError):
+        userprovided.url.extract_domain_from_host(None)
+    with pytest.raises(ValueError):
+        userprovided.url.extract_domain_from_host('')

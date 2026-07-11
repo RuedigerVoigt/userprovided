@@ -284,6 +284,121 @@ def normalize_url(url: str,
     return url
 
 
+def normalize_hostname(host: str) -> str:
+    """Normalize a bare hostname or IP literal to one canonical form.
+
+    Different spellings of the same host (trailing root-label dot,
+    internationalized vs. punycode names, compressed vs. expanded IPv6)
+    are reduced to a single canonical string, suitable as an identity
+    key (e.g. for rate limiting or deduplication). Normalization steps:
+
+    - Strip surrounding whitespace and lowercase.
+    - Remove trailing root-label dots ('example.com.' -> 'example.com').
+    - IP literals (IPv6 with or without square brackets, IPv4) are
+      canonicalized via the ipaddress module: '[::1]', '::1', and
+      '0:0:0:0:0:0:0:1' all become '::1'. The returned form carries
+      no brackets.
+    - Non-ASCII hostnames are canonicalized to punycode via the stdlib
+      IDNA codec ('münchen.example' -> 'xn--mnchen-3ya.example'). The
+      stdlib codec implements IDNA 2003, so a handful of newer scripts
+      and codepoints differ from IDNA 2008 — acceptable best-effort.
+      If the codec cannot encode the name, the lowercased unicode form
+      is returned instead of raising.
+    - ASCII hostnames pass through unchanged (lowercased, dot-stripped).
+      This is a normalizer, not a validator: label syntax is not checked.
+
+    Normalization is idempotent: feeding the result back in returns it
+    unchanged. In contrast to this function, ``normalize_url`` and
+    ``extract_domain`` deliberately do not canonicalize hosts, as their
+    outputs serve as identity keys in existing downstream databases.
+
+    Args:
+        host: A bare hostname or IP literal — not a URL.
+
+    Returns:
+        The canonical form of the hostname or IP address.
+
+    Raises:
+        TypeError: If host is not a string.
+        ValueError: If host is empty, whitespace-only, a bare dot,
+            empty brackets, or longer than 2048 characters.
+    """
+    if not isinstance(host, str):
+        raise TypeError('Hostname must be a string.')
+
+    if len(host) > _MAX_URL_LENGTH:
+        raise ValueError(
+            f"Hostname exceeds maximum length of {_MAX_URL_LENGTH} characters.")
+
+    candidate = host.strip().lower().rstrip('.')
+
+    unbracketed = candidate
+    if candidate.startswith('[') and candidate.endswith(']'):
+        unbracketed = candidate[1:-1]
+
+    if not unbracketed:
+        raise ValueError('Hostname is empty.')
+
+    try:
+        return str(ipaddress.ip_address(unbracketed))
+    except ValueError:
+        # Not an IP literal, continue with hostname handling
+        pass
+
+    if not candidate.isascii():
+        try:
+            return candidate.encode('idna').decode('ascii')
+        except UnicodeError:
+            logging.debug(
+                'Hostname could not be IDNA-encoded. '
+                'Returning the lowercased unicode form.')
+
+    return candidate
+
+
+def extract_domain_from_host(host: str, drop_subdomain: bool = False) -> str:
+    """Extract the domain from a bare hostname instead of a full URL.
+
+    Host-level sibling of ``extract_domain`` for callers that already
+    hold a hostname and would otherwise have to fabricate a URL around
+    it. Unlike ``extract_domain``, which deliberately does not
+    canonicalize hosts (its output is an identity key in existing
+    downstream databases), this function normalizes its input via
+    ``normalize_hostname`` first (trailing dot, IDNA, IP
+    canonicalization).
+
+    Args:
+        host: A bare hostname or IP literal — not a URL.
+        drop_subdomain: If True, extracts only the registrable domain
+            (domain + public suffix), removing subdomains. Handles
+            multi-part TLDs correctly (e.g., .co.uk, .com.au).
+
+    Returns:
+        The normalized domain. IP addresses (which have no subdomains
+        or public suffix) and single-word hosts like 'localhost' are
+        returned in canonical form regardless of drop_subdomain.
+
+    Raises:
+        TypeError: If host is not a string.
+        ValueError: If host is empty or longer than 2048 characters.
+
+    Examples:
+        >>> extract_domain_from_host('www.example.co.uk', drop_subdomain=True)
+        'example.co.uk'
+        >>> extract_domain_from_host('MÜNCHEN.example.')
+        'xn--mnchen-3ya.example'
+        >>> extract_domain_from_host('[::1]')
+        '::1'
+    """
+    normalized = normalize_hostname(host)
+
+    if drop_subdomain:
+        # The helper returns IP addresses and single-word hosts as-is.
+        return _extract_registrable_domain(normalized, TWO_PART_TLDS)
+
+    return normalized
+
+
 def determine_file_extension(url: str,
                              provided_mime_type: str | None = None) -> str:
     """Determines appropriate file extension from URL and/or MIME type.
@@ -430,6 +545,13 @@ def is_shortened_url(url: str) -> bool:
 def extract_domain(url: str, drop_subdomain: bool = False) -> str:
     """
     Extract the domain (hostname) from a URL and handle most important two level TLDs.
+
+    This function deliberately does not canonicalize the host (trailing
+    root-label dots, internationalized spellings, and equivalent IPv6
+    literals stay as given): its output is an identity key in existing
+    downstream databases and must remain stable. If you hold a bare
+    hostname and want a canonical form, use ``extract_domain_from_host``,
+    which normalizes via ``normalize_hostname``.
 
     Args:
         url: Full URL string (e.g., 'https://www.example.com:8080/path')

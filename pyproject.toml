@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "userprovided"
-version = "2.5.0"
+version = "2.6.0"
 description = "Validate, normalize, and convert user input: URLs, emails, dates, hashes, parameters — pure stdlib, no dependencies"
 authors = ["Rüdiger Voigt <projects@ruediger-voigt.eu>"]
 readme = "README.md"
