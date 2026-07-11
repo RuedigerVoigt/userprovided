@@ -673,3 +673,80 @@ def parse_boolean(value: str | bool,
                 name=name,
                 source=source))
     return parsed
+
+
+def one_of(value: str,
+           allowed: set | frozenset | tuple | list,
+           *,
+           name: str | None = None,
+           case_sensitive: bool = False,
+           source: str | None = None) -> str:
+    """Check that a string is one of the allowed options and canonicalize it.
+
+    The value is stripped of surrounding whitespace and matched against
+    ``allowed`` — case-insensitively unless ``case_sensitive`` is True. On a
+    match the member from ``allowed`` is returned (not the input), so callers
+    get the registered spelling in one call: with ``allowed={'HTML'}`` the
+    input ``' html '`` returns ``'HTML'``. Anything else raises a
+    ``ValidationError`` listing the options.
+
+    Args:
+        value: The string to check.
+        allowed: The allowed options (set, frozenset, tuple, or list of
+            strings).
+        name: Optional parameter name, used only in the error message.
+        case_sensitive: If True, the value must match an option exactly.
+        source: Optional origin of the value (e.g. ``'in config.ini'``),
+            used only in the error message.
+
+    Returns:
+        The matching member of ``allowed``.
+
+    Raises:
+        ValidationError: If the stripped value is not among the allowed
+            options.
+        TypeError: If value is not a string, or allowed contains a
+            non-string member.
+        ValueError: If allowed is empty, or (with case_sensitive=False)
+            contains members that differ only in case, which would make
+            the match ambiguous.
+    """
+    if not isinstance(value, str):
+        raise TypeError('one_of expects a string value.')
+    if isinstance(allowed, frozenset):
+        # convert_to_set does not accept frozenset, but membership
+        # checks work the same on it.
+        allowed_set: set | frozenset = allowed
+    else:
+        allowed_set = convert_to_set(allowed)
+    if not allowed_set:
+        raise ValueError('one_of requires at least one allowed option.')
+    if not all(isinstance(member, str) for member in allowed_set):
+        raise TypeError('one_of expects allowed to contain only strings.')
+
+    stripped = value.strip()
+    if case_sensitive:
+        if stripped in allowed_set:
+            return stripped
+    else:
+        lookup: dict[str, str] = {}
+        for member in allowed_set:
+            folded = member.lower()
+            if folded in lookup:
+                raise ValueError(
+                    'one_of: allowed contains members that differ only '
+                    f'in case ({lookup[folded]!r} / {member!r}) - the '
+                    'case-insensitive match would be ambiguous. Use '
+                    'case_sensitive=True or deduplicate allowed.')
+            lookup[folded] = member
+        match = lookup.get(stripped.lower())
+        if match is not None:
+            return match
+
+    options = ', '.join(sorted(allowed_set))
+    raise err.ValidationError(
+        _validation_message(
+            value,
+            f'must be one of: {options}',
+            name=name,
+            source=source))

@@ -5,6 +5,7 @@
 * New features:
   * `url`: added `normalize_hostname` to reduce a bare hostname or IP literal to one canonical form (lowercased, trailing root-label dots removed, internationalized names converted to punycode, equivalent IPv4/IPv6 spellings canonicalized). Normalization is idempotent. Existing functions like `normalize_url` and `extract_domain` deliberately keep their behavior, as their outputs are identity keys in downstream databases.
   * `url`: added `extract_domain_from_host`, a host-level sibling of `extract_domain` for callers that already hold a bare hostname instead of a URL. It normalizes via `normalize_hostname` first and supports the same optional subdomain removal.
+  * `parameters`: added `one_of` to check a string against a collection of allowed options. It validates and normalizes in one call: on a match it returns the member from the allowed collection (canonical spelling), matching case-insensitively by default after stripping whitespace. Unknown options raise `ValidationError` with the allowed options listed in sorted order; the optional `name`/`source` keywords produce a source-aware error message.
 * Bug fixes:
   * `parameters`: `numeric_in_range` no longer accepts `NaN`. Since every comparison with `NaN` is `False`, it slipped through the range check and was returned as a valid in-range value. A `NaN` given value now returns the fallback; `NaN` as minimum, maximum, or fallback value raises `ValueError` (caller error). Infinite bounds (e.g. `math.inf` for "no upper limit") remain accepted.
 * CI:

@@ -675,6 +675,73 @@ def test_parse_boolean_message_no_log_injection():
     assert '\\n' in msg
 
 
+@pytest.mark.parametrize("value,allowed,expected", [
+    # case-insensitive by default; the member from allowed is returned,
+    # so the caller gets the registered spelling, not the input:
+    ('html', {'HTML', 'markdown'}, 'HTML'),
+    (' html ', ['HTML'], 'HTML'),
+    ('Markdown', ('markdown', 'tex'), 'markdown'),
+    # a single string is a one-option collection (via convert_to_set):
+    ('TEX', 'tex', 'tex'),
+    # frozenset works too:
+    ('a', frozenset({'a', 'b'}), 'a'),
+])
+def test_one_of_valid(value, allowed, expected):
+    assert userprovided.parameters.one_of(value, allowed) == expected
+
+
+def test_one_of_case_sensitive():
+    # An exact match is required (whitespace is still stripped):
+    assert userprovided.parameters.one_of(
+        ' HTML ', {'HTML', 'html'}, case_sensitive=True) == 'HTML'
+    with pytest.raises(userprovided.err.ValidationError):
+        userprovided.parameters.one_of(
+            'Html', {'HTML', 'html'}, case_sensitive=True)
+
+
+def test_one_of_invalid_value():
+    # An unknown option raises ValidationError ...
+    with pytest.raises(userprovided.err.ValidationError):
+        userprovided.parameters.one_of('yaml', {'html', 'markdown'})
+    # ... which is also a ValueError (backward-compatible handling).
+    with pytest.raises(ValueError):
+        userprovided.parameters.one_of('yaml', {'html', 'markdown'})
+
+
+def test_one_of_non_string_value():
+    # A non-string value is a caller error -> TypeError, not ValidationError.
+    for bad in (None, 1, 1.0, ['html'], {'html'}):
+        with pytest.raises(TypeError):
+            userprovided.parameters.one_of(bad, {'html'})
+
+
+def test_one_of_caller_errors():
+    # An empty allowed collection is a caller error, not a validation failure:
+    with pytest.raises(ValueError):
+        userprovided.parameters.one_of('html', set())
+    # Non-string members cannot be matched:
+    with pytest.raises(TypeError):
+        userprovided.parameters.one_of('1', {1, 2})
+    # Members differing only in case make the default (case-insensitive)
+    # match ambiguous:
+    with pytest.raises(ValueError):
+        userprovided.parameters.one_of('html', {'HTML', 'html'})
+
+
+def test_one_of_error_message():
+    # The message names the value, the parameter, the source, and the
+    # sorted options (deterministic even for set input).
+    with pytest.raises(userprovided.err.ValidationError) as excinfo:
+        userprovided.parameters.one_of(
+            'yaml', {'markdown', 'html', 'tex'},
+            name='output_format', source='in config.ini')
+    msg = str(excinfo.value)
+    assert "'yaml'" in msg
+    assert 'for output_format' in msg
+    assert 'in config.ini' in msg
+    assert 'must be one of: html, markdown, tex' in msg
+
+
 def test_aws_s3_bucket_label_regex_fallback():
     """Cover the final regex fallback (parameters.py lines 503-504).
 

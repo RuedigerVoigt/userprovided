@@ -26,6 +26,7 @@ Userprovided has functionality for the following inputs:
   * [Clean and trim strings](#clean-and-trim-strings) by stripping whitespace and converting empty input to None or a custom value.
   * [Enforce boolean type](#enforce-boolean-type) to reject truthy/falsy values.
   * [Parse a boolean](#parse-a-boolean) from config/env/form spellings (yes/no/on/off/1/0) into a real `bool`.
+  * [Check a string against allowed options](#check-a-string-against-allowed-options) and return the canonical spelling.
   * [Validate AWS S3 bucket names](#validate-aws-s3-bucket-names) against AWS naming rules.
 * [url](#handle-urls):
   * [Normalize a URL](#normalize-urls) and drop specific keys from the query part of it.
@@ -308,6 +309,27 @@ userprovided.parameters.parse_boolean(
 ```
 
 The optional `name` and `source` keywords are used only to build the error message, so a user learns *which* value to fix and *where*. A non-string, non-bool argument (e.g. `None`) raises `TypeError`.
+
+### Check a String against Allowed Options
+
+`one_of` checks that a string is one of a set of allowed options and returns the *member from the allowed collection* — so it validates and normalizes in one call: the caller gets the registered spelling, no matter how the user cased or padded the input. Matching is case-insensitive by default (set `case_sensitive=True` for exact matching); surrounding whitespace is always stripped. Like `parse_boolean`, it never falls back to a default — an unknown option raises `userprovided.err.ValidationError` (a subclass of `ValueError`) listing the allowed options in sorted order.
+
+```python
+userprovided.parameters.one_of(' html ', {'HTML', 'markdown'})
+# => 'HTML' (the member from allowed, not the input spelling)
+
+userprovided.parameters.one_of('Markdown', ('markdown', 'tex'))
+# => 'markdown'
+
+# Unknown options raise, with an actionable, source-aware message:
+userprovided.parameters.one_of(
+    'yaml', {'markdown', 'html', 'tex'},
+    name='output_format', source='in config.ini')
+# => ValidationError: Invalid value 'yaml' for output_format in config.ini -
+#    must be one of: html, markdown, tex.
+```
+
+The optional `name` and `source` keywords are used only to build the error message. Caller mistakes raise immediately instead of failing validation: an empty `allowed` collection or one whose members differ only in case (ambiguous under case-insensitive matching) raises `ValueError`; a non-string value or non-string members raise `TypeError`.
 
 ### Validate AWS S3 Bucket Names
 
