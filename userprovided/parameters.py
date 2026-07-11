@@ -332,21 +332,20 @@ def numeric_in_range(parameter_name: str,
             "Fallback value outside the allowed range.")
 
     if math.isnan(given_value):
-        msg = (f"Value of {parameter_name} is NaN." +
-               f"Falling back to {fallback_value}.")
-        logging.debug(msg)
+        logging.debug("Value of %r is NaN. Falling back to %r.",
+                      parameter_name, fallback_value)
         return fallback_value
 
     if given_value < minimum_value:
-        msg = (f"Value of {parameter_name} is below the minimum allowed." +
-               f"Falling back to {fallback_value}.")
-        logging.debug(msg)
+        logging.debug("Value of %r is below the minimum allowed. "
+                      "Falling back to %r.",
+                      parameter_name, fallback_value)
         return fallback_value
 
     if given_value > maximum_value:
-        msg = (f"Value of {parameter_name} is above the maximum allowed." +
-               f"Falling back to {fallback_value}.")
-        logging.debug(msg)
+        logging.debug("Value of %r is above the maximum allowed. "
+                      "Falling back to %r.",
+                      parameter_name, fallback_value)
         return fallback_value
 
     # passed all checks:
@@ -676,7 +675,7 @@ def parse_boolean(value: str | bool,
 
 
 def one_of(value: str,
-           allowed: set | frozenset | tuple | list,
+           allowed: set | frozenset | tuple | list | str,
            *,
            name: str | None = None,
            case_sensitive: bool = False,
@@ -693,7 +692,7 @@ def one_of(value: str,
     Args:
         value: The string to check.
         allowed: The allowed options (set, frozenset, tuple, or list of
-            strings).
+            strings; a single string counts as a one-option collection).
         name: Optional parameter name, used only in the error message.
         case_sensitive: If True, the value must match an option exactly.
         source: Optional origin of the value (e.g. ``'in config.ini'``),
