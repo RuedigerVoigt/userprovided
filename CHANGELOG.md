@@ -1,5 +1,10 @@
 # Changelog / History
 
+## Version 2.6.0 (upcoming)
+
+* CI:
+  * Bumped the pinned GitHub Actions to the latest versions.
+
 ## Version 2.5.0 (2026-06-14)
 
 * New features:
