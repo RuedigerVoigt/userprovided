@@ -10,6 +10,7 @@ Released under the Apache License 2.0
 """
 
 import logging
+import math
 import re
 
 from userprovided import err
@@ -298,9 +299,13 @@ def numeric_in_range(parameter_name: str,
 
     Returns:
         The given_value if within range, otherwise fallback_value.
+        NaN as given_value is treated as out of range and returns
+        fallback_value. Infinite bounds (e.g. maximum_value=math.inf
+        for "no upper limit") are accepted.
 
     Raises:
-        ValueError: If any parameter is not numeric.
+        ValueError: If any parameter is not numeric, or if
+            minimum_value, maximum_value, or fallback_value is NaN.
         ContradictoryParameters: If minimum > maximum or fallback_value
             is outside the allowed range.
     """
@@ -311,6 +316,13 @@ def numeric_in_range(parameter_name: str,
         if isinstance(param, bool) or not isinstance(param, (int, float)):
             raise ValueError('Value must be numeric.')
 
+    # NaN compares False to everything, so it would defeat the sanity
+    # checks below and slip through the range check as "in range".
+    for param in (minimum_value, maximum_value, fallback_value):
+        if math.isnan(param):
+            raise ValueError(
+                'Minimum, maximum, and fallback must not be NaN.')
+
     if minimum_value > maximum_value:
         raise err.ContradictoryParameters(
             "Minimum must not be larger than maximum value.")
@@ -318,6 +330,12 @@ def numeric_in_range(parameter_name: str,
     if fallback_value < minimum_value or fallback_value > maximum_value:
         raise err.ContradictoryParameters(
             "Fallback value outside the allowed range.")
+
+    if math.isnan(given_value):
+        msg = (f"Value of {parameter_name} is NaN." +
+               f"Falling back to {fallback_value}.")
+        logging.debug(msg)
+        return fallback_value
 
     if given_value < minimum_value:
         msg = (f"Value of {parameter_name} is below the minimum allowed." +

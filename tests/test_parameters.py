@@ -10,8 +10,10 @@ Released under the Apache License 2.0
 
 # ruff: noqa
 
+import math
 from unittest.mock import patch
 
+from hypothesis import given, assume, strategies as st
 import pytest
 
 import userprovided
@@ -460,6 +462,50 @@ def test_numeric_in_range():
     assert userprovided.parameters.numeric_in_range('example', 3, 10, 100, 50) == 50
 
 
+def test_numeric_in_range_nan_given_value():
+    # NaN compares False to any bound, so it used to slip through the
+    # range check and was returned as "in range". It must be treated
+    # like any other out-of-range user input: return the fallback.
+    assert userprovided.parameters.numeric_in_range(
+        'example', math.nan, 0.0, 10.0, 1.0) == 1.0
+
+
+@pytest.mark.parametrize("minimum,maximum,fallback", [
+    (math.nan, 10.0, 5.0),
+    (0.0, math.nan, 5.0),
+    (0.0, 10.0, math.nan),
+])
+def test_numeric_in_range_nan_bounds_raise(minimum, maximum, fallback):
+    # NaN as a bound or fallback defeats the sanity checks
+    # (every comparison is False) => caller error
+    with pytest.raises(ValueError):
+        userprovided.parameters.numeric_in_range(
+            'example', 5.0, minimum, maximum, fallback)
+
+
+def test_numeric_in_range_infinite_bound_accepted():
+    # an infinite bound is legitimate ("no upper limit") - only NaN is rejected
+    assert userprovided.parameters.numeric_in_range(
+        'example', 5.0, 0.0, math.inf, 1.0) == 5.0
+    # inf as given value falls out of a finite range => fallback
+    assert userprovided.parameters.numeric_in_range(
+        'example', math.inf, 0.0, 10.0, 1.0) == 1.0
+
+
+@given(
+    given_value=st.floats(allow_nan=False, allow_infinity=False),
+    minimum=st.floats(allow_nan=False, allow_infinity=False),
+    maximum=st.floats(allow_nan=False, allow_infinity=False),
+    fallback=st.floats(allow_nan=False, allow_infinity=False))
+def test_numeric_in_range_never_returns_nan(
+        given_value, minimum, maximum, fallback):
+    assume(minimum <= fallback <= maximum)
+    result = userprovided.parameters.numeric_in_range(
+        'example', given_value, minimum, maximum, fallback)
+    assert result == given_value or result == fallback
+    assert not math.isnan(result)
+
+
 def test_int_in_range():
     # parmeter is not integer
     with pytest.raises(ValueError):
@@ -481,6 +527,9 @@ def test_int_in_range():
     assert userprovided.parameters.int_in_range('foo', 10, 1, 100, 50) == 10
     # given value to small => fallback
     assert userprovided.parameters.int_in_range('foo', 3, 10, 100, 50) == 50
+    # a float NaN is not an int => rejected by the type check
+    with pytest.raises(ValueError):
+        userprovided.parameters.int_in_range('foo', math.nan, 1, 100, 50)
 
 
 def test_string_in_range():

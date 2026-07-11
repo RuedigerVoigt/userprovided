@@ -2,6 +2,8 @@
 
 ## Version 2.6.0 (upcoming)
 
+* Bug fixes:
+  * `parameters`: `numeric_in_range` no longer accepts `NaN`. Since every comparison with `NaN` is `False`, it slipped through the range check and was returned as a valid in-range value. A `NaN` given value now returns the fallback; `NaN` as minimum, maximum, or fallback value raises `ValueError` (caller error). Infinite bounds (e.g. `math.inf` for "no upper limit") remain accepted.
 * CI:
   * Bumped the pinned GitHub Actions to the latest versions.
 
