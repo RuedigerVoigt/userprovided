@@ -2,6 +2,8 @@
 
 ## Version 2.6.1 (unreleased)
 
+* Security:
+  * Added a [security policy](./SECURITY.md) with private vulnerability reporting.
 * CI:
   * Security: pinned `poetry` and `twine` to exact versions in the release workflow. Both were installed unpinned into the job that holds `id-token: write`, so a compromised release of either could have run where it can mint a PyPI OIDC token. This closes the gap left by pinning the actions themselves to commit SHAs.
   * Bumped the pinned GitHub Actions to the latest versions.
