@@ -751,3 +751,132 @@ def test_aws_s3_bucket_label_regex_fallback():
     with patch('userprovided.parameters._AWS_S3_BUCKET_LABELS') as mock_re:
         mock_re.match.return_value = None
         assert userprovided.parameters.is_aws_s3_bucket_name('valid') is False
+
+
+# ############## strict_int / strict_numeric ##############
+
+@pytest.mark.parametrize('value, expected', [
+    (8, 8),
+    ('8', 8),
+    ('  8  ', 8),      # strings are stripped
+    ('-3', -3),
+    ('0', 0),
+    (0, 0),
+])
+def test_strict_int_accepts(value, expected):
+    assert userprovided.parameters.strict_int(value) == expected
+
+
+@pytest.mark.parametrize('value', [
+    '5.5',      # no truncation of a string
+    'abc',
+    '',
+    '   ',
+    '0x10',     # not decimal
+    '1_000_0.5',
+])
+def test_strict_int_rejects_value(value):
+    with pytest.raises(userprovided.err.ValidationError):
+        userprovided.parameters.strict_int(value)
+
+
+@pytest.mark.parametrize('value', [
+    5.5,        # a float literal is a caller error, not a bad config value
+    5.0,        # even whole-valued: truncation would hide the mistake
+    True,       # bool is a subclass of int, but never a count
+    False,
+    None,
+    [1],
+    {'a': 1},
+])
+def test_strict_int_rejects_type(value):
+    with pytest.raises(TypeError):
+        userprovided.parameters.strict_int(value)
+
+
+@pytest.mark.parametrize('value, expected', [
+    (8, 8.0),
+    ('8', 8.0),
+    ('8.5', 8.5),
+    ('  -0.25  ', -0.25),
+    (3, 3.0),           # int input still returns float
+])
+def test_strict_numeric_accepts(value, expected):
+    result = userprovided.parameters.strict_numeric(value)
+    assert result == expected
+    assert isinstance(result, float)
+
+
+@pytest.mark.parametrize('value', [
+    'abc', '', '   ',
+    'nan', 'inf', '-inf',           # would slip through any range check
+    float('nan'), float('inf'), float('-inf'),
+])
+def test_strict_numeric_rejects_value(value):
+    with pytest.raises(userprovided.err.ValidationError):
+        userprovided.parameters.strict_numeric(value)
+
+
+@pytest.mark.parametrize('value', [True, False, None, [1], {'a': 1}])
+def test_strict_numeric_rejects_type(value):
+    with pytest.raises(TypeError):
+        userprovided.parameters.strict_numeric(value)
+
+
+@pytest.mark.parametrize('func, value, minimum, maximum', [
+    (userprovided.parameters.strict_int, '3', 5, None),
+    (userprovided.parameters.strict_int, '9', None, 5),
+    (userprovided.parameters.strict_int, '9', 1, 5),
+    (userprovided.parameters.strict_numeric, '3.5', 5, None),
+    (userprovided.parameters.strict_numeric, '9.5', None, 5),
+])
+def test_strict_bounds_reject(func, value, minimum, maximum):
+    with pytest.raises(userprovided.err.ValidationError):
+        func(value, minimum=minimum, maximum=maximum)
+
+
+@pytest.mark.parametrize('func, value, minimum, maximum', [
+    (userprovided.parameters.strict_int, '5', 5, 5),      # bounds inclusive
+    (userprovided.parameters.strict_int, '3', 1, 5),
+    (userprovided.parameters.strict_numeric, '5', 5, 5),
+    (userprovided.parameters.strict_numeric, '2.5', 0, 5),
+])
+def test_strict_bounds_accept(func, value, minimum, maximum):
+    assert func(value, minimum=minimum, maximum=maximum) is not None
+
+
+@pytest.mark.parametrize('func', [userprovided.parameters.strict_int,
+                                  userprovided.parameters.strict_numeric])
+def test_strict_caller_errors(func):
+    # A NaN bound would silently disable the check.
+    with pytest.raises(ValueError):
+        func('1', minimum=float('nan'))
+    with pytest.raises(ValueError):
+        func('1', maximum=float('nan'))
+    # Contradictory bounds are a caller mistake, not a bad value.
+    with pytest.raises(userprovided.err.ContradictoryParameters):
+        func('1', minimum=10, maximum=1)
+
+
+def test_strict_error_messages_are_source_aware():
+    with pytest.raises(userprovided.err.ValidationError) as excinfo:
+        userprovided.parameters.strict_int(
+            '5.5', name='num_workers', source='in config.ini')
+    message = str(excinfo.value)
+    assert "'5.5'" in message          # repr(), as a log-injection guard
+    assert 'num_workers' in message
+    assert 'in config.ini' in message
+    assert 'whole number' in message
+
+    with pytest.raises(userprovided.err.ValidationError) as excinfo:
+        userprovided.parameters.strict_int('0', name='workers', minimum=1)
+    assert '1 or larger' in str(excinfo.value)
+
+
+def test_strict_validation_error_is_a_value_error():
+    # Existing 'except ValueError' handlers keep working for bad values,
+    # while a wrong type surfaces as TypeError and is NOT caught by them.
+    with pytest.raises(ValueError):
+        userprovided.parameters.strict_int('abc')
+    with pytest.raises(ValueError):
+        userprovided.parameters.strict_numeric('abc')

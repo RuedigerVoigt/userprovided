@@ -749,3 +749,163 @@ def one_of(value: str,
             f'must be one of: {options}',
             name=name,
             source=source))
+
+
+def _check_bounds(result: int | float,
+                  value: object,
+                  minimum: int | float | None,
+                  maximum: int | float | None,
+                  name: str | None,
+                  source: str | None) -> None:
+    """Check a converted number against inclusive bounds.
+
+    Shared by strict_int and strict_numeric. The message shows the value as
+    the user supplied it, not the converted result, so they see what to fix.
+
+    Args:
+        result: The already converted number to check.
+        value: The value as supplied, rendered into the error message.
+        minimum: Inclusive lower bound, or None for no lower bound.
+        maximum: Inclusive upper bound, or None for no upper bound.
+        name: Optional parameter name for the message.
+        source: Optional origin clause for the message.
+
+    Raises:
+        ValidationError: If result is below minimum or above maximum.
+        ValueError: If a bound is NaN (it would silently disable the check,
+            as every comparison with NaN is False).
+        ContradictoryParameters: If minimum is larger than maximum.
+    """
+    for bound in (minimum, maximum):
+        if isinstance(bound, float) and math.isnan(bound):
+            raise ValueError('Minimum and maximum must not be NaN.')
+
+    if minimum is not None and maximum is not None and minimum > maximum:
+        raise err.ContradictoryParameters(
+            'Minimum must not be larger than maximum value.')
+
+    if minimum is not None and result < minimum:
+        raise err.ValidationError(
+            _validation_message(value, f'must be {minimum} or larger',
+                                name=name, source=source))
+
+    if maximum is not None and result > maximum:
+        raise err.ValidationError(
+            _validation_message(value, f'must be {maximum} or smaller',
+                                name=name, source=source))
+
+
+def strict_int(value: str | int,
+               *,
+               name: str | None = None,
+               minimum: int | None = None,
+               maximum: int | None = None,
+               source: str | None = None) -> int:
+    """Convert a user-supplied value to an int, or raise.
+
+    The strict counterpart to ``int_in_range``: where the tolerant helpers
+    log and return a fallback, this refuses. Use it at an application's input
+    boundary — config files, environment variables, command line arguments —
+    where a misconfiguration must stop the program with an actionable
+    message instead of silently running with a default.
+
+    Strings are stripped before conversion, so ``' 8 '`` is valid. Floats are
+    rejected rather than truncated (``5.5`` and ``5.0`` alike): truncation
+    hides user errors. ``bool`` is rejected even though it is a subclass of
+    ``int``, so ``verbose = True`` cannot pass as ``1``.
+
+    Args:
+        value: An ``int``, or a string spelling of one.
+        name: Optional parameter name, used only in the error message.
+        minimum: Optional inclusive lower bound.
+        maximum: Optional inclusive upper bound.
+        source: Optional origin of the value (e.g. ``'in config.ini'``),
+            used only in the error message.
+
+    Returns:
+        The value as an int.
+
+    Raises:
+        ValidationError: If value is a string that is not a whole number, or
+            if the number is outside the bounds.
+        TypeError: If value is neither an int nor a string, or is a bool.
+        ValueError: If a bound is NaN.
+        ContradictoryParameters: If minimum is larger than maximum.
+    """
+    if isinstance(value, bool):
+        raise TypeError('strict_int expects an int or a string, not a bool.')
+
+    if isinstance(value, int):
+        result = value
+    elif isinstance(value, str):
+        try:
+            result = int(value.strip())
+        except ValueError:
+            raise err.ValidationError(
+                _validation_message(value, 'must be a whole number',
+                                    name=name, source=source)) from None
+    else:
+        raise TypeError('strict_int expects an int or a string.')
+
+    _check_bounds(result, value, minimum, maximum, name, source)
+    return result
+
+
+def strict_numeric(value: str | int | float,
+                   *,
+                   name: str | None = None,
+                   minimum: int | float | None = None,
+                   maximum: int | float | None = None,
+                   source: str | None = None) -> float:
+    """Convert a user-supplied value to a float, or raise.
+
+    The strict counterpart to ``numeric_in_range``. See ``strict_int`` for
+    when to prefer the strict validators over the tolerant ones.
+
+    Always returns a ``float``, even for int input — a deliberate divergence
+    from ``numeric_in_range``, which preserves ``int | float``. Callers that
+    need an int should use ``strict_int``. ``NaN`` and infinity are rejected:
+    every comparison with ``NaN`` is False, so it would otherwise pass any
+    range check unnoticed. ``bool`` is rejected as in ``strict_int``.
+
+    Args:
+        value: An ``int``, a ``float``, or a string spelling of a number.
+        name: Optional parameter name, used only in the error message.
+        minimum: Optional inclusive lower bound.
+        maximum: Optional inclusive upper bound.
+        source: Optional origin of the value (e.g. ``'in config.ini'``),
+            used only in the error message.
+
+    Returns:
+        The value as a float.
+
+    Raises:
+        ValidationError: If value is a string that is not a number, if it is
+            NaN or infinite, or if it is outside the bounds.
+        TypeError: If value is neither a number nor a string, or is a bool.
+        ValueError: If a bound is NaN.
+        ContradictoryParameters: If minimum is larger than maximum.
+    """
+    if isinstance(value, bool):
+        raise TypeError(
+            'strict_numeric expects a number or a string, not a bool.')
+
+    if isinstance(value, (int, float)):
+        result = float(value)
+    elif isinstance(value, str):
+        try:
+            result = float(value.strip())
+        except ValueError:
+            raise err.ValidationError(
+                _validation_message(value, 'must be a number',
+                                    name=name, source=source)) from None
+    else:
+        raise TypeError('strict_numeric expects a number or a string.')
+
+    if not math.isfinite(result):
+        raise err.ValidationError(
+            _validation_message(value, 'must be a finite number',
+                                name=name, source=source))
+
+    _check_bounds(result, value, minimum, maximum, name, source)
+    return result

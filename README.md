@@ -17,6 +17,7 @@ The code has type hints ([PEP 484](https://www.python.org/dev/peps/pep-0484/), u
 
 Userprovided has functionality for the following inputs:
 * [parameters](#handle-parameters):
+  * [Tolerant vs. strict validators](#tolerant-vs-strict-validators): fall back to a default, or stop the program.
   * [Check a dictionary](#check-a-parameter-dictionary) for valid, needed, and unknown keys.
   * [Avoid keys without value in a dictionary](#avoid-keys-without-value-in-a-dictionary) to ensure all values are present.
   * [Convert into a set](#convert-into-a-set) from lists, strings and tuples.
@@ -27,6 +28,8 @@ Userprovided has functionality for the following inputs:
   * [Enforce boolean type](#enforce-boolean-type) to reject truthy/falsy values.
   * [Parse a boolean](#parse-a-boolean) from config/env/form spellings (yes/no/on/off/1/0) into a real `bool`.
   * [Check a string against allowed options](#check-a-string-against-allowed-options) and return the canonical spelling.
+  * [Convert to an integer or fail](#convert-to-an-integer-or-fail) instead of silently using a default.
+  * [Convert to a number or fail](#convert-to-a-number-or-fail) for values that may have decimals.
   * [Validate AWS S3 bucket names](#validate-aws-s3-bucket-names) against AWS naming rules.
 * [url](#handle-urls):
   * [Normalize a URL](#normalize-urls) and drop specific keys from the query part of it.
@@ -99,6 +102,43 @@ pip install userprovided --upgrade
 * [exoskeleton](https://github.com/RuedigerVoigt/exoskeleton) — a web scraping framework
 
 ## Handle Parameters
+
+### Tolerant vs. Strict Validators
+
+This module offers two families of validators. Picking the wrong one is the
+difference between a program that keeps running with a silently substituted
+value and one that stops with an actionable message.
+
+| | Tolerant | Strict |
+| --- | -------- | ------ |
+| Functions | `numeric_in_range`, `int_in_range`, `string_in_range` | `strict_int`, `strict_numeric`, `parse_boolean`, `one_of` |
+| Invalid value | logs at debug level, returns your fallback | raises `ValidationError` |
+| Converts strings? | no, the value must already have the right type | yes — `'8'` becomes `8` |
+| Error message | none, the caller never learns | names the value, the parameter and its origin |
+| Use for | a pipeline that must not stop for one bad record | config files, environment variables, command line arguments |
+
+Use the **tolerant** family when processing continues regardless: one
+implausible value among thousands should not abort a scraping run.
+
+Use the **strict** family at an application's input boundary. A mistyped
+setting in a config file should stop the program at startup and say what to
+fix — not silently run with a default the user did not choose.
+
+```python
+# Tolerant: out of range, so the fallback is returned and logged at debug.
+userprovided.parameters.int_in_range('workers', 500, 1, 32, 4)
+# => 4
+
+# Strict: out of range, so it raises.
+userprovided.parameters.strict_int('500', name='workers', minimum=1, maximum=32)
+# => ValidationError: Invalid value '500' for workers - must be 32 or smaller.
+```
+
+Both strict families distinguish a bad *value* from a wrong *type*: a value a
+user could plausibly have typed raises `ValidationError` (a subclass of
+`ValueError`), while a wrong type — `None`, a list, a `bool` — raises
+`TypeError`, because that is a bug in the calling code rather than something
+an end user can fix.
 
 ### Check a Parameter Dictionary
 
@@ -332,6 +372,52 @@ userprovided.parameters.one_of(
 ```
 
 The optional `name` and `source` keywords are used only to build the error message. Caller mistakes raise immediately instead of failing validation: an empty `allowed` collection or one whose members differ only in case (ambiguous under case-insensitive matching) raises `ValueError`; a non-string value or non-string members raise `TypeError`.
+
+### Convert to an Integer or Fail
+
+`strict_int` converts a value to an `int` or raises — the strict counterpart to
+`int_in_range`. Strings are stripped before conversion, so `' 8 '` is valid.
+
+```python
+userprovided.parameters.strict_int('8')
+# => 8
+
+userprovided.parameters.strict_int('8', name='workers', minimum=1, maximum=32)
+# => 8 (bounds are inclusive)
+
+# Floats are rejected instead of truncated, because truncation hides typos:
+userprovided.parameters.strict_int('5.5', name='workers', source='in config.ini')
+# => ValidationError: Invalid value '5.5' for workers in config.ini -
+#    must be a whole number.
+
+# A bool is never a count, even though bool is a subclass of int:
+userprovided.parameters.strict_int(True)
+# => TypeError: strict_int expects an int or a string, not a bool.
+```
+
+### Convert to a Number or Fail
+
+`strict_numeric` is the same for values that may have decimals, and the strict
+counterpart to `numeric_in_range`. It always returns a `float`, even for `int`
+input — use `strict_int` when you need an `int`.
+
+```python
+userprovided.parameters.strict_numeric('2.5', name='timeout', minimum=0.0)
+# => 2.5
+
+userprovided.parameters.strict_numeric(3)
+# => 3.0 (always a float)
+
+# NaN and infinity are rejected: every comparison with NaN is False, so a NaN
+# would pass any range check unnoticed.
+userprovided.parameters.strict_numeric('nan', name='timeout')
+# => ValidationError: Invalid value 'nan' for timeout - must be a finite number.
+```
+
+For both functions the optional `name` and `source` keywords only build the
+error message, so the user learns *which* value to fix and *where*. A `NaN`
+bound raises `ValueError` and a `minimum` larger than the `maximum` raises
+`ContradictoryParameters`: those are caller mistakes, not bad input.
 
 ### Validate AWS S3 Bucket Names
 
