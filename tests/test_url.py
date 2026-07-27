@@ -587,3 +587,19 @@ def test_extract_domain_from_host_propagates_errors():
         userprovided.url.extract_domain_from_host(None)
     with pytest.raises(ValueError):
         userprovided.url.extract_domain_from_host('')
+
+
+def test_url_functions_reject_non_string():
+    # A wrong type is a caller error: these used to leak an AttributeError
+    # from .strip() instead of following the library's TypeError contract.
+    for wrong_type in (None, 123, ['https://example.com']):
+        with pytest.raises(TypeError):
+            userprovided.url.extract_domain(wrong_type)
+        with pytest.raises(TypeError):
+            userprovided.url.extract_tld(wrong_type)
+        # url_matches_domain checks both of its parameters:
+        with pytest.raises(TypeError):
+            userprovided.url.url_matches_domain(
+                'https://example.com', wrong_type)
+        with pytest.raises(TypeError):
+            userprovided.url.url_matches_domain(wrong_type, 'example.com')

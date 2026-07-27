@@ -57,6 +57,8 @@ Userprovided has functionality for the following inputs:
   * [Validate IBAN](#validate-iban) (International Bank Account Number).
 * [geo](#validate-geographic-coordinates):
   * [Validate coordinates](#validate-geographic-coordinates) to check if latitude and longitude are within valid Earth ranges.
+* [err](#exceptions):
+  * [The exceptions](#exceptions) this package raises and how to catch them.
 
 
 
@@ -749,6 +751,43 @@ userprovided.geo.is_valid_coordinates('51.5074', '-0.1278')
 # => True (London, UK)
 ```
 
+
+## Exceptions
+
+The `userprovided.err` module defines the exceptions this package raises:
+
+| Exception | Also inherits from | Raised when |
+| --------- | ------------------ | ----------- |
+| `UserprovidedException` | — | Base class. Never raised directly. |
+| `ValidationError` | `ValueError` | A strict validator rejects a value instead of falling back to a default (`parse_boolean`, `one_of`). |
+| `ContradictoryParameters` | `ValueError` | Parameters contradict each other, like dropping query keys while leaving the query part unchanged. |
+| `QueryKeyConflict` | — | A URL query part repeats a key with conflicting values. |
+| `DeprecatedHashAlgorithm` | — | MD5 or SHA1 was requested, even if available on the system. |
+
+Every exception inherits from `UserprovidedException`, so one handler catches
+everything this package raises:
+
+```python
+try:
+    userprovided.parameters.one_of(user_input, {'html', 'markdown'})
+except userprovided.err.UserprovidedException as e:
+    print(f'userprovided rejected the input: {e}')
+```
+
+`ValidationError` and `ContradictoryParameters` additionally inherit from
+`ValueError`, so existing handlers keep working and you can stay unaware of this
+package's own exception classes:
+
+```python
+try:
+    userprovided.parameters.parse_boolean(config['verbose'], name='verbose')
+except ValueError as e:
+    # Catches ValidationError without importing userprovided.err
+    print(f'Bad configuration value: {e}')
+```
+
+Note that not every error is a custom exception: wrong *types* raise the builtin
+`TypeError`, and some functions raise a plain `ValueError`.
 
 ## Update and Deprecation Policy
 

@@ -5,7 +5,10 @@
 * Security fixes:
   * `hashing`: `calculate_file_hash` no longer skips verification when `expected_hash` is an empty string. Only `None` skips the check now, so a config field left blank can no longer turn "verify this file against a known hash" into "return success without verifying".
   * `hashing`: `calculate_file_hash` compares hashes with `hmac.compare_digest` instead of `!=`, so the comparison is constant-time.
+* New features:
+  * `err` is now imported by the package itself and listed in `__all__`. `userprovided.err.ValidationError` and its siblings previously resolved only as a side effect of other modules importing `err`.
 * Changed behavior:
+  * `url`: `extract_domain`, `extract_tld`, and `url_matches_domain` raise `TypeError` for non-string arguments, matching the contract the other string-validating functions already follow. They previously leaked an `AttributeError` from an internal `.strip()` call.
   * `hashing`: `calculate_file_hash` compares `expected_hash` case-insensitively and ignores surrounding whitespace. `hexdigest()` is lowercase, so an uppercase expected value — how many vendors publish hashes — previously reported a mismatch for an intact file.
 * Security:
   * Added a [security policy](./SECURITY.md) with private vulnerability reporting.

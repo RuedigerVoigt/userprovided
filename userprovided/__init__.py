@@ -13,6 +13,7 @@ Released under the Apache License 2.0
 from importlib.metadata import version
 
 from userprovided import date
+from userprovided import err
 from userprovided import finance
 from userprovided import ip
 from userprovided import geo
@@ -28,6 +29,7 @@ __author__ = "Rüdiger Voigt"
 
 __all__ = [
     "date",
+    "err",
     "finance",
     "ip",
     "geo",

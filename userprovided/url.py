@@ -565,6 +565,7 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
         returns the address/hostname unchanged.
 
     Raises:
+        TypeError: If url is not a string.
         ValueError: If url is empty or domain extraction fails
 
     Examples:
@@ -581,6 +582,9 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
         >>> extract_domain('http://localhost:3000', drop_subdomain=True)
         'localhost'
     """
+    if not isinstance(url, str):
+        raise TypeError('URL must be a string.')
+
     if not url or not url.strip():
         raise ValueError("URL cannot be empty")
 
@@ -625,6 +629,7 @@ def extract_tld(url: str) -> str:
         addresses, localhost, or invalid URLs).
 
     Raises:
+        TypeError: If url is not a string.
         ValueError: If url is empty
 
     Examples:
@@ -639,6 +644,9 @@ def extract_tld(url: str) -> str:
         >>> extract_tld('http://localhost')
         ''
     """
+    if not isinstance(url, str):
+        raise TypeError('URL must be a string.')
+
     if not url or not url.strip():
         raise ValueError("URL cannot be empty")
 
@@ -768,7 +776,15 @@ def url_matches_domain(url: str, domain: str) -> bool:
     Returns:
         True if the URL's registrable domain matches, False otherwise.
         Returns False for malformed URLs.
+
+    Raises:
+        TypeError: If url or domain is not a string. A wrong type is a caller
+            error, not a URL that failed to match, so it is surfaced instead
+            of being reported as False.
     """
+    if not isinstance(domain, str):
+        raise TypeError('Domain must be a string.')
+
     domain = domain.strip().lower()
 
     try:
