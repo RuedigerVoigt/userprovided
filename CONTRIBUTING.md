@@ -11,8 +11,6 @@ So it is ok if you use artificial intelligence to find bugs or to support you in
 As those tools sometimes hallucinate or choose overcomplicated ways to solve an issue, check your pull requests before submitting them.
 Specific instructions for these agents are found in the [AGENTS.md](AGENTS.md) file.
 
-
-
 ## Pull Requests / Code Guidelines
 
 * This project uses the **[Apache License 2.0](LICENSE)**. In order to submit you must agree with its terms.
@@ -22,12 +20,14 @@ Specific instructions for these agents are found in the [AGENTS.md](AGENTS.md) f
 * If you add a new feature, please add corresponding unit tests.
 * Please do not put too many changes in one PR. Instead group them logically.
 * Please check that there are no untracked, modified, or staged files left unintentionally before you make a commit (e.g. run `git status` to confirm a clean working tree).
+* Install the development tools with `pip install -U pytest hypothesis pytest-cov ruff mypy bandit`.
 
 ## Coding Style
 
 * Respect [PEP 8](https://peps.python.org/pep-0008/) style guidelines.
 * The use of type hints ([PEP 484](https://peps.python.org/pep-0484/)) is encouraged. Use modern [PEP 604](https://peps.python.org/pep-0604/) / [PEP 585](https://peps.python.org/pep-0585/) syntax (`X | None`, built-in generics like `list[str]`) rather than `typing.Optional`/`Union`/`List`.
 * Please provide useful log and error messages. Use `logging.debug` for handled validation failures so the library does not spam the host application's logs.
-* Docstrings are required for all functions and classes using [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings).
+* Docstrings are required for all functions and classes using [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings), with the `Args`, `Returns`, and `Raises` sections filled in where they apply.
+* Naming: `snake_case` for functions and variables, `CapWords` for classes, `UPPER_SNAKE` for constants.
 
 This project supports Python 3.10 to 3.14 and uses [Poetry](https://python-poetry.org/) for packaging and dependency management.
