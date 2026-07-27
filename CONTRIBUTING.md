@@ -21,6 +21,7 @@ Specific instructions for these agents are found in the [AGENTS.md](AGENTS.md) f
 * Please do not put too many changes in one PR. Instead group them logically.
 * Please check that there are no untracked, modified, or staged files left unintentionally before you make a commit (e.g. run `git status` to confirm a clean working tree).
 * Install the development tools with `pip install -U pytest hypothesis pytest-cov ruff mypy bandit`.
+* CI runs on every pull request and on pushes to `master` and `develop`. Pushing to any other branch deliberately runs no checks: branches inside this repository would otherwise be tested twice, once for the push and once for the pull request. Open a pull request to get your branch tested.
 
 ## Coding Style
 

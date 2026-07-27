@@ -3,10 +3,19 @@
 name: Ruff
 
 on:
+  # Only the long-lived branches: topic and dependabot branches live in this
+  # repository, so a push there would run this twice -- once for the push and
+  # once for the pull request.
   push:
+    branches: [master, develop]
   pull_request:
   # Called by the release workflow, which gates publishing on this check.
   workflow_call:
+
+# Superseded commits do not need to finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

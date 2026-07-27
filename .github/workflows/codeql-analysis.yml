@@ -8,6 +8,11 @@ on:
   schedule:
     - cron: '0 23 * * 5'
 
+# Superseded commits do not need to finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   analyze:
     name: Analyze
