@@ -65,7 +65,7 @@ def hash_available(hash_method: str,
                 f'The supplied hash method {hash_method} is deprecated!')
 
     if hash_method in hashlib.algorithms_available:
-        logging.debug('Hash method %s is available.', hash_method)
+        logging.debug('Hash method %r is available.', hash_method)
         return True
     return False
 
@@ -171,7 +171,8 @@ def calculate_file_hash(file_path: pathlib.Path | str,
                                    calculated_hash):
             mismatch_message = ("Mismatch between calculated and expected " +
                                 f"{hash_method} hash for {file_path}")
-            logging.debug(mismatch_message)
+            logging.debug('Mismatch between calculated and expected '
+                          '%r hash for %r', hash_method, file_path)
             raise ValueError(mismatch_message)
 
     return calculated_hash
@@ -218,11 +219,11 @@ def calculate_string_hash(data: str,
     try:
         byte_data = data.encode(encoding)
     except UnicodeEncodeError:
-        logging.debug('Cannot encode string with %s encoding', encoding)
+        logging.debug('Cannot encode string with %r encoding', encoding)
         raise
 
     hash_object.update(byte_data)
     calculated_hash = hash_object.hexdigest()
 
-    logging.debug('String hash calculated successfully using %s', hash_method)
+    logging.debug('String hash calculated successfully using %r', hash_method)
     return calculated_hash

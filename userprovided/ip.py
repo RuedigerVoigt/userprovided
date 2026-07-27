@@ -176,7 +176,7 @@ def is_potential_ssrf_target(url: str) -> bool:
         TypeError: If url is not a string.
     """
     if is_loopback(url) or is_private(url) or is_link_local(url):
-        logging.debug('Potential SSRF target detected: %s', url)
+        logging.debug('Potential SSRF target detected: %r', url)
         return True
 
     # RFC 6598 carrier-grade NAT is not covered by is_private above.
@@ -184,7 +184,7 @@ def is_potential_ssrf_target(url: str) -> bool:
     if host is not None:
         ip = _parse_ip(host)
         if ip is not None and ip in _CGNAT_NETWORK:
-            logging.debug('Potential SSRF target detected (CGNAT): %s', url)
+            logging.debug('Potential SSRF target detected (CGNAT): %r', url)
             return True
 
     return False

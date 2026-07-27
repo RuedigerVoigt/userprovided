@@ -140,7 +140,7 @@ def is_url(url: str,
             # tuple — would accept http URLs. Treat it as one scheme name.
             require_specific_schemes = (require_specific_schemes,)
         if parsed.scheme not in require_specific_schemes:
-            logging.debug('Scheme %s not supported.', parsed.scheme)
+            logging.debug('Scheme %r not supported.', parsed.scheme)
             return False
 
     if parsed.netloc == '':
@@ -463,7 +463,7 @@ def determine_file_extension(url: str,
         # the server provides a mime type.
         extension = mimetypes.guess_extension(provided_mime_type)
         if extension is None:
-            logging.debug('No hint in URL and mime-type malformed for %s', url)
+            logging.debug('No hint in URL and mime-type malformed for %r', url)
             return '.unknown'
     elif type_by_url is not None and provided_mime_type is None:
         # There is a usable file extension in the URL, but the misconfigured
@@ -473,17 +473,15 @@ def determine_file_extension(url: str,
         # guessed a type once we got here and can guess a matching extension.
     elif type_by_url is None and provided_mime_type is None:
         # Neither the URL nor the server does hint to a extension
-        msg = (f"Neither URL ({url}) nor mime-type ({provided_mime_type}) " +
-               "suggests a file extension.")
-        logging.debug(msg)
+        logging.debug('Neither URL %r nor mime-type %r suggests a '
+                      'file extension.', url, provided_mime_type)
         return '.unknown'
     elif type_by_url != provided_mime_type:  # pragma: no branch
         # The suggestions contradict each other
-        msg = (f"The mime type ({type_by_url}) suggested by the URL ({url}) " +
-               "does not match the mime type supplied by the server " +
-               f"({provided_mime_type}). Using the extension suggested " +
-               "by the URL.")
-        logging.debug(msg)
+        logging.debug('The mime type %r suggested by the URL %r does not '
+                      'match the mime type supplied by the server (%r). '
+                      'Using the extension suggested by the URL.',
+                      type_by_url, url, provided_mime_type)
         extension = mimetypes.guess_extension(type_by_url)  # type: ignore[arg-type]
 
     # Handle errors and irregularities in mimetypes:
@@ -825,7 +823,7 @@ def url_matches_domain(url: str, domain: str) -> bool:
     try:
         url_domain = extract_domain(url, drop_subdomain=True)
     except ValueError:
-        logging.debug('Could not extract domain from URL: %s', url)
+        logging.debug('Could not extract domain from URL: %r', url)
         return False
 
     return url_domain == domain

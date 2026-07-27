@@ -719,3 +719,18 @@ def test_is_url_rejects_invalid_port(test_url):
 ])
 def test_is_url_accepts_valid_port(test_url):
     assert userprovided.url.is_url(test_url) is True
+
+
+def test_log_records_escape_control_characters(caplog):
+    """User input must reach the log as repr(), so it cannot forge log lines.
+
+    A raw %s would put the newline into the record and let an attacker append
+    a line that looks like it came from the application itself.
+    """
+    import logging
+    forged = 'https://example.com/\nERROR:root:transfer approved'
+    with caplog.at_level(logging.DEBUG, logger='root'):
+        userprovided.ip.is_potential_ssrf_target('http://127.0.0.1/')
+        userprovided.url.url_matches_domain(forged, 'example.com')
+    for record in caplog.records:
+        assert '\n' not in record.getMessage()

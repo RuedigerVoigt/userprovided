@@ -3,6 +3,7 @@
 ## Version 2.7.0 (unreleased)
 
 * Security fixes:
+  * All modules: user-provided values are now logged with `%r` and lazy `%`-arguments instead of `%s` or a pre-formatted f-string. `repr()` escapes newlines and control characters, so a crafted URL, dictionary key or bucket name can no longer forge additional log lines in the host application's log. Version 2.5.0 applied this to `mail.is_email`; the remaining sites follow now, among them the SSRF guard in `ip`, `url.determine_file_extension`, `url.url_matches_domain` and `parameters.validate_dict_keys`. The last one logged at `error` level, which most applications have enabled. Its `ValueError` messages now render the offending key with `repr()` as well.
   * `hashing`: `calculate_file_hash` no longer skips verification when `expected_hash` is an empty string. Only `None` skips the check now, so a config field left blank can no longer turn "verify this file against a known hash" into "return success without verifying".
   * `hashing`: `calculate_file_hash` compares hashes with `hmac.compare_digest` instead of `!=`, so the comparison is constant-time.
 * New features:

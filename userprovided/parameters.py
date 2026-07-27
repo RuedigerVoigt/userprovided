@@ -221,8 +221,10 @@ def validate_dict_keys(dict_to_check: dict,
     # Check for unknown keys:
     for key in found_keys:
         if key not in allowed_keys:
-            msg = f"Unknown key {key} in {dict_name}"
-            logging.error(msg)
+            # repr() the key: it comes from the caller's dictionary and
+            # may contain newlines or control characters.
+            msg = f"Unknown key {key!r} in {dict_name!r}"
+            logging.error('Unknown key %r in %r', key, dict_name)
             raise ValueError(msg)
     logging.debug('No unknown keys found.')
 
@@ -230,8 +232,9 @@ def validate_dict_keys(dict_to_check: dict,
     if necessary_keys:
         for key in necessary_keys:
             if key not in found_keys:
-                msg = f"Necessary key {key} missing in {dict_name}!"
-                logging.error(msg)
+                msg = f"Necessary key {key!r} missing in {dict_name!r}"
+                logging.error('Necessary key %r missing in %r',
+                              key, dict_name)
                 raise ValueError(msg)
         logging.debug('All necessary keys found.')
 
@@ -508,14 +511,14 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
     # Check for forbidden prefixes
     forbidden_prefixes = ('xn--', 'sthree-', 'amzn-s3-demo-')
     if bucket_name.startswith(forbidden_prefixes):
-        logging.debug('AWS bucket name cannot start with reserved prefixes: %s',
+        logging.debug('AWS bucket name cannot start with reserved prefixes: %r',
                       ', '.join(forbidden_prefixes))
         return False
 
     # Check for forbidden suffixes
     forbidden_suffixes = ('-s3alias', '--ol-s3', '.mrap', '--x-s3', '--table-s3')
     if bucket_name.endswith(forbidden_suffixes):
-        logging.debug('AWS bucket name cannot end with reserved suffixes: %s',
+        logging.debug('AWS bucket name cannot end with reserved suffixes: %r',
                       ', '.join(forbidden_suffixes))
         return False
 
