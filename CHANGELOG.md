@@ -5,6 +5,8 @@
 * Security:
   * Added a [security policy](./SECURITY.md) with private vulnerability reporting.
 * CI:
+  * Security: publishing to PyPI now requires the tests, the coverage gate, and the linters to pass for the released commit. They run as reusable workflows called by the release workflow, so a release cut from a red commit can no longer be published.
+  * The release workflow now verifies that the git tag matches the version in `pyproject.toml` before building, instead of failing at the upload step or publishing a mismatched version silently.
   * Security: pinned `poetry` and `twine` to exact versions in the release workflow. Both were installed unpinned into the job that holds `id-token: write`, so a compromised release of either could have run where it can mint a PyPI OIDC token. This closes the gap left by pinning the actions themselves to commit SHAs.
   * Bumped the pinned GitHub Actions to the latest versions.
 
