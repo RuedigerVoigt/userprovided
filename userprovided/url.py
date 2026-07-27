@@ -14,6 +14,7 @@ Released under the Apache License 2.0
 import ipaddress
 import logging
 import mimetypes
+import re
 import urllib.parse
 
 from userprovided import err
@@ -281,8 +282,11 @@ def normalize_url(url: str,
         # There is a port but it is not in the list or not standard
         reassemble.append(f"{host}:{port}")
 
-    # remove common typo (// in path element):
-    reassemble.append(parsed.path.replace('//', '/'))
+    # remove common typo (// in path element). str.replace consumes
+    # non-overlapping matches, so a single pass turns '///a' into '//a' and
+    # leaves a duplicate behind. Collapse any run of slashes in one step,
+    # otherwise '//a' and '///a' -- the same resource -- yield two keys.
+    reassemble.append(re.sub('/{2,}', '/', parsed.path))
 
     # do not change parameters of the path element (!= query)
     reassemble.append(parsed.params)

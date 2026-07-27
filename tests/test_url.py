@@ -656,3 +656,40 @@ def test_extract_domain_never_returns_netloc(url):
     with pytest.raises(ValueError):
         userprovided.url.extract_domain(url)
     assert userprovided.url.extract_tld(url) == ''
+
+
+@pytest.mark.parametrize('test_url, expected', [
+    ('https://example.com//a', 'https://example.com/a'),
+    ('https://example.com///a', 'https://example.com/a'),
+    ('https://example.com////a', 'https://example.com/a'),
+    ('https://example.com/en///index.html', 'https://example.com/en/index.html'),
+    ('https://example.com/a//b///c', 'https://example.com/a/b/c'),
+    # a single slash is untouched:
+    ('https://example.com/a/b', 'https://example.com/a/b'),
+])
+def test_normalize_url_collapses_slash_runs(test_url, expected):
+    # str.replace consumes non-overlapping matches, so one pass left a
+    # duplicate behind for three or more slashes.
+    assert userprovided.url.normalize_url(test_url) == expected
+
+
+@pytest.mark.parametrize('test_url', [
+    'https://example.com///a',
+    'https://example.com/a//b///c',
+    'https://example.com/en///index.html',
+])
+def test_normalize_url_is_idempotent(test_url):
+    # The output is an identity key, so normalizing an already normalized URL
+    # must not produce a second, different key.
+    once = userprovided.url.normalize_url(test_url)
+    assert userprovided.url.normalize_url(once) == once
+
+
+def test_normalize_url_equivalent_spellings_share_one_key():
+    # The point of normalizing: URLs for the same resource collapse to one key.
+    variants = ['https://example.com/a',
+                'https://example.com//a',
+                'https://example.com///a',
+                'https://example.com////a']
+    keys = {userprovided.url.normalize_url(v) for v in variants}
+    assert keys == {'https://example.com/a'}
