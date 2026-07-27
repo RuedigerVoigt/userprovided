@@ -23,7 +23,6 @@ from userprovided import parameters
 from userprovided import url
 
 
-NAME = "userprovided"
 __version__ = version("userprovided")
 __author__ = "Rüdiger Voigt"
 
