@@ -94,6 +94,28 @@ def test_calculate_file_hash_with_expected_value():
     with pytest.raises(ValueError):
         assert userprovided.hashing.calculate_file_hash(pathlib.Path('tests/testfile'), 'sha512', 'foo') == testfile_sha512
 
+
+def test_calculate_file_hash_expected_value_normalized():
+    # Hashes are often published uppercase, but hexdigest() is lowercase.
+    assert userprovided.hashing.calculate_file_hash(
+        pathlib.Path('tests/testfile'), 'sha512',
+        testfile_sha512.upper()) == testfile_sha512
+    # Surrounding whitespace (i.e. from a config file) is ignored.
+    assert userprovided.hashing.calculate_file_hash(
+        pathlib.Path('tests/testfile'), 'sha512',
+        f"  {testfile_sha512}\n") == testfile_sha512
+
+
+def test_calculate_file_hash_empty_expected_value():
+    # An empty string must NOT skip the verification: a config value left
+    # blank would otherwise turn the check into a silent success.
+    with pytest.raises(ValueError):
+        userprovided.hashing.calculate_file_hash(
+            pathlib.Path('tests/testfile'), 'sha512', '')
+    # Only None skips the check.
+    assert userprovided.hashing.calculate_file_hash(
+        pathlib.Path('tests/testfile'), 'sha512', None) == testfile_sha512
+
 # mock a PermissionError exception
 # see: https://stackoverflow.com/questions/1289894/#answer-34677735
 def test_calculate_file_hash_mocked_permission():
@@ -224,9 +246,10 @@ def test_calculate_string_hash_hashlib_error():
             userprovided.hashing.calculate_string_hash('test', 'sha256')
 
 
-def test_calculate_string_hash_generic_exception():
-    # Test generic exception handler by mocking hash update to raise unexpected error
-    # The generic exception handler catches and re-raises unexpected exceptions
+def test_calculate_string_hash_unexpected_error_propagates():
+    # An unexpected error from the hash object must reach the caller instead of
+    # being swallowed. Mock update() to raise something the function does not
+    # anticipate.
     with patch('hashlib.new') as mock_hash:
         mock_hash_obj = mock_hash.return_value
         mock_hash_obj.update.side_effect = RuntimeError('Unexpected error')

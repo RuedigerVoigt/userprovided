@@ -11,6 +11,7 @@ Released under the Apache License 2.0
 
 
 import hashlib
+import hmac
 import logging
 import pathlib
 
@@ -69,6 +70,45 @@ def hash_available(hash_method: str,
     return False
 
 
+def _new_hash(hash_method: str) -> 'hashlib._Hash':
+    """Creates a hash object, rejecting deprecated algorithms.
+
+    Centralizes the guard sequence shared by the public hash functions:
+    reject the requested name, check availability, construct the object,
+    then re-check its canonical name to catch platform-specific aliases
+    (e.g. 'sha' resolving to 'sha1').
+
+    Args:
+        hash_method: Name of the hash algorithm to use.
+
+    Returns:
+        A new hashlib hash object for the requested algorithm.
+
+    Raises:
+        DeprecatedHashAlgorithm: If hash_method is deprecated, or resolves
+            to a deprecated algorithm.
+        ValueError: If the hash method is not available or not supported.
+    """
+    if _hash_is_deprecated(hash_method):
+        raise err.DeprecatedHashAlgorithm(
+            'Deprecated hash method not supported')
+
+    if not hash_available(hash_method):
+        raise ValueError(f"Hash method {hash_method} not available on system.")
+
+    try:
+        hash_object = hashlib.new(hash_method)
+    except ValueError as e:
+        raise ValueError(f"Hash method {hash_method} not supported: {e}") from e
+
+    if _hash_is_deprecated(hash_object.name):
+        raise err.DeprecatedHashAlgorithm(
+            f"Hash method '{hash_method}' resolves to "
+            f"deprecated algorithm '{hash_object.name}'")
+
+    return hash_object
+
+
 def calculate_file_hash(file_path: pathlib.Path | str,
                         hash_method: str = 'sha256',
                         expected_hash: str | None = None) -> str:
@@ -83,9 +123,11 @@ def calculate_file_hash(file_path: pathlib.Path | str,
         hash_method: Hash algorithm to use. Supports all algorithms available
             in hashlib (sha224, sha256, sha384, sha512, sha3_*, blake2*, etc.)
             excluding deprecated algorithms (MD5, SHA1). Defaults to 'sha256'.
-        expected_hash: Expected hash value for verification. If provided
-            and doesn't match calculated hash, raises ValueError.
-            Defaults to None.
+        expected_hash: Expected hash value for verification. Compared
+            case-insensitively and in constant time, ignoring surrounding
+            whitespace. A mismatch raises ValueError. Only None skips the
+            verification: an empty string is a value that cannot match,
+            not a request to skip the check. Defaults to None.
 
     Returns:
         Hexadecimal string representation of the file's hash digest.
@@ -103,35 +145,12 @@ def calculate_file_hash(file_path: pathlib.Path | str,
         intended file and does not contain path traversal sequences.
     """
 
-    if _hash_is_deprecated(hash_method):
-        raise err.DeprecatedHashAlgorithm(
-            'Deprecated hash method not supported')
-
-    if not hash_available(hash_method):
-        raise ValueError(f"Hash method {hash_method} not available on system.")
-
-    try:
-        h = hashlib.new(hash_method)
-    except ValueError as e:
-        raise ValueError(f"Hash method {hash_method} not supported: {e}") from e
-
-    # Check canonical name to catch platform-specific aliases
-    # (e.g., 'sha' resolving to 'sha1')
-    if _hash_is_deprecated(h.name):
-        raise err.DeprecatedHashAlgorithm(
-            f"Hash method '{hash_method}' resolves to deprecated algorithm '{h.name}'")
+    hash_object = _new_hash(hash_method)
 
     try:
         with open(pathlib.Path(file_path), 'rb') as file:
             while chunk := file.read(65536):
-                h.update(chunk)
-        calculated_hash = h.hexdigest()
-        if expected_hash and expected_hash != calculated_hash:
-            mismatch_message = ("Mismatch between calculated and expected " +
-                                f"{hash_method} hash for {file_path}")
-            logging.debug(mismatch_message)
-            raise ValueError(mismatch_message)
-        return calculated_hash
+                hash_object.update(chunk)
     except FileNotFoundError:
         logging.debug(
             'Cannot calculate hash: File not found or not readable.',
@@ -142,10 +161,20 @@ def calculate_file_hash(file_path: pathlib.Path | str,
             'Cannot calculate file hash: insufficient permissions.',
             exc_info=True)
         raise
-    except Exception:
-        logging.debug('Exception while trying to get file hash',
-                      exc_info=True)
-        raise
+
+    calculated_hash = hash_object.hexdigest()
+
+    if expected_hash is not None:
+        # hexdigest() is lowercase, but hashes are often published uppercase.
+        # compare_digest keeps the comparison constant-time.
+        if not hmac.compare_digest(expected_hash.strip().lower(),
+                                   calculated_hash):
+            mismatch_message = ("Mismatch between calculated and expected " +
+                                f"{hash_method} hash for {file_path}")
+            logging.debug(mismatch_message)
+            raise ValueError(mismatch_message)
+
+    return calculated_hash
 
 
 def calculate_string_hash(data: str,
@@ -184,37 +213,16 @@ def calculate_string_hash(data: str,
     if not data:
         raise ValueError('Cannot hash empty string')
 
-    if _hash_is_deprecated(hash_method):
-        raise err.DeprecatedHashAlgorithm(
-            'Deprecated hash method not supported')
-
-    if not hash_available(hash_method):
-        raise ValueError(f"Hash method {hash_method} not available on system.")
+    hash_object = _new_hash(hash_method)
 
     try:
         byte_data = data.encode(encoding)
-
-        try:
-            h = hashlib.new(hash_method)
-        except ValueError as e:
-            raise ValueError(f"Hash method {hash_method} not supported: {e}") from e
-
-        # Check canonical name to catch platform-specific aliases
-        # (e.g., 'sha' resolving to 'sha1')
-        if _hash_is_deprecated(h.name):
-            raise err.DeprecatedHashAlgorithm(
-                f"Hash method '{hash_method}' resolves to "
-                f"deprecated algorithm '{h.name}'")
-
-        h.update(byte_data)
-        calculated_hash = h.hexdigest()
-
-        logging.debug('String hash calculated successfully using %s', hash_method)
-        return calculated_hash
-
     except UnicodeEncodeError:
         logging.debug('Cannot encode string with %s encoding', encoding)
         raise
-    except Exception:
-        logging.debug('Exception while calculating string hash', exc_info=True)
-        raise
+
+    hash_object.update(byte_data)
+    calculated_hash = hash_object.hexdigest()
+
+    logging.debug('String hash calculated successfully using %s', hash_method)
+    return calculated_hash
