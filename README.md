@@ -41,6 +41,7 @@ Userprovided has functionality for the following inputs:
   * [Extract domain from a hostname](#extract-domain-from-a-hostname) for callers that already hold a bare hostname instead of a URL.
   * [Extract TLD from URL](#extract-tld-from-url) correctly identifying both standard and 2-part TLDs.
   * [Check if a URL belongs to a domain](#check-url-domain) with subdomain matching.
+  * [Limits of the two-part TLD list](#limits-of-the-two-part-tld-list) and when to reach for a dedicated package.
 * [ip](#check-ip-addresses):
   * [Check for loopback addresses](#check-for-loopback-addresses) (127.0.0.0/8, ::1, localhost).
   * [Check for private addresses](#check-for-private-addresses) (RFC 1918, IPv6 unique-local).
@@ -648,6 +649,49 @@ userprovided.url.url_matches_domain('https://www.example.co.uk/page', 'example.c
 userprovided.url.url_matches_domain('https://evil.com', 'wikipedia.org')
 # => False
 ```
+
+### Limits of the Two-Part TLD List
+
+`extract_domain(drop_subdomain=True)`, `extract_tld` and `url_matches_domain`
+all resolve a hostname to its *registrable domain*, which requires knowing
+where the public suffix ends. Doing that correctly means consulting the
+[Public Suffix List](https://publicsuffix.org/) — several thousand rules,
+updated continuously. This package relies solely on the Python Standard
+Library, so it instead carries a hand-maintained set of the most common
+two-part suffixes (`userprovided.url.TWO_PART_TLDS`, currently 98 entries
+covering 20 countries).
+
+Under a suffix that is **not** in that set, one label too few is kept:
+
+```python
+# .co.uk is in the list:
+userprovided.url.extract_domain('https://www.alice.co.uk', drop_subdomain=True)
+# => 'alice.co.uk'
+
+# .com.ua is not:
+userprovided.url.extract_domain('https://www.alice.com.ua', drop_subdomain=True)
+# => 'com.ua'   (not 'alice.com.ua')
+```
+
+Two consequences follow, and the second one matters for security:
+
+```python
+# 1. Matching your own site fails under an unlisted suffix:
+userprovided.url.url_matches_domain('https://www.alice.com.ua/p', 'alice.com.ua')
+# => False
+
+# 2. Unrelated sites share one registrable domain, so never derive the
+#    expected domain with the same function — pass a literal instead:
+expected = userprovided.url.extract_domain('https://alice.com.ua', drop_subdomain=True)
+# => 'com.ua'
+userprovided.url.url_matches_domain('https://bob.com.ua/p', expected)
+# => True — bob is not alice
+```
+
+If your application needs full public-suffix coverage, use a dedicated package
+such as [tldextract](https://pypi.org/project/tldextract/), which ships and
+updates the Public Suffix List. That is a dependency for your application to
+take; `userprovided` will not take it.
 
 ## Check IP Addresses
 

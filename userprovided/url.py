@@ -25,9 +25,13 @@ from userprovided import err
 # Accepting arbitrarily long strings risks slow regex processing and memory use.
 _MAX_URL_LENGTH = 2048
 
-# Known 2-part TLDs (country code second-level domains)
-# Note: This is a subset of common 2-part TLDs. For comprehensive coverage,
-# consider using the Public Suffix List (https://publicsuffix.org/)
+# Known 2-part TLDs (country code second-level domains).
+# This is a hand-maintained subset of the most common ones, because full
+# coverage means shipping the Public Suffix List (https://publicsuffix.org/)
+# and this package relies solely on the Standard Library. Under a suffix that
+# is missing here, one label too few is kept: 'alice.com.ua' resolves to
+# 'com.ua', so unrelated sites share a registrable domain. Callers needing
+# full coverage should use a dedicated package such as tldextract.
 TWO_PART_TLDS = {
     # United Kingdom
     'co.uk', 'gov.uk', 'ac.uk', 'org.uk', 'net.uk',
@@ -583,7 +587,9 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
         url: Full URL string (e.g., 'https://www.example.com:8080/path')
         drop_subdomain: If True, extracts only the registrable domain
                         (domain + public suffix), removing subdomains.
-                        Handles multi-part TLDs correctly (e.g., .co.uk, .com.au).
+                        Handles the multi-part TLDs listed in TWO_PART_TLDS
+                        (e.g., .co.uk, .com.au); see there for the limits of
+                        that hand-maintained subset.
                         IP addresses and localhost are returned as-is.
 
     Returns:
@@ -788,6 +794,13 @@ def url_matches_domain(url: str, domain: str) -> bool:
     distinguish ``www.example.com`` from ``sub.example.com`` — both match
     ``example.com``. If you need to match a specific subdomain, use
     ``extract_domain`` directly and compare the full hostname.
+
+    Trade-off / Security: The registrable domain is derived from
+    ``TWO_PART_TLDS``, a hand-maintained subset (see its definition). Under a
+    suffix missing from it, matching your own site fails, and unrelated sites
+    share one registrable domain. Never derive the ``domain`` argument with
+    ``extract_domain`` — under such a suffix that yields the public suffix
+    itself and matches every site below it. Pass a literal.
 
     Args:
         url: The URL to check. Must be a valid URL with a scheme and
