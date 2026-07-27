@@ -263,7 +263,10 @@ def test_is_shortened_url_exception_handling():
     with patch('userprovided.url.urllib.parse.urlparse') as mock_parse:
         # Make is_url succeed but then fail in is_shortened_url
         mock_parse.side_effect = [
-            type('obj', (object,), {'scheme': 'https', 'netloc': 'bit.ly'})(),  # First call in is_url
+            # First call, inside is_url. Needs every attribute is_url reads,
+            # including the port it validates.
+            type('obj', (object,), {'scheme': 'https', 'netloc': 'bit.ly',
+                                    'port': None})(),
             Exception('Unexpected error')  # Second call in is_shortened_url
         ]
         # Should return False and not raise
@@ -693,3 +696,26 @@ def test_normalize_url_equivalent_spellings_share_one_key():
                 'https://example.com////a']
     keys = {userprovided.url.normalize_url(v) for v in variants}
     assert keys == {'https://example.com/a'}
+
+
+@pytest.mark.parametrize('test_url', [
+    'https://example.com:notaport',
+    'https://example.com:99999',      # above 65535
+    'https://example.com:-1',
+    'https://[::1]:notaport',
+])
+def test_is_url_rejects_invalid_port(test_url):
+    # urlparse does not validate the port, it raises on attribute access.
+    # A URL no client could dial must not be reported as valid.
+    assert userprovided.url.is_url(test_url) is False
+
+
+@pytest.mark.parametrize('test_url', [
+    'https://example.com:443',
+    'https://example.com:8080',
+    'https://example.com:0',          # 0 is in range
+    'https://example.com:65535',      # the highest valid port
+    'https://example.com',            # no port at all
+])
+def test_is_url_accepts_valid_port(test_url):
+    assert userprovided.url.is_url(test_url) is True

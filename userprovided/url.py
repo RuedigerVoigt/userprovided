@@ -143,6 +143,15 @@ def is_url(url: str,
         logging.debug('URL is missing or malformed.')
         return False
 
+    try:
+        # urllib validates the port lazily, on attribute access. Without this
+        # a URL no client could ever dial ('https://example.com:notaport',
+        # or a port above 65535) would be reported as valid.
+        parsed.port
+    except ValueError:
+        logging.debug('URL has an invalid port.')
+        return False
+
     return True
 
 
@@ -254,14 +263,8 @@ def normalize_url(url: str,
     reassemble = list()
     reassemble.append(parsed.scheme.lower())
 
-    try:
-        port = parsed.port
-    except ValueError as e:
-        # urllib validates the port lazily, on attribute access, and quotes the
-        # offending value in its message. Raise this function's own message
-        # instead of passing user input on to the caller's logs.
-        logging.debug('URL has a malformed port.')
-        raise ValueError('Malformed URL') from e
+    # is_url above rejects a port urllib cannot cast, so this cannot raise.
+    port = parsed.port
 
     host = parsed.hostname
     if host and ':' in host:
