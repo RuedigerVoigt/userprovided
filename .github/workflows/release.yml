@@ -24,16 +24,19 @@ jobs:
         with:
           python-version: '3.14'
 
+      # This job holds `id-token: write` and can mint a PyPI OIDC token, so the
+      # tooling installed here is pinned to exact versions — the same reason the
+      # actions above are pinned to commit SHAs instead of mutable tags.
       - name: Install Poetry
         run: |
           python -m pip install --upgrade pip
-          pip install poetry
+          pip install poetry==2.4.1
 
       - name: Build package
         run: poetry build
 
       - name: Install Twine
-        run: pip install twine
+        run: pip install twine==7.0.0
 
       - name: Validate built distributions with Twine
         run: twine check dist/*
