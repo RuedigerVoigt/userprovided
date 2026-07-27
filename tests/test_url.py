@@ -483,19 +483,27 @@ def test_url_matches_domain(url, domain, expected):
     assert userprovided.url.url_matches_domain(url, domain) is expected
 
 
-def test_extract_domain_attribute_error():
-    """Cover the AttributeError handler in extract_domain (url.py line 433)."""
-    with patch('userprovided.url.urllib.parse.urlparse',
-               side_effect=AttributeError('mocked')):
-        with pytest.raises(ValueError, match="Invalid URL format"):
-            userprovided.url.extract_domain('https://example.com')
+def test_extract_domain_unparseable():
+    """urllib rejects an unclosed IPv6 literal -- no mock needed."""
+    with pytest.raises(ValueError, match="Invalid URL format"):
+        userprovided.url.extract_domain('http://[::1')
 
 
-def test_extract_tld_generic_exception():
-    """Cover the generic Exception handler in extract_tld (url.py lines 506-508)."""
+def test_extract_tld_unparseable():
+    """Same input as above, but this function reports it with an empty string."""
+    assert userprovided.url.extract_tld('http://[::1') == ''
+
+
+def test_extract_tld_unexpected_error_propagates():
+    """An unexpected error must reach the caller, not be masked as 'no TLD'.
+
+    Only a parse failure is reported with an empty string; anything else is a
+    bug and would previously have been swallowed by a broad except Exception.
+    """
     with patch('userprovided.url.urllib.parse.urlparse',
                side_effect=RuntimeError('mocked')):
-        assert userprovided.url.extract_tld('https://example.com') == ''
+        with pytest.raises(RuntimeError):
+            userprovided.url.extract_tld('https://example.com')
 
 
 def test_host_from_url_exception():
@@ -621,3 +629,30 @@ def test_normalize_url_uses_its_own_message(malformed):
     # urllib's messages quote the offending value; this one must not.
     with pytest.raises(ValueError, match='Malformed URL'):
         userprovided.url.normalize_url(malformed)
+
+
+@pytest.mark.parametrize('url, expected', [
+    ('https://bit.ly/x', True),
+    # netloc carries the port and the userinfo, hostname does not:
+    ('https://bit.ly:443/x', True),
+    ('https://evil.com@bit.ly/x', True),
+    ('https://www.bit.ly/x', True),
+    # not a shortener, even though the userinfo names one:
+    ('https://bit.ly@example.com/x', False),
+    ('https://example.com/x', False),
+])
+def test_is_shortened_url_ignores_userinfo_and_port(url, expected):
+    assert userprovided.url.is_shortened_url(url) is expected
+
+
+@pytest.mark.parametrize('url', [
+    'http://user:pass@',   # netloc is 'user:pass@', hostname is None
+    'http://@',
+    'http://:8080',
+])
+def test_extract_domain_never_returns_netloc(url):
+    # Falling back to netloc handed the caller credentials or a bare port
+    # as if they were a domain.
+    with pytest.raises(ValueError):
+        userprovided.url.extract_domain(url)
+    assert userprovided.url.extract_tld(url) == ''

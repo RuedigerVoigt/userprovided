@@ -517,7 +517,10 @@ def is_shortened_url(url: str) -> bool:
 
     try:
         parsed = urllib.parse.urlparse(url)
-        domain = parsed.netloc.lower()
+        # hostname, not netloc: netloc carries the userinfo and the port, so
+        # 'https://evil.com@bit.ly/' and 'https://bit.ly:443/' would both slip
+        # past the lookup.
+        domain = (parsed.hostname or '').lower()
 
         # Remove 'www.' prefix if present
         if domain.startswith('www.'):
@@ -608,24 +611,23 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
         raise ValueError(f"URL exceeds maximum length of {_MAX_URL_LENGTH} characters.")
 
     try:
-        parsed = urllib.parse.urlparse(url.strip())
-        domain = parsed.hostname
-
-        if not domain:
-            domain = parsed.netloc
-
-        if not domain:
-            raise ValueError("Could not extract domain from URL.")
-
-        domain = domain.lower().strip()
-
-        if drop_subdomain:
-            domain = _extract_registrable_domain(domain, TWO_PART_TLDS)
-
-        return domain
-
-    except AttributeError as e:
+        domain = urllib.parse.urlparse(url.strip()).hostname
+    except ValueError as e:
+        # urllib rejects malformed input such as an unclosed IPv6 literal.
         raise ValueError("Invalid URL format.") from e
+
+    if not domain:
+        # netloc is deliberately not used as a fallback: it carries the
+        # userinfo and the port, so 'http://user:pass@' would be handed back
+        # as if it were a domain.
+        raise ValueError("Could not extract domain from URL.")
+
+    domain = domain.lower().strip()
+
+    if drop_subdomain:
+        domain = _extract_registrable_domain(domain, TWO_PART_TLDS)
+
+    return domain
 
 
 def extract_tld(url: str) -> str:
@@ -670,44 +672,41 @@ def extract_tld(url: str) -> str:
         raise ValueError(f"URL exceeds maximum length of {_MAX_URL_LENGTH} characters.")
 
     try:
-        parsed = urllib.parse.urlparse(url.strip())
-        domain = parsed.hostname
-
-        if not domain:
-            domain = parsed.netloc
-
-        if not domain:
-            return ''
-
-        domain = domain.lower().strip()
-
-        # Check if it's an IP address (IPv4 or IPv6)
-        try:
-            ipaddress.ip_address(domain)
-            # It's an IP address, no TLD
-            return ''
-        except ValueError:
-            # Not an IP address, continue
-            pass
-
-        parts = domain.split('.')
-
-        # Single-word domains (like localhost) have no TLD
-        if len(parts) == 1:
-            return ''
-
-        # Check for 2-part TLD
-        if len(parts) >= 2:  # pragma: no branch
-            potential_2part_tld = '.'.join(parts[-2:])
-            if potential_2part_tld in TWO_PART_TLDS:
-                return '.' + potential_2part_tld
-
-        # Standard single-part TLD
-        return '.' + parts[-1]
-
-    except Exception:
-        # If parsing fails, return empty string
+        domain = urllib.parse.urlparse(url.strip()).hostname
+    except ValueError:
+        # Same failure as in extract_domain, but this function reports "no TLD
+        # could be determined" with an empty string instead of raising.
         return ''
+
+    if not domain:
+        # netloc is deliberately not used as a fallback -- see extract_domain.
+        return ''
+
+    domain = domain.lower().strip()
+
+    # Check if it's an IP address (IPv4 or IPv6)
+    try:
+        ipaddress.ip_address(domain)
+        # It's an IP address, no TLD
+        return ''
+    except ValueError:
+        # Not an IP address, continue
+        pass
+
+    parts = domain.split('.')
+
+    # Single-word domains (like localhost) have no TLD
+    if len(parts) == 1:
+        return ''
+
+    # Check for 2-part TLD
+    if len(parts) >= 2:  # pragma: no branch
+        potential_2part_tld = '.'.join(parts[-2:])
+        if potential_2part_tld in TWO_PART_TLDS:
+            return '.' + potential_2part_tld
+
+    # Standard single-part TLD
+    return '.' + parts[-1]
 
 
 def _extract_registrable_domain(domain: str, two_part_tlds: set) -> str:

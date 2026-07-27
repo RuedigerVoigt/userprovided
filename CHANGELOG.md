@@ -7,7 +7,11 @@
   * `hashing`: `calculate_file_hash` compares hashes with `hmac.compare_digest` instead of `!=`, so the comparison is constant-time.
 * New features:
   * `err` is now imported by the package itself and listed in `__all__`. `userprovided.err.ValidationError` and its siblings previously resolved only as a side effect of other modules importing `err`.
+* Security fixes:
+  * `url`: `is_shortened_url` matched against the netloc, which carries the userinfo and the port. `https://bit.ly:443/x` and `https://evil.com@bit.ly/x` were therefore not recognized as shortened URLs, defeating the check that is meant to spot disguised link targets. It now matches on the hostname, like the rest of the module.
 * Bug fixes:
+  * `url`: `extract_domain` and `extract_tld` no longer fall back to the netloc when no hostname can be determined. The netloc carries the userinfo and the port, so `extract_domain('http://user:pass@')` returned the credentials as if they were a domain. Such input now raises `ValueError` (`extract_domain`) or returns an empty string (`extract_tld`).
+  * `url`: `extract_tld` no longer swallows every exception. A URL that cannot be parsed still yields an empty string, but an unexpected error now reaches the caller instead of being reported as "no TLD found". `extract_domain` and `extract_tld` now react to the same set of errors, each in the way its documentation promises.
   * `url`: `is_url` no longer raises for URLs that `urllib.parse` cannot parse at all, such as an unclosed IPv6 literal (`http://[::1`). It returned a `ValueError` the docstring did not promise, so an application validating hostile input crashed instead of rejecting it. Such URLs are now simply invalid.
   * `url`: `normalize_url` raises its own `Malformed URL` message for an invalid port (`https://example.com:notaport`). `urllib` validates the port only on attribute access and quotes the offending value in its message, which passed user input on to the caller's logs.
 * Changed behavior:
