@@ -1,6 +1,6 @@
 # Changelog / History
 
-## Version 2.6.1 (unreleased)
+## Version 2.7.0 (unreleased)
 
 * Security fixes:
   * `hashing`: `calculate_file_hash` no longer skips verification when `expected_hash` is an empty string. Only `None` skips the check now, so a config field left blank can no longer turn "verify this file against a known hash" into "return success without verifying".
