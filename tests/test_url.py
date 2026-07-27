@@ -603,3 +603,21 @@ def test_url_functions_reject_non_string():
                 'https://example.com', wrong_type)
         with pytest.raises(TypeError):
             userprovided.url.url_matches_domain(wrong_type, 'example.com')
+
+
+def test_is_url_malformed_does_not_raise():
+    # urllib.parse raises for an unclosed IPv6 literal. A validator must
+    # classify such input as invalid instead of raising at the caller.
+    assert userprovided.url.is_url('http://[::1') is False
+    assert userprovided.url.is_url('http://[') is False
+
+
+@pytest.mark.parametrize('malformed', [
+    'http://[::1',              # urlparse fails outright
+    'https://[::1]:notaport',   # parses, but the port is invalid
+    'https://example.com:99999',  # port out of range
+])
+def test_normalize_url_uses_its_own_message(malformed):
+    # urllib's messages quote the offending value; this one must not.
+    with pytest.raises(ValueError, match='Malformed URL'):
+        userprovided.url.normalize_url(malformed)

@@ -116,7 +116,14 @@ def is_url(url: str,
         logging.debug('URL exceeds maximum length of %d characters.', _MAX_URL_LENGTH)
         return False
 
-    parsed = urllib.parse.urlparse(url)
+    try:
+        parsed = urllib.parse.urlparse(url)
+    except ValueError:
+        # urllib raises for malformed input like an unclosed IPv6 literal
+        # ('http://[::1'). Classifying a URL as invalid is what this function
+        # is for, so return False instead of raising at the caller.
+        logging.debug('URL could not be parsed.')
+        return False
 
     if parsed.scheme == '':
         logging.debug('The URL has no scheme (like http or https)')
@@ -246,24 +253,33 @@ def normalize_url(url: str,
     reassemble = list()
     reassemble.append(parsed.scheme.lower())
 
+    try:
+        port = parsed.port
+    except ValueError as e:
+        # urllib validates the port lazily, on attribute access, and quotes the
+        # offending value in its message. Raise this function's own message
+        # instead of passing user input on to the caller's logs.
+        logging.debug('URL has a malformed port.')
+        raise ValueError('Malformed URL') from e
+
     host = parsed.hostname
     if host and ':' in host:
         # urlparse strips the square brackets from IPv6 literals.
         # Restore them, otherwise the reassembled URL is invalid.
         host = f"[{host}]"
 
-    if not parsed.port:
+    if not port:
         # There is no port to begin with
         # hostname is lowercase without port
         reassemble.append(host)  # type: ignore[arg-type]
     elif (parsed.scheme in standard_ports and
-            parsed.port == standard_ports[parsed.scheme]):
+            port == standard_ports[parsed.scheme]):
         # There is a port and it equals the standard.
         # That means it is redundant.
         reassemble.append(host)  # type: ignore[arg-type]
     else:
         # There is a port but it is not in the list or not standard
-        reassemble.append(f"{host}:{parsed.port}")
+        reassemble.append(f"{host}:{port}")
 
     # remove common typo (// in path element):
     reassemble.append(parsed.path.replace('//', '/'))

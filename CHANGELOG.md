@@ -7,6 +7,9 @@
   * `hashing`: `calculate_file_hash` compares hashes with `hmac.compare_digest` instead of `!=`, so the comparison is constant-time.
 * New features:
   * `err` is now imported by the package itself and listed in `__all__`. `userprovided.err.ValidationError` and its siblings previously resolved only as a side effect of other modules importing `err`.
+* Bug fixes:
+  * `url`: `is_url` no longer raises for URLs that `urllib.parse` cannot parse at all, such as an unclosed IPv6 literal (`http://[::1`). It returned a `ValueError` the docstring did not promise, so an application validating hostile input crashed instead of rejecting it. Such URLs are now simply invalid.
+  * `url`: `normalize_url` raises its own `Malformed URL` message for an invalid port (`https://example.com:notaport`). `urllib` validates the port only on attribute access and quotes the offending value in its message, which passed user input on to the caller's logs.
 * Changed behavior:
   * `url`: `extract_domain`, `extract_tld`, and `url_matches_domain` raise `TypeError` for non-string arguments, matching the contract the other string-validating functions already follow. They previously leaked an `AttributeError` from an internal `.strip()` call.
   * `hashing`: `calculate_file_hash` compares `expected_hash` case-insensitively and ignores surrounding whitespace. `hexdigest()` is lowercase, so an uppercase expected value — how many vendors publish hashes — previously reported a mismatch for an intact file.
