@@ -159,12 +159,12 @@ Check if all keys in a dictionary have a value. Return `False` if the value for 
 
 ```python
 # returns True:
-parameters.keys_neither_none_nor_empty({'a': 123, 'b': 'example'})
+userprovided.parameters.keys_neither_none_nor_empty({'a': 123, 'b': 'example'})
 
 # returns False:
-parameters.keys_neither_none_nor_empty({'a': '   ', 'b': 'example'})
-parameters.keys_neither_none_nor_empty({'a': None, 'b': 'example'})
-parameters.keys_neither_none_nor_empty({'a': list(), 'b': 'example'})
+userprovided.parameters.keys_neither_none_nor_empty({'a': '   ', 'b': 'example'})
+userprovided.parameters.keys_neither_none_nor_empty({'a': None, 'b': 'example'})
+userprovided.parameters.keys_neither_none_nor_empty({'a': list(), 'b': 'example'})
 ```
 
 ### Convert into a set
@@ -267,7 +267,7 @@ userprovided.parameters.int_in_range(
     maximum_value=100,
     fallback_value=1
 )
-# => 1 (fallback value, logs warning)
+# => 1 (fallback value, logs at debug level)
 
 # Rejects floats even if they represent whole numbers
 userprovided.parameters.int_in_range(
@@ -889,7 +889,7 @@ The `userprovided.err` module defines the exceptions this package raises:
 | Exception | Also inherits from | Raised when |
 | --------- | ------------------ | ----------- |
 | `UserprovidedException` | — | Base class. Never raised directly. |
-| `ValidationError` | `ValueError` | A strict validator rejects a value instead of falling back to a default (`parse_boolean`, `one_of`). |
+| `ValidationError` | `ValueError` | A [strict validator](#tolerant-vs-strict-validators) rejects a user-supplied value instead of falling back to a default. |
 | `ContradictoryParameters` | `ValueError` | Parameters contradict each other, like dropping query keys while leaving the query part unchanged. |
 | `QueryKeyConflict` | — | A URL query part repeats a key with conflicting values. |
 | `DeprecatedHashAlgorithm` | — | MD5 or SHA1 was requested, even if available on the system. |
