@@ -135,11 +135,12 @@ userprovided.parameters.strict_int('500', name='workers', minimum=1, maximum=32)
 # => ValidationError: Invalid value '500' for workers - must be 32 or smaller.
 ```
 
-Both strict families distinguish a bad *value* from a wrong *type*: a value a
-user could plausibly have typed raises `ValidationError` (a subclass of
-`ValueError`), while a wrong type — `None`, a list, a `bool` — raises
-`TypeError`, because that is a bug in the calling code rather than something
-an end user can fix.
+Both families distinguish a bad *value* from a wrong *type*. A value a user
+could plausibly have typed is a value problem: the strict validators raise
+`ValidationError` (a subclass of `ValueError`), the tolerant ones fall back.
+A wrong type — `None`, a list, a `bool` — always raises `TypeError`, in both
+families, because that is a bug in the calling code rather than something an
+end user can fix.
 
 ### Check a Parameter Dictionary
 
@@ -241,7 +242,8 @@ def string_in_range(string_to_check,
 
 userprovided.parameters.is_port(int)
 # Checks if the port is integer and within the
-# valid range from 0 to 65535.
+# valid range from 0 to 65535. A non-integer — including a
+# bool, which is a subclass of int — raises TypeError.
 ```
 
 ### Check Integer Range
@@ -277,7 +279,7 @@ userprovided.parameters.int_in_range(
     maximum_value=10,
     fallback_value=5
 )
-# => ValueError: Value must be an integer.
+# => TypeError: Value must be an integer.
 ```
 
 The function validates that minimum ≤ maximum and that the fallback value is within the allowed range.

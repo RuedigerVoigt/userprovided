@@ -104,10 +104,13 @@ def test_parameters_is_port():
     assert userprovided.parameters.is_port(443) is True
     assert userprovided.parameters.is_port(65536) is False
     assert userprovided.parameters.is_port(-1) is False
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.is_port('foo')
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.is_port(None)
+    # bool is a subclass of int, but True is not port 1:
+    with pytest.raises(TypeError):
+        userprovided.parameters.is_port(True)
 
 
 @pytest.mark.parametrize("input,expected", [
@@ -397,28 +400,28 @@ def test_numeric_in_range():
             )
 
     # One of the values not numeric
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.numeric_in_range(
             'example',
             'some string',
             100,
             1.0,
             0)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.numeric_in_range(
             'example',
             101,
             'some string',
             1.0,
             0)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.numeric_in_range(
             'example',
             101,
             100,
             'some string',
             0)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.numeric_in_range(
             'example',
             101,
@@ -426,7 +429,7 @@ def test_numeric_in_range():
             1.0,
             'some string')
     # no paramter name
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.numeric_in_range(
             None,
             101,
@@ -435,21 +438,21 @@ def test_numeric_in_range():
             'some string')
 
     # bool must be rejected even though bool is a subclass of int
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.numeric_in_range('example', True, 0, 10, 5)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.numeric_in_range('example', False, 0, 10, 5)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.numeric_in_range('example', 5, True, 10, 5)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.numeric_in_range('example', 5, False, 10, 5)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.numeric_in_range('example', 5, 0, True, 5)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.numeric_in_range('example', 5, 0, False, 5)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.numeric_in_range('example', 5, 0, 10, True)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.numeric_in_range('example', 5, 0, 10, False)
 
     # given value within range
@@ -508,7 +511,7 @@ def test_numeric_in_range_never_returns_nan(
 
 def test_int_in_range():
     # parmeter is not integer
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.int_in_range(
             'example',
             10,
@@ -516,7 +519,7 @@ def test_int_in_range():
             100.0,
             50)
     # parameter is string
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.int_in_range(
             'example',
             10,
@@ -528,7 +531,7 @@ def test_int_in_range():
     # given value to small => fallback
     assert userprovided.parameters.int_in_range('foo', 3, 10, 100, 50) == 50
     # a float NaN is not an int => rejected by the type check
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.parameters.int_in_range('foo', math.nan, 1, 100, 50)
 
 
@@ -880,3 +883,19 @@ def test_strict_validation_error_is_a_value_error():
         userprovided.parameters.strict_int('abc')
     with pytest.raises(ValueError):
         userprovided.parameters.strict_numeric('abc')
+
+
+@pytest.mark.parametrize('given, minimum, maximum, fallback', [
+    ('count', 5.0, 1, 10, 5)[1:],      # float first  -- caught before too
+    ('count', 5, 1, 10, 5.0)[1:],      # float equals an earlier int
+    ('x', 10, 1, 10.0, 5)[1:],
+    ('x', 1, 1.0, 100, 50)[1:],
+    ('x', 10, 1, 100.0, 50)[1:],
+])
+def test_int_in_range_rejects_equal_valued_floats(given, minimum, maximum,
+                                                  fallback):
+    # The type check used to iterate a set, and 5.0 == 5, so a float equal to
+    # an argument already in the set was dropped and never type-checked.
+    with pytest.raises(TypeError):
+        userprovided.parameters.int_in_range('example', given, minimum,
+                                             maximum, fallback)

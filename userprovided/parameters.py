@@ -307,8 +307,9 @@ def numeric_in_range(parameter_name: str,
         for "no upper limit") are accepted.
 
     Raises:
-        ValueError: If any parameter is not numeric, or if
-            minimum_value, maximum_value, or fallback_value is NaN.
+        TypeError: If any parameter is not numeric (a bool counts as
+            not numeric, although it is a subclass of int).
+        ValueError: If minimum_value, maximum_value, or fallback_value is NaN.
         ContradictoryParameters: If minimum > maximum or fallback_value
             is outside the allowed range.
     """
@@ -317,7 +318,8 @@ def numeric_in_range(parameter_name: str,
 
     for param in (given_value, minimum_value, maximum_value, fallback_value):
         if isinstance(param, bool) or not isinstance(param, (int, float)):
-            raise ValueError('Value must be numeric.')
+            # bool is a subclass of int, but never a measurement.
+            raise TypeError('Value must be numeric.')
 
     # NaN compares False to everything, so it would defeat the sanity
     # checks below and slip through the range check as "in range".
@@ -376,13 +378,15 @@ def int_in_range(parameter_name: str,
         The given_value if within range, otherwise fallback_value.
 
     Raises:
-        ValueError: If any parameter is not an integer.
+        TypeError: If any parameter is not an integer.
         ContradictoryParameters: If minimum > maximum or fallback_value
             is outside the allowed range.
     """
-    for param in {given_value, minimum_value, maximum_value, fallback_value}:
+    # A tuple, not a set: 5.0 == 5, so a set would drop a float that equals
+    # an argument already in it and the type check would never see it.
+    for param in (given_value, minimum_value, maximum_value, fallback_value):
         if type(param) != int:  # pylint: disable=unidiomatic-typecheck  # noqa: E721
-            raise ValueError('Value must be an integer.')
+            raise TypeError('Value must be an integer.')
     return int(numeric_in_range(parameter_name,
                                 given_value,
                                 minimum_value,
@@ -403,11 +407,13 @@ def is_port(port_number: int) -> bool:
         True if port_number is a valid port, False otherwise.
 
     Raises:
-        ValueError: If port_number is not an integer.
+        TypeError: If port_number is not an integer (a bool counts as not
+            an integer, although it is a subclass of int).
     """
 
-    if not isinstance(port_number, int):
-        raise ValueError('Port has to be an integer.')
+    if isinstance(port_number, bool) or not isinstance(port_number, int):
+        # bool is a subclass of int, but True is not port 1.
+        raise TypeError('Port has to be an integer.')
 
     if 0 <= port_number <= 65535:
         logging.debug('Port within range')
