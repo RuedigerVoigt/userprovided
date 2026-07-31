@@ -1,40 +1,33 @@
 # Changelog / History
 
-## Version 3.0.0 (unreleased)
+## Version 3.0.0 (2026-07-31)
 
 * Breaking changes:
-  * `parameters`: `numeric_in_range`, `int_in_range` and `is_port` raise `TypeError` instead of `ValueError` when an argument has the wrong type. They were the last functions in the package that reported a wrong type as a value problem; every other function — the string predicates, `parse_boolean`, `one_of`, `strict_int`, `strict_numeric` — already raised `TypeError`. Since `TypeError` is not a subclass of `ValueError`, callers catching `ValueError` around these functions must now catch `TypeError` as well (or instead). A misconfigured value read from a config file, e.g. the string `"3306"` where a port number is expected, is the typical trigger.
-  * `parameters`: `is_port` now rejects `bool`. `isinstance(True, int)` is `True`, so `is_port(True)` previously returned `True`, treating a flag as port 1. `numeric_in_range` closed the same trap in 2.4.0.
-  * `url`: `extract_domain`, `extract_tld` and `url_matches_domain` raise `TypeError` for non-string arguments (see "Changed behavior" below).
-* Security fixes:
-  * All modules: user-provided values are now logged with `%r` and lazy `%`-arguments instead of `%s` or a pre-formatted f-string. `repr()` escapes newlines and control characters, so a crafted URL, dictionary key or bucket name can no longer forge additional log lines in the host application's log. Version 2.5.0 applied this to `mail.is_email`; the remaining sites follow now, among them the SSRF guard in `ip`, `url.determine_file_extension`, `url.url_matches_domain` and `parameters.validate_dict_keys`. The last one logged at `error` level, which most applications have enabled. Its `ValueError` messages now render the offending key with `repr()` as well.
+  * `parameters`: `numeric_in_range`, `int_in_range` and `is_port` raise `TypeError` instead of `ValueError` when an argument has the wrong type in order to be consistent with the rest of the package.
+  * `parameters`: `is_port` now rejects `bool`. `isinstance(True, int)` is `True`, so `is_port(True)` previously returned `True`, treating a flag as port 1.
+  * `url`: `extract_domain`, `extract_tld` and `url_matches_domain` raise `TypeError` for non-string arguments.
+* Security:
+  * Added a [security policy](./SECURITY.md) and enabled private vulnerability reporting.
+  * Publishing to PyPI now requires the tests, the coverage gate, and the linters to pass for the released commit.
+  * Pinned `poetry` and `twine` to exact versions in the release workflow.
+  * Bumped the pinned GitHub Actions to the latest versions.
+  * All modules: user-provided values are now logged with `%r` and lazy `%`-arguments instead of `%s` or a pre-formatted f-string. `repr()` escapes newlines and control characters, so a crafted URL, dictionary key or bucket name can no longer forge additional log lines in the host application's log.
   * `hashing`: `calculate_file_hash` no longer skips verification when `expected_hash` is an empty string. Only `None` skips the check now, so a config field left blank can no longer turn "verify this file against a known hash" into "return success without verifying".
   * `hashing`: `calculate_file_hash` compares hashes with `hmac.compare_digest` instead of `!=`, so the comparison is constant-time.
   * `url`: `is_shortened_url` matched against the netloc, which carries the userinfo and the port. `https://bit.ly:443/x` and `https://evil.com@bit.ly/x` were therefore not recognized as shortened URLs, defeating the check that is meant to spot disguised link targets. It now matches on the hostname, like the rest of the module.
 * New features:
-  * `parameters`: added `strict_int` and `strict_numeric`, the strict counterparts to `int_in_range` and `numeric_in_range`. Where the tolerant helpers log a debug message and return a fallback, these convert and raise: a mistyped setting stops the program at startup with a message naming the value, the parameter and its origin, instead of silently running with a default the user never chose. They accept the strings that config files, environment variables and command line arguments deliver, reject `bool` (a subclass of `int`, but never a count), reject floats for `strict_int` rather than truncating them, and reject `NaN` and infinity for `strict_numeric`, which would otherwise pass any range check unnoticed. Together with `parse_boolean` and `one_of` the strict family now covers the four types a configuration value arrives as.
-  * `err` is now imported by the package itself and listed in `__all__`. `userprovided.err.ValidationError` and its siblings previously resolved only as a side effect of other modules importing `err`.
+  * `parameters`: added `strict_int` and `strict_numeric`, the strict counterparts to `int_in_range` and `numeric_in_range`.
 * Bug fixes:
-  * `parameters`: `int_in_range` checked the types of its arguments by iterating a set. Since `5.0 == 5`, a float equal to an argument already in that set was silently dropped and never checked, so whether a float was rejected depended on the order of the arguments: `int_in_range('count', 5.0, 1, 10, 5)` raised, but `int_in_range('count', 5, 1, 10, 5.0)` accepted the float and returned `5`.
-  * `url`: `normalize_url` now collapses any run of slashes in the path, not just pairs. `str.replace` consumes non-overlapping matches, so a single pass turned `///a` into `//a` and left a duplicate behind. Two spellings of the same resource therefore produced two different results (`https://example.com//a` became `.../a`, while `https://example.com///a` became `.../​/a`), which defeats the purpose of a normalized URL used as an identity key. Normalization is now also idempotent for such URLs. **Callers storing normalized URLs should be aware that keys generated before this release for paths with three or more consecutive slashes differ from the ones generated now.**
+  * `url`: `normalize_url` now collapses any run of slashes in the path, not just pairs. `str.replace` consumes non-overlapping matches, so a single pass turned `///a` into `//a` and left a duplicate behind. Two spellings of the same resource therefore produced two different results (`https://example.com//a` became `.../a`, while `https://example.com///a` became `.../​/a`), which defeats the purpose of a normalized URL used as an identity key.
   * `url`: `extract_domain` and `extract_tld` no longer fall back to the netloc when no hostname can be determined. The netloc carries the userinfo and the port, so `extract_domain('http://user:pass@')` returned the credentials as if they were a domain. Such input now raises `ValueError` (`extract_domain`) or returns an empty string (`extract_tld`).
-  * `url`: `extract_tld` no longer swallows every exception. A URL that cannot be parsed still yields an empty string, but an unexpected error now reaches the caller instead of being reported as "no TLD found". `extract_domain` and `extract_tld` now react to the same set of errors, each in the way its documentation promises.
-  * `url`: `is_url` no longer raises for URLs that `urllib.parse` cannot parse at all, such as an unclosed IPv6 literal (`http://[::1`). It returned a `ValueError` the docstring did not promise, so an application validating hostile input crashed instead of rejecting it. Such URLs are now simply invalid.
-  * `url`: `is_url` now rejects a URL whose port is not a number or lies outside 0-65535 (`https://example.com:notaport`, `https://example.com:99999`). `urllib.parse` validates the port only on attribute access, so such a URL — which no client could ever dial — was reported as valid. Everything building on `is_url`, among them `normalize_url` and `is_shortened_url`, rejects those URLs as a result.
-  * `url`: `normalize_url` raises its own `Malformed URL` message for an invalid port (`https://example.com:notaport`). `urllib` validates the port only on attribute access and quotes the offending value in its message, which passed user input on to the caller's logs.
-* Changed behavior:
-  * `url`: `extract_domain`, `extract_tld`, and `url_matches_domain` raise `TypeError` for non-string arguments, matching the contract the other string-validating functions already follow. They previously leaked an `AttributeError` from an internal `.strip()` call.
-  * `hashing`: `calculate_file_hash` compares `expected_hash` case-insensitively and ignores surrounding whitespace. `hexdigest()` is lowercase, so an uppercase expected value — how many vendors publish hashes — previously reported a mismatch for an intact file.
-* Documentation:
-  * Added a [security policy](./SECURITY.md) with private vulnerability reporting.
-  * The README explains [when to use the tolerant and when the strict validators](https://github.com/RuedigerVoigt/userprovided#tolerant-vs-strict-validators), as picking the wrong family is the difference between a substituted value and a stopped program.
-  * The README documents the [limits of the two-part TLD list](https://github.com/RuedigerVoigt/userprovided#limits-of-the-two-part-tld-list). Under a public suffix missing from `TWO_PART_TLDS`, one label too few is kept, so matching your own site fails and unrelated sites share a registrable domain. Deriving the expected domain with `extract_domain` and passing it to `url_matches_domain` is therefore unsafe. Applications needing full coverage should use a dedicated package such as `tldextract`.
-  * The README lists the exceptions this package raises, and no longer claimed that `int_in_range` logs at warning level.
-* CI:
-  * Security: publishing to PyPI now requires the tests, the coverage gate, and the linters to pass for the released commit. They run as reusable workflows called by the release workflow, so a release cut from a red commit can no longer be published.
+  * `url`: `extract_tld` no longer swallows every exception. A URL that cannot be parsed still yields an empty string, but an unexpected error now reaches the caller instead of being reported as "no TLD found".
+  * `url`: `is_url` no longer raises for URLs that `urllib.parse` cannot parse at all, such as an unclosed IPv6 literal (`http://[::1`). Such URLs are now simply invalid.
+  * `url`: `is_url` now rejects a URL whose port is not a number or lies outside the range 0-65535. `urllib.parse` validates the port only on attribute access, so such a URL — which no client could ever dial — was reported as valid. Everything building on `is_url`, among them `normalize_url` and `is_shortened_url`, rejects those URLs as a result.
+  * `url`: `normalize_url` raises its own `Malformed URL` message for an invalid port (`https://example.com:notaport`).
+  * `hashing`: `calculate_file_hash` compares `expected_hash` case-insensitively and ignores surrounding whitespace.
+* CI
   * The release workflow now verifies that the git tag matches the version in `pyproject.toml` before building, instead of failing at the upload step or publishing a mismatched version silently.
-  * Security: pinned `poetry` and `twine` to exact versions in the release workflow. Both were installed unpinned into the job that holds `id-token: write`, so a compromised release of either could have run where it can mint a PyPI OIDC token. This closes the gap left by pinning the actions themselves to commit SHAs.
-  * Bumped the pinned GitHub Actions to the latest versions.
+
 
 ## Version 2.6.0 (2026-07-11)
 
@@ -68,7 +61,7 @@
   * Tooling: added a Dependabot config to keep the GitHub Actions up to date automatically.
   * Security: pinned all GitHub Actions to full commit SHAs (with a version comment) instead of mutable tags, so a re-pointed upstream tag cannot inject code into the workflows — most importantly the PyPI publish job. Dependabot keeps the pins current.
   * Security: set least-privilege `permissions: contents: read` on the test, lint, and build workflows, so their `GITHUB_TOKEN` cannot write to the repository. The OIDC publishing capability (`id-token: write`) remains exclusive to the release workflow.
-  * Security: Enabled release immutability
+  * Security: Enabled release immutability.
 
 ## Version 2.4.0 (2026-06-06)
 
@@ -193,7 +186,7 @@
 
 ## Version 0.9.4 (2021-10-06)
 
-* Test now run with Python 3.10.
+* Tests now run with Python 3.10.
 
 ## Version 0.9.3 (2021-08-05)
 
@@ -236,7 +229,7 @@
 * Currently 98% test coverage.
 
 Bugfixes:
-* The function `url.determine_file_extension` did not handle some edge cases separetly, but instead suggested the extension `.unknown` in both cases. Now:
+* The function `url.determine_file_extension` did not handle some edge cases separately, but instead suggested the extension `.unknown` in both cases. Now:
     * If neither the URL nor the server provide enough information to determine the file extension, the function will suggest `.unknown`.
     * If the file extension in the URL and the provided mime-type contradict each other, the file extension suggested by the URL will prevail.
 * The function `url.determine_file_extension` did try to guess a file extension from the URL even if that missed the path part (i.e. `https://www.example.com` instead of something like `https://www.example.com/index.html`). Now it only guesses from the URL if there is a path component. Otherwise only the mime-type suggested by the server will be used.
@@ -276,11 +269,11 @@ Bugfixes:
 
 ## Version 0.7.1 beta (2020-07-09)
 
-* New function `url.determine_file_extension` (moved here from the `exoskeleton` sister project): determine the appropriate file extension either based on the URL and / or the mime type provided by the server.
+* New function `url.determine_file_extension` (moved here from the `exoskeleton` sister-project): determine the appropriate file extension either based on the URL and / or the mime type provided by the server.
 
 ## Version 0.7.0 beta (2020-06-25)
 
-* New function `hash.calculate_file_hash` which calculates SHA224, SHA256, or SHA256 hashes for files.
+* New function `hash.calculate_file_hash` which calculates SHA224, SHA256, or SHA512 hashes for files.
 * Extended documentation.
 
 ## Version 0.6.0 beta (2020-06-22)
@@ -296,7 +289,7 @@ Bugfixes:
 
 * Improved error handling for date conversion.
 * More tests.
-* Clarify Update and Deprecation Policy
+* Clarify Update and Deprecation Policy.
 
 ## Version 0.5.3 beta (2020-04-18)
 
