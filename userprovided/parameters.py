@@ -61,6 +61,41 @@ def convert_to_set(convert_this: list | set | str | tuple) -> set:
     return new_set
 
 
+def _check_separator_args(sep: str,
+                          allow_quotes: bool,
+                          quote_char: str) -> None:
+    """Validate the separator and quote character of separated_string_to_set.
+
+    Kept out of the parsing loop so that function stays within the complexity
+    limit and the rules are readable in one place.
+
+    Args:
+        sep: The separator character to check.
+        allow_quotes: Whether quoting is enabled. The quote_char rules only
+            apply when it is.
+        quote_char: The quote character to check.
+
+    Raises:
+        ValueError: If sep or quote_char is not a single character, if either
+            is the backslash escape character, or if they are equal.
+    """
+    if not isinstance(sep, str) or len(sep) != 1:
+        raise ValueError("sep must be a single character.")
+    if sep == "\\":
+        # The backslash escapes the following character, so it would consume
+        # every separator and the string would never be split.
+        raise ValueError("sep cannot be the backslash escape character.")
+    if not allow_quotes:
+        return
+    if not isinstance(quote_char, str) or len(quote_char) != 1:
+        raise ValueError("quote_char must be a single character.")
+    if quote_char == "\\":
+        raise ValueError(
+            "quote_char cannot be the backslash escape character.")
+    if quote_char == sep:
+        raise ValueError("quote_char cannot equal sep.")
+
+
 def separated_string_to_set(
     raw_string: str | None,
     sep: str = ",",
@@ -82,8 +117,8 @@ def separated_string_to_set(
 
     Raises:
         ValueError: If sep or quote_char is not a single character,
-            if quote_char equals sep or backslash, or if quotes are
-            unclosed.
+            if sep or quote_char is the backslash, if quote_char equals
+            sep, or if quotes are unclosed.
 
     Note:
         - Separator: `sep` (single character, default ',').
@@ -107,16 +142,7 @@ def separated_string_to_set(
     if raw_string is None:
         return None
 
-    if not isinstance(sep, str) or len(sep) != 1:
-        raise ValueError("sep must be a single character.")
-    if allow_quotes:
-        if not isinstance(quote_char, str) or len(quote_char) != 1:
-            raise ValueError("quote_char must be a single character.")
-        if quote_char == "\\":
-            raise ValueError(
-                "quote_char cannot be the backslash escape character.")
-        if quote_char == sep:
-            raise ValueError("quote_char cannot equal sep.")
+    _check_separator_args(sep, allow_quotes, quote_char)
 
     result: set[str] = set()
     buf: list[str] = []
@@ -479,8 +505,8 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
         TypeError: If bucket_name is not a string.
 
     Note:
-        Applies rules from:
-        https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
+        Applies the general purpose bucket rules from:
+        https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
     """
     if not isinstance(bucket_name, str):
         raise TypeError('Bucket name must be a string.')
@@ -498,8 +524,10 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
     if not _AWS_S3_BUCKET_CHARS.match(bucket_name):
         logging.debug('The AWS bucket name contains invalid characters.')
         return False
-    if _AWS_S3_BUCKET_IPV4.match(bucket_name):
-        # Check if the bucket name resembles an IPv4 address.
+    if _AWS_S3_BUCKET_IPV4.fullmatch(bucket_name):
+        # AWS forbids a name "formatted as an IP address", i.e. the whole name
+        # is one. fullmatch, not match: anchored only at the start it would
+        # also reject '1.2.3.45abc', which is a legal bucket name.
         # No need to check IPv6 as the colon is not an allowed character.
         logging.debug('An AWS bucket name must not resemble an IP address.')
         return False
@@ -595,7 +623,7 @@ def enforce_boolean(parameter_value: bool,
     """
     if type(parameter_value) != bool:  # pylint: disable=unidiomatic-typecheck  # noqa: E721
         parameter_name = parameter_name or 'parameter'
-        raise ValueError(f"Value of {parameter_name} must be boolean," +
+        raise ValueError(f"Value of {parameter_name} must be boolean, " +
                          "i.e True / False (without quotation marks).")
 
 

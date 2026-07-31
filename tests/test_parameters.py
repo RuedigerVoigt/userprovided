@@ -87,6 +87,26 @@ def test_cloud_is_aws_s3_bucket_name(bucket_name, truth_value):
     assert userprovided.parameters.is_aws_s3_bucket_name(bucket_name) is truth_value
 
 
+@pytest.mark.parametrize("bucket_name,truth_value", [
+    # AWS forbids a name "formatted as an IP address (for example,
+    # 192.168.5.4)" -- the whole name, not merely a name starting like one.
+    ('192.168.5.4', False),
+    ('1.2.3.4', False),
+    ('255.255.255.255', False),
+    # Four dotted groups plus anything else is not an IP address format:
+    ('1.2.3.45abc', True),
+    ('1.2.3.4x', True),
+    ('1.2.3.4-backup', True),
+    ('192.168.5.4.5', True),
+    # Fewer than four groups is not an IP address format either:
+    ('1.2.3', True),
+    ('10.0', True),
+])
+def test_is_aws_s3_bucket_name_ip_address_format(bucket_name, truth_value):
+    assert userprovided.parameters.is_aws_s3_bucket_name(
+        bucket_name) is truth_value
+
+
 def test_is_aws_s3_bucket_name_non_string():
     # Non-string input is a caller error and raises TypeError.
     with pytest.raises(TypeError):
@@ -252,6 +272,16 @@ def test_separated_string_to_set_errors():
                        match="quote_char cannot be the backslash"):
         userprovided.parameters.separated_string_to_set(
             'a,b', quote_char='\\')
+
+    # Separator equals backslash: it escapes the next character, so it would
+    # consume every separator and the string would never be split.
+    with pytest.raises(ValueError, match="sep cannot be the backslash"):
+        userprovided.parameters.separated_string_to_set('a\\b\\c', sep='\\')
+
+    # ... and the guard applies with quotes turned off as well:
+    with pytest.raises(ValueError, match="sep cannot be the backslash"):
+        userprovided.parameters.separated_string_to_set(
+            'a\\b', sep='\\', allow_quotes=False)
 
     # Quote char equals separator
     with pytest.raises(ValueError, match="quote_char cannot equal sep"):
@@ -611,6 +641,14 @@ def test_enforce_boolean():
     # valid calls:
     userprovided.parameters.enforce_boolean(True)
     userprovided.parameters.enforce_boolean(False)
+
+
+def test_enforce_boolean_message_is_readable():
+    """The message is built from two concatenated literals - keep the space."""
+    with pytest.raises(ValueError, match=r"must be boolean, i\.e True / False"):
+        userprovided.parameters.enforce_boolean('True')
+    with pytest.raises(ValueError, match=r"Value of example must be boolean"):
+        userprovided.parameters.enforce_boolean(1, 'example')
 
 
 @pytest.mark.parametrize("value,expected", [

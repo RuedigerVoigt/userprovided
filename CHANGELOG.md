@@ -19,6 +19,9 @@
   * `parameters`: added `strict_int` and `strict_numeric`, the strict counterparts to `int_in_range` and `numeric_in_range`.
   * `err`: added `HashMismatch` (subclass of `ValueError`), raised by `calculate_file_hash` when a file fails its hash check. Previously indistinguishable from the `ValueError` an unknown algorithm raises.
 * Bug fixes:
+  * `parameters`: `is_aws_s3_bucket_name` no longer rejects names that merely *start* like an IP address. AWS forbids a name "formatted as an IP address", so `1.2.3.45abc` is legal while `192.168.5.4` stays rejected.
+  * `parameters`: `separated_string_to_set` rejects `sep='\'` instead of silently never splitting. The backslash escapes the next character, so it consumed every separator.
+  * `parameters`: fixed the missing space in the `enforce_boolean` error message (`boolean,i.e`).
   * `hashing`: `calculate_file_hash` no longer raises an unrelated `TypeError` from `hmac.compare_digest` when `expected_hash` contains non-ASCII characters. Such a value cannot match a hexdigest and now counts as a mismatch. A non-string `expected_hash` raises `TypeError` with a clear message.
   * `url`: a trailing root-label dot (`www.example.com.`) no longer collapses a host onto its public suffix. `extract_domain(drop_subdomain=True)` returned `com.` instead of `example.com`, `extract_tld` returned `.` instead of `.com`, and `url_matches_domain` failed to match such a URL. Without `drop_subdomain` the host is still returned exactly as given.
   * `url`: `normalize_url` now collapses any run of slashes in the path, not just pairs. `str.replace` consumes non-overlapping matches, so a single pass turned `///a` into `//a` and left a duplicate behind. Two spellings of the same resource therefore produced two different results (`https://example.com//a` became `.../a`, while `https://example.com///a` became `.../​/a`), which defeats the purpose of a normalized URL used as an identity key.
