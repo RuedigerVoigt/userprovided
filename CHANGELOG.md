@@ -1,6 +1,6 @@
 # Changelog / History
 
-## Version 3.0.0 (2026-07-31)
+## Version 3.0.0 (2026-08-01)
 
 * Breaking changes:
   * `parameters`: `numeric_in_range`, `int_in_range` and `is_port` raise `TypeError` instead of `ValueError` when an argument has the wrong type in order to be consistent with the rest of the package.
