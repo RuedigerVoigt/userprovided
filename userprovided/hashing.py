@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Hash functionality for the userprovided library
 ~~~~~~~~~~~~~~~~~~~~~

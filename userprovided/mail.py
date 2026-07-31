@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Checking Email for the userprovided library
 ~~~~~~~~~~~~~~~~~~~~~

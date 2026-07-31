@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Geographic validation functions of the userprovided library
 ~~~~~~~~~~~~~~~~~~~~~

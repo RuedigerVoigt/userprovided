@@ -8,7 +8,7 @@ Open Source thrives on code contributions so pull requests (PRs) are always welc
 
 Software engineering agents like OpenAI Codex or Claude Code are becoming an important part of modern software development.
 So it is ok if you use artificial intelligence to find bugs or to support you in the development of a new feature.
-As those tools sometimes hallucinate or choose overcomplicated ways to solve an issue, check your pull requests before submitting them.
+As those tools sometimes hallucinate or choose overcomplicated ways to solve an issue, please check your pull requests before submitting them.
 Specific instructions for these agents are found in the [AGENTS.md](AGENTS.md) file.
 
 ## Pull Requests / Code Guidelines

@@ -1,6 +1,6 @@
 # AGENTS.md instructions
 
-This file extends [CONTRIBUTING.md](CONTRIBUTING.md) and applies specifically to software engineering agents (e.g. OpenAI Codex, Claude, ...)
+This file extends [CONTRIBUTING.md](CONTRIBUTING.md) and applies specifically to software engineering agents (e.g. OpenAI Codex, Anthropic Claude, ...)
 Agents must also follow all guidelines in CONTRIBUTING.md, including style, testing, and licensing requirements.
 The sections below add constraints and clarifications that apply to agents only.
 
@@ -43,7 +43,7 @@ The Python package userprovided checks input for validity and plausibility. It a
 ## Dependencies
 
 * The library "userprovided" relies solely on the Python Standard Library (PSL) for runtime dependencies. External dependencies are prohibited in the main library code.
-* External dependencies ARE allowed and encouraged for testing purposes (pytest, hypothesis, ...).
+* External dependencies ARE allowed and encouraged for testing purposes (pytest, ...).
 * Agents must not modify pyproject.toml or any configuration/metadata files unless explicitly instructed in the task.
 
 ## Supported Python versions
@@ -60,7 +60,7 @@ CONTRIBUTING.md covers PEP 8, type hints, naming and docstrings. In addition:
 * Logging levels — the package must not spam the logs of the application using it:
   * `logging.debug` for handled validation failures and other expected, recoverable conditions (the default for nearly everything here). If a traceback is useful, pass `exc_info=True` to `debug` rather than using `logging.exception`.
   * `logging.error` only for caller contradictions that also raise (e.g. mutually exclusive arguments).
-  * Do **not** use `logging.exception` (it logs at ERROR with a traceback and is reserved for genuinely unexpected faults — the library currently uses it nowhere).
+  * Do **not** use `logging.exception`.
   * **Log user-provided values with `%r`, not `%s`** (e.g. `logging.debug('bad value %r', value)`). `repr()` escapes newlines and control characters, preventing log injection / forged log lines from attacker-controlled input. Use lazy `%`-args, never f-strings or string concatenation, so the formatting only happens when the message is emitted.
 
 ## Test driven development

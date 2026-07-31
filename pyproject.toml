@@ -48,18 +48,28 @@ bandit = "*"
 files = ["userprovided"]
 
 [tool.ruff]
-# Match the line length previously enforced via .flake8.
 line-length = 127
 
 [tool.ruff.lint]
-# pycodestyle (E/W), pyflakes (F) and mccabe (C90) — the checks flake8
-# provided, now from a single tool.
-select = ["E", "W", "F", "C90"]
+# pycodestyle (E/W), pyflakes (F), mccabe (C90) and pyupgrade (UP)
+select = ["E", "W", "F", "C90", "UP"]
 
 [tool.ruff.lint.mccabe]
 # Several validators are inherently branchy. This threshold passes today
 # and still flags future regressions; lower it deliberately, not by accident.
 max-complexity = 15
+
+[tool.pytest.ini_options]
+console_output_style = "classic"
+python_files = ["test_*.py"]
+
+[tool.coverage.run]
+branch = true
+cover_pylib = false
+source = ["userprovided"]
+
+[tool.coverage.html]
+title = "Coverage Report for the userprovided Python Package"
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]
