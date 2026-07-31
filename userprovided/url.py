@@ -586,6 +586,11 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
                         (e.g., .co.uk, .com.au); see there for the limits of
                         that hand-maintained subset.
                         IP addresses and localhost are returned as-is.
+                        A trailing root-label dot is removed, because the
+                        registrable domain is a derived identity key and
+                        'example.com.' must not be a second key for
+                        'example.com'. Without drop_subdomain the host is
+                        returned exactly as given, dot included.
 
     Returns:
         Domain string without port. For IP addresses (IPv4/IPv6) and localhost,
@@ -646,6 +651,9 @@ def extract_tld(url: str) -> str:
     as a single unit. For standard TLDs (like .com, .org), returns just the
     single-part TLD.
 
+    A trailing root-label dot is ignored, so the fully qualified
+    'example.com.' reports the same TLD as 'example.com'.
+
     Args:
         url: Full URL string (e.g., 'https://www.example.com/path')
 
@@ -665,6 +673,8 @@ def extract_tld(url: str) -> str:
         '.co.uk'
         >>> extract_tld('https://subdomain.example.com.au/page')
         '.com.au'
+        >>> extract_tld('https://www.example.com.')
+        '.com'
         >>> extract_tld('http://192.168.1.1')
         ''
         >>> extract_tld('http://localhost')
@@ -690,7 +700,14 @@ def extract_tld(url: str) -> str:
         # netloc is deliberately not used as a fallback -- see extract_domain.
         return ''
 
-    domain = domain.lower().strip()
+    # rstrip: a trailing root-label dot ('example.com.') is legal in a fully
+    # qualified name and would otherwise be counted as an empty final label,
+    # making every such host report '.' as its TLD.
+    domain = domain.lower().strip().rstrip('.')
+
+    if not domain:
+        # The host consisted of dots only.
+        return ''
 
     # Check if it's an IP address (IPv4 or IPv6)
     try:
@@ -733,6 +750,7 @@ def _extract_registrable_domain(domain: str, two_part_tlds: set) -> str:
         for IP addresses and localhost.
 
     Algorithm:
+        0. Remove trailing root-label dots so labels can be counted
         1. Check if domain is an IP address (IPv4 or IPv6) - return as-is
         2. Check if domain is localhost or single-word - return as-is
         3. Check for 2-part TLD match (e.g., .co.uk, .com.au)
@@ -745,11 +763,20 @@ def _extract_registrable_domain(domain: str, two_part_tlds: set) -> str:
         'example.com'
         >>> _extract_registrable_domain('deep.sub.example.com.au', TWO_PART_TLDS)
         'example.com.au'
+        >>> _extract_registrable_domain('www.example.com.', TWO_PART_TLDS)
+        'example.com'
         >>> _extract_registrable_domain('192.168.1.1', TWO_PART_TLDS)
         '192.168.1.1'
         >>> _extract_registrable_domain('localhost', TWO_PART_TLDS)
         'localhost'
     """
+    # A trailing root-label dot is legal in a fully qualified name
+    # ('www.example.com.') and produces an empty final label. Counting that
+    # label collapses every such host onto its public suffix
+    # ('www.example.com.' -> 'com.'), which makes unrelated sites share one
+    # registrable domain. Strip the dots before splitting into labels.
+    domain = domain.rstrip('.')
+
     # Check if the domain is an IP address (IPv4 or IPv6)
     try:
         ipaddress.ip_address(domain)

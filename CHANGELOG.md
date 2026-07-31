@@ -18,6 +18,7 @@
 * New features:
   * `parameters`: added `strict_int` and `strict_numeric`, the strict counterparts to `int_in_range` and `numeric_in_range`.
 * Bug fixes:
+  * `url`: a trailing root-label dot (`www.example.com.`) no longer collapses a host onto its public suffix. `extract_domain(drop_subdomain=True)` returned `com.` instead of `example.com`, `extract_tld` returned `.` instead of `.com`, and `url_matches_domain` failed to match such a URL. Without `drop_subdomain` the host is still returned exactly as given.
   * `url`: `normalize_url` now collapses any run of slashes in the path, not just pairs. `str.replace` consumes non-overlapping matches, so a single pass turned `///a` into `//a` and left a duplicate behind. Two spellings of the same resource therefore produced two different results (`https://example.com//a` became `.../a`, while `https://example.com///a` became `.../​/a`), which defeats the purpose of a normalized URL used as an identity key.
   * `url`: `extract_domain` and `extract_tld` no longer fall back to the netloc when no hostname can be determined. The netloc carries the userinfo and the port, so `extract_domain('http://user:pass@')` returned the credentials as if they were a domain. Such input now raises `ValueError` (`extract_domain`) or returns an empty string (`extract_tld`).
   * `url`: `extract_tld` no longer swallows every exception. A URL that cannot be parsed still yields an empty string, but an unexpected error now reaches the caller instead of being reported as "no TLD found".

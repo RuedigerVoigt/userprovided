@@ -594,6 +594,16 @@ userprovided.url.extract_domain('http://localhost:3000', drop_subdomain=True)
 
 Note that `extract_domain` deliberately does *not* canonicalize the host (trailing dots, punycode, IPv6 spellings stay as given), as its output serves as an identity key in existing downstream databases. If you hold a bare hostname and want a canonical form, use `extract_domain_from_host`.
 
+The one exception is `drop_subdomain=True`: there the trailing root-label dot of a fully qualified name is removed, because the registrable domain is a derived key and `example.com.` must not become a second key for `example.com`.
+
+```python
+userprovided.url.extract_domain('https://www.example.com.')
+# => 'www.example.com.' (host returned exactly as given)
+
+userprovided.url.extract_domain('https://www.example.com.', drop_subdomain=True)
+# => 'example.com'
+```
+
 ### Extract Domain from a Hostname
 
 `extract_domain_from_host` is the host-level sibling of `extract_domain` for callers that already hold a bare hostname and would otherwise have to fabricate a URL around it. Unlike `extract_domain`, it normalizes its input via `normalize_hostname` first (trailing dot, punycode, IP canonicalization).

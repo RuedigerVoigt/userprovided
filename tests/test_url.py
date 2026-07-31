@@ -340,6 +340,57 @@ def test_extract_domain_drop_subdomain(test_url, expected_domain):
     assert userprovided.url.extract_domain(test_url, drop_subdomain=True) == expected_domain
 
 
+@pytest.mark.parametrize("test_url,expected_domain", [
+    # A trailing root-label dot marks a fully qualified name. It must not be
+    # counted as an empty label, which would leave only the public suffix.
+    ('https://www.example.com.', 'example.com'),
+    ('https://example.com.', 'example.com'),
+    ('https://deep.sub.example.com.', 'example.com'),
+    ('https://www.example.co.uk.', 'example.co.uk'),
+    ('https://sub.example.com.au./page', 'example.com.au'),
+    # More than one trailing dot:
+    ('https://www.example.com..', 'example.com'),
+    # Single-word hosts stay single-word:
+    ('http://localhost.', 'localhost'),
+])
+def test_extract_domain_drop_subdomain_trailing_dot(test_url, expected_domain):
+    assert userprovided.url.extract_domain(
+        test_url, drop_subdomain=True) == expected_domain
+
+
+def test_extract_domain_trailing_dot_kept_without_drop_subdomain():
+    """Without drop_subdomain the host is returned exactly as given.
+
+    extract_domain deliberately does not canonicalize the host, as its output
+    is an identity key in existing downstream databases. Only the derived
+    registrable domain strips the root-label dot.
+    """
+    assert userprovided.url.extract_domain(
+        'https://www.example.com.') == 'www.example.com.'
+
+
+def test_extract_domain_fqdn_does_not_collide_with_unrelated_host():
+    """Unrelated hosts must not share one registrable domain.
+
+    Previously both collapsed to 'com.', so a caller using the registrable
+    domain as a rate-limiting or grouping key merged unrelated sites as soon
+    as a trailing dot was appended.
+    """
+    first = userprovided.url.extract_domain(
+        'https://evil.example.com.', drop_subdomain=True)
+    second = userprovided.url.extract_domain(
+        'https://bank.other.com.', drop_subdomain=True)
+    assert first != second
+
+
+def test_extract_domain_fqdn_and_plain_name_share_one_key():
+    """The dotted and undotted spellings identify the same site."""
+    assert (userprovided.url.extract_domain(
+                'https://www.example.com.', drop_subdomain=True) ==
+            userprovided.url.extract_domain(
+                'https://www.example.com', drop_subdomain=True))
+
+
 def test_extract_domain_errors():
     # Empty URL
     with pytest.raises(ValueError, match="URL cannot be empty"):
@@ -414,9 +465,21 @@ def test_extract_domain_ipv6_variations():
     # Case insensitivity
     ('https://EXAMPLE.COM', '.com'),
     ('https://Example.CO.UK', '.co.uk'),
+    # Trailing root-label dot: a fully qualified name has the same TLD as
+    # the same name without the dot, not '.'
+    ('https://www.example.com.', '.com'),
+    ('https://example.com.', '.com'),
+    ('https://www.example.co.uk.', '.co.uk'),
+    ('https://sub.example.com.au./page', '.com.au'),
+    ('https://www.example.com..', '.com'),
 ])
 def test_extract_tld_basic(test_url, expected_tld):
     assert userprovided.url.extract_tld(test_url) == expected_tld
+
+
+def test_extract_tld_host_of_dots_only():
+    """A host that is nothing but dots has no TLD to report."""
+    assert userprovided.url.extract_tld('http://.../path') == ''
 
 
 def test_extract_tld_edge_cases():
@@ -466,6 +529,12 @@ def test_extract_tld_whitespace():
     # Case insensitivity:
     ('https://WWW.EXAMPLE.COM', 'example.com', True),
     ('https://example.com', 'EXAMPLE.COM', True),
+    # Fully qualified names (trailing root-label dot) still match:
+    ('https://www.example.com.', 'example.com', True),
+    ('https://example.com.', 'example.com', True),
+    ('https://sub.example.co.uk.', 'example.co.uk', True),
+    # ... and still fail to match an unrelated domain:
+    ('https://evil.com.', 'example.com', False),
     # Domain with whitespace:
     ('https://example.com', '  example.com  ', True),
     # Non-matching domains:
