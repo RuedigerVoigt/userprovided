@@ -30,6 +30,17 @@ class DeprecatedHashAlgorithm(UserprovidedException):
     """
 
 
+class HashMismatch(UserprovidedException, ValueError):
+    """Raised when a file's hash does not match the expected value.
+
+    Signals a failed integrity check: the file is corrupt, was modified, or
+    the expected hash is wrong. Distinct from the plain ``ValueError`` that
+    an unknown or unavailable hash algorithm raises, because the two demand
+    opposite responses -- fix the configuration, versus stop trusting the
+    file. Subclasses ``ValueError`` so existing handlers keep working.
+    """
+
+
 class ContradictoryParameters(UserprovidedException, ValueError):
     """Raised when mutually exclusive parameters or settings are used together.
 

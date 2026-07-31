@@ -122,17 +122,22 @@ def calculate_file_hash(file_path: pathlib.Path | str,
             excluding deprecated algorithms (MD5, SHA1). Defaults to 'sha256'.
         expected_hash: Expected hash value for verification. Compared
             case-insensitively and in constant time, ignoring surrounding
-            whitespace. A mismatch raises ValueError. Only None skips the
+            whitespace. A mismatch raises HashMismatch. Only None skips the
             verification: an empty string is a value that cannot match,
-            not a request to skip the check. Defaults to None.
+            not a request to skip the check. A value containing non-ASCII
+            characters cannot match a hexdigest and counts as a mismatch
+            rather than an error. Defaults to None.
 
     Returns:
         Hexadecimal string representation of the file's hash digest.
 
     Raises:
         DeprecatedHashAlgorithm: If hash_method is MD5 or SHA1.
-        ValueError: If hash method is not supported or calculated hash
-            doesn't match expected_hash.
+        HashMismatch: If the calculated hash does not match expected_hash.
+            Subclasses ValueError, so it is caught by handlers for the plain
+            ValueError this function raised before.
+        ValueError: If the hash method is not supported.
+        TypeError: If expected_hash is neither a string nor None.
         FileNotFoundError: If the specified file doesn't exist.
         PermissionError: If insufficient permissions to read the file.
 
@@ -162,15 +167,21 @@ def calculate_file_hash(file_path: pathlib.Path | str,
     calculated_hash = hash_object.hexdigest()
 
     if expected_hash is not None:
+        if not isinstance(expected_hash, str):
+            raise TypeError('expected_hash must be a string or None.')
         # hexdigest() is lowercase, but hashes are often published uppercase.
-        # compare_digest keeps the comparison constant-time.
-        if not hmac.compare_digest(expected_hash.strip().lower(),
-                                   calculated_hash):
+        normalized = expected_hash.strip().lower()
+        # compare_digest rejects non-ASCII strings with a TypeError. A hexdigest
+        # is ASCII, so such a value simply cannot match -- report that as the
+        # mismatch it is instead of letting hmac raise an unrelated error.
+        # compare_digest keeps the comparison of ASCII values constant-time.
+        if not normalized.isascii() or not hmac.compare_digest(normalized,
+                                                               calculated_hash):
             mismatch_message = ("Mismatch between calculated and expected " +
                                 f"{hash_method} hash for {file_path}")
             logging.debug('Mismatch between calculated and expected '
                           '%r hash for %r', hash_method, file_path)
-            raise ValueError(mismatch_message)
+            raise err.HashMismatch(mismatch_message)
 
     return calculated_hash
 

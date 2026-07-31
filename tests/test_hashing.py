@@ -113,6 +113,56 @@ def test_calculate_file_hash_empty_expected_value():
     assert userprovided.hashing.calculate_file_hash(
         pathlib.Path('tests/testfile'), 'sha512', None) == testfile_sha512
 
+
+def test_calculate_file_hash_mismatch_raises_hash_mismatch():
+    """A failed integrity check is separable from a bad algorithm name.
+
+    Both used to be a bare ValueError, so a caller could not tell 'you typo'd
+    the algorithm' from 'this file does not match its expected hash'.
+    """
+    with pytest.raises(userprovided.err.HashMismatch):
+        userprovided.hashing.calculate_file_hash(
+            pathlib.Path('tests/testfile'), 'sha512', 'foo')
+    # An unknown algorithm is a configuration error, not a mismatch:
+    with pytest.raises(ValueError) as excinfo:
+        userprovided.hashing.calculate_file_hash(
+            pathlib.Path('tests/testfile'), 'not_a_hash_method')
+    assert not isinstance(excinfo.value, userprovided.err.HashMismatch)
+
+
+def test_calculate_file_hash_mismatch_still_caught_as_value_error():
+    """HashMismatch subclasses ValueError, so old handlers keep working."""
+    with pytest.raises(ValueError):
+        userprovided.hashing.calculate_file_hash(
+            pathlib.Path('tests/testfile'), 'sha512', 'foo')
+    with pytest.raises(userprovided.err.UserprovidedException):
+        userprovided.hashing.calculate_file_hash(
+            pathlib.Path('tests/testfile'), 'sha512', 'foo')
+
+
+def test_calculate_file_hash_non_ascii_expected_value():
+    """A non-ASCII expected hash is a mismatch, not an unrelated TypeError.
+
+    hmac.compare_digest refuses non-ASCII input. A hexdigest is ASCII, so such
+    a value simply cannot match and must be reported as a failed check.
+    """
+    with pytest.raises(userprovided.err.HashMismatch):
+        userprovided.hashing.calculate_file_hash(
+            pathlib.Path('tests/testfile'), 'sha512', 'ä' * 128)
+    # A hash with one non-ASCII character swapped in must not slip through:
+    with pytest.raises(userprovided.err.HashMismatch):
+        userprovided.hashing.calculate_file_hash(
+            pathlib.Path('tests/testfile'), 'sha512',
+            testfile_sha512[:-1] + 'ä')
+
+
+def test_calculate_file_hash_expected_value_wrong_type():
+    """A non-string expected_hash is a caller error, not a mismatch."""
+    for wrong_type in (123, 1.5, True, [testfile_sha512], b'abc'):
+        with pytest.raises(TypeError):
+            userprovided.hashing.calculate_file_hash(
+                pathlib.Path('tests/testfile'), 'sha512', wrong_type)
+
 # mock a PermissionError exception
 # see: https://stackoverflow.com/questions/1289894/#answer-34677735
 def test_calculate_file_hash_mocked_permission():

@@ -819,14 +819,27 @@ You can calculate hash sums for files. If you do not provide the method, this de
 userprovided.hashing.calculate_file_hash(pathlib.Path('./foo.txt'))
 ```
 
-If you provide an expected value for the hash you can check for file changes or tampering. In the case the provided value and the calculated hash do *not* match, a ValueError exception is raised.
+If you provide an expected value for the hash you can check for file changes or tampering. In the case the provided value and the calculated hash do *not* match, a `userprovided.err.HashMismatch` exception is raised.
 
 ```python
 userprovided.hashing.calculate_file_hash(
     file_path = pathlib.Path('./foo.txt'),
     hash_method = 'sha512',
     expected_hash = 'not_the_right_value')
-# => raises an exception
+# => raises HashMismatch
+```
+
+The comparison ignores case and surrounding whitespace, and runs in constant time. Only `None` skips the check — an empty string is a value that cannot match, not a request to skip verification.
+
+`HashMismatch` is a subclass of `ValueError`, so existing handlers keep working. Catch it specifically to tell a failed integrity check apart from a configuration error like an unknown algorithm name, which stays a plain `ValueError`:
+
+```python
+try:
+    userprovided.hashing.calculate_file_hash(path, 'sha256', expected)
+except userprovided.err.HashMismatch:
+    print('The file does not match its expected hash - do not trust it.')
+except ValueError:
+    print('The hash method is misconfigured.')
 ```
 
 ### Calculate String Hash
@@ -905,6 +918,7 @@ The `userprovided.err` module defines the exceptions this package raises:
 | `ContradictoryParameters` | `ValueError` | Parameters contradict each other, like dropping query keys while leaving the query part unchanged. |
 | `QueryKeyConflict` | — | A URL query part repeats a key with conflicting values. |
 | `DeprecatedHashAlgorithm` | — | MD5 or SHA1 was requested, even if available on the system. |
+| `HashMismatch` | `ValueError` | A file's hash does not match the expected value. |
 
 Every exception inherits from `UserprovidedException`, so one handler catches
 everything this package raises:
@@ -916,9 +930,9 @@ except userprovided.err.UserprovidedException as e:
     print(f'userprovided rejected the input: {e}')
 ```
 
-`ValidationError` and `ContradictoryParameters` additionally inherit from
-`ValueError`, so existing handlers keep working and you can stay unaware of this
-package's own exception classes:
+`ValidationError`, `ContradictoryParameters` and `HashMismatch` additionally
+inherit from `ValueError`, so existing handlers keep working and you can stay
+unaware of this package's own exception classes:
 
 ```python
 try:
