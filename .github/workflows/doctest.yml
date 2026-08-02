@@ -31,7 +31,14 @@ jobs:
       with:
         python-version: '3.14'
 
-    # doctest is part of the standard library, so nothing to install.
+    # doctest itself is part of the standard library, but importing the
+    # package is not enough: __init__.py reads its own version from the
+    # installed distribution metadata.
+    - name: Install package
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+
     # The glob also covers modules added later.
     - name: Run doctests
       run: python -m doctest userprovided/*.py
