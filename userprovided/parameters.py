@@ -211,6 +211,8 @@ def validate_dict_keys(dict_to_check: dict,
     Raises:
         ValueError: If unknown keys are found, necessary keys are missing,
             or necessary_keys contains keys not in allowed_keys.
+        TypeError: If allowed_keys or necessary_keys is not a set, string,
+            list, or tuple.
         AttributeError: If dict_to_check is not a dictionary.
     """
 

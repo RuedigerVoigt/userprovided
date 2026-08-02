@@ -343,6 +343,11 @@ def test_validate_dict_keys():
         userprovided.parameters.validate_dict_keys(
             {'a', 'b', 'c'},
             {'a', 'b'})
+    # allowed_keys / necessary_keys of a type convert_to_set cannot convert
+    with pytest.raises(TypeError):
+        userprovided.parameters.validate_dict_keys({}, 5)
+    with pytest.raises(TypeError):
+        userprovided.parameters.validate_dict_keys({'a': 1}, {'a'}, 5)
     # unknown key in dictionary, but no necessary keys
     with pytest.raises(ValueError):
         userprovided.parameters.validate_dict_keys(
