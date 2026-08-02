@@ -14,11 +14,8 @@ from userprovided import err
 
 
 # Compiled regex patterns for performance optimization
-_AWS_S3_BUCKET_CHARS = re.compile(r"^[a-z0-9\-\.]*$")
+_AWS_S3_BUCKET_CHARS = re.compile(r"[a-z0-9\-\.]*")
 _AWS_S3_BUCKET_IPV4 = re.compile(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
-_AWS_S3_BUCKET_LABELS = re.compile(
-    r"^([a-z0-9]([a-z0-9\-]*[a-z0-9])?\.)*"
-    r"[a-z0-9]([a-z0-9\-]*[a-z0-9])?$")
 
 # Boolean spellings accepted by parse_boolean (lowercased keys). Mirrors
 # configparser.BOOLEAN_STATES, the de-facto standard for config files,
@@ -521,7 +518,9 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
         logging.debug(
             'The AWS bucket name exceeds the maximum length of 63 characters.')
         return False
-    if not _AWS_S3_BUCKET_CHARS.match(bucket_name):
+    # fullmatch, not match: '$' also matches in front of a trailing newline,
+    # so 'my-bucket\n' would pass an anchored match.
+    if not _AWS_S3_BUCKET_CHARS.fullmatch(bucket_name):
         logging.debug('The AWS bucket name contains invalid characters.')
         return False
     if _AWS_S3_BUCKET_IPV4.fullmatch(bucket_name):
@@ -553,22 +552,14 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
                       ', '.join(forbidden_suffixes))
         return False
 
-    # Check for consecutive dots or invalid dot-hyphen patterns
-    if '..' in bucket_name or '.-' in bucket_name or '-.' in bucket_name:
-        logging.debug('AWS bucket name cannot contain consecutive dots '
-                      'or dot-hyphen patterns.')
+    # Only two adjacent periods are forbidden. A hyphen next to a period
+    # ('my-.bucket') was banned by the legacy US East rules, but is legal
+    # under the current ones, which constrain only the whole name's ends.
+    if '..' in bucket_name:
+        logging.debug('AWS bucket name cannot contain consecutive dots.')
         return False
 
-    # Final validation: Each label (part between dots) must:
-    # - Start with a letter or number
-    # - End with a letter or number
-    # - Can contain hyphens in the middle
-    # - Can be a single character
-    if _AWS_S3_BUCKET_LABELS.match(bucket_name):
-        return True
-
-    logging.debug('Invalid AWS bucket name.')
-    return False
+    return True
 
 
 def clean_trim(value: str | None,

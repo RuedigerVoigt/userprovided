@@ -445,7 +445,7 @@ AWS S3 bucket name requirements enforced:
 - Allowed characters: lowercase letters, numbers, hyphens, and dots
 - Must start and end with a letter or number
 - Cannot resemble an IP address (e.g., 192.168.1.1)
-- Cannot contain consecutive dots (..) or dot-hyphen combinations (.- or -.)
+- Cannot contain consecutive dots (..)
 - Cannot start with reserved prefixes: `xn--`, `sthree-`, `amzn-s3-demo-`
 - Cannot end with reserved suffixes: `-s3alias`, `--ol-s3`, `.mrap`, `--x-s3`, `--table-s3`
 

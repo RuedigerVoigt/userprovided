@@ -8,7 +8,6 @@ Released under the Apache License 2.0
 # ruff: noqa
 
 import math
-from unittest.mock import patch
 
 from hypothesis import given, assume, strategies as st
 import pytest
@@ -42,12 +41,18 @@ import userprovided
     ('abc.', False),
     ('test-bucket.', False),
     ('valid-bucket-', False),
-    # edge cases - consecutive dots and invalid patterns:
+    # edge cases - only consecutive dots are forbidden:
     ('a..b', False),
     ('test..bucket', False),
-    ('a.-b', False),
-    ('-a.b', False),  # label starts with hyphen
-    ('a-.b', False),  # label ends with hyphen
+    # a hyphen next to a dot is legal under the current AWS rules:
+    ('a.-b', True),
+    ('a-.b', True),
+    ('my-.bucket', True),
+    ('my.-bucket', True),
+    ('-a.b', False),  # whole name still cannot start with a hyphen
+    # a trailing newline is not part of any legal name:
+    ('my-bucket\n', False),
+    ('\nmy-bucket', False),
     # single character labels are valid per AWS rules:
     ('a.b', True),
     ('x.y.z', True),
@@ -778,17 +783,6 @@ def test_one_of_error_message():
     assert 'for output_format' in msg
     assert 'in config.ini' in msg
     assert 'must be one of: html, markdown, tex' in msg
-
-
-def test_aws_s3_bucket_label_regex_fallback():
-    """Cover the final regex fallback (parameters.py lines 503-504).
-
-    The preceding checks already reject all inputs that would fail the
-    label regex, making this path effectively unreachable under normal
-    conditions.  We patch the regex to force the fallback path."""
-    with patch('userprovided.parameters._AWS_S3_BUCKET_LABELS') as mock_re:
-        mock_re.match.return_value = None
-        assert userprovided.parameters.is_aws_s3_bucket_name('valid') is False
 
 
 # ############## strict_int / strict_numeric ##############
