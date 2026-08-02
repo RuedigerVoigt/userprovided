@@ -9,7 +9,6 @@ packages = [{include = "userprovided"}]
 keywords = ["validation", "input", "sanitization", "url", "normalize", "hashing", "email", "parameters", "user-input", "type-checking", "finance", "data-cleaning", "no-dependencies"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -33,7 +32,7 @@ Changelog = "https://github.com/RuedigerVoigt/userprovided/blob/master/CHANGELOG
 "Bug Tracker" = "https://github.com/RuedigerVoigt/userprovided/issues"
 
 [tool.poetry.dependencies]
-python = ">=3.10"
+python = ">=3.11"
 
 [tool.poetry.group.dev.dependencies]
 hypothesis = "*"

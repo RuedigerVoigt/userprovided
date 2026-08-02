@@ -31,4 +31,4 @@ Specific instructions for these agents are found in the [AGENTS.md](AGENTS.md) f
 * Docstrings are required for all functions and classes using [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings), with the `Args`, `Returns`, and `Raises` sections filled in where they apply.
 * Naming: `snake_case` for functions and variables, `CapWords` for classes, `UPPER_SNAKE` for constants.
 
-This project supports Python 3.10 to 3.14 and uses [Poetry](https://python-poetry.org/) for packaging and dependency management.
+This project supports Python 3.11 to 3.14 and uses [Poetry](https://python-poetry.org/) for packaging and dependency management.

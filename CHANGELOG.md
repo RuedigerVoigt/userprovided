@@ -3,6 +3,7 @@
 ## Version 3.0.0 (2026-08-01)
 
 * Breaking changes:
+  * Dropped support for Python 3.10, which reaches EOL in October 2026. The minimum version is now 3.11.
   * `parameters`: `numeric_in_range`, `int_in_range` and `is_port` raise `TypeError` instead of `ValueError` when an argument has the wrong type in order to be consistent with the rest of the package.
   * `parameters`: `is_port` now rejects `bool`. `isinstance(True, int)` is `True`, so `is_port(True)` previously returned `True`, treating a flag as port 1.
   * `url`: `extract_domain`, `extract_tld` and `url_matches_domain` raise `TypeError` for non-string arguments.
