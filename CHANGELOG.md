@@ -2,47 +2,49 @@
 
 ## Version 3.0.0 (2026-08-03)
 
+This release makes the checks stricter: a wrong-typed argument now raises `TypeError` throughout the package (`enforce_boolean` is the one documented exception), and validators that quietly accepted bad input no longer do. Several security-relevant functions were hardened as well, and support for Python 3.10 ends.
+
 * Breaking changes:
-  * Dropped support for Python 3.10, which reaches EOL in October 2026. The minimum version is now 3.11.
-  * `parameters`: `numeric_in_range`, `int_in_range` and `is_port` raise `TypeError` instead of `ValueError` when an argument has the wrong type in order to be consistent with the rest of the package.
-  * `parameters`: `is_port` now rejects `bool`. `isinstance(True, int)` is `True`, so `is_port(True)` previously returned `True`, treating a flag as port 1.
+  * Dropped Python 3.10 (EOL October 2026); the minimum is now 3.11.
+  * `parameters`: `numeric_in_range`, `int_in_range` and `is_port` raise `TypeError` instead of `ValueError` for a wrong-typed argument.
   * `url`: `extract_domain`, `extract_tld` and `url_matches_domain` raise `TypeError` for non-string arguments.
-  * `parameters`: `separated_string_to_set` (non-string `sep` or `quote_char`), `keys_neither_none_nor_empty` and `validate_dict_keys` (non-dict) now raise `TypeError` as well. `enforce_boolean` keeps raising `ValueError`, as documented since 1.0.
-  * `parameters`: `string_in_range` rejects length limits that are not integers. A float limit was compared as given (`string_in_range('ab', 1.5, 3)` returned `True`), and string limits raised an unhelpful comparison error.
-  * `hashing`: `hash_available(None)` raises `TypeError` instead of `ValueError`, matching the two hash functions. An empty or whitespace-only name stays a `ValueError`.
+  * `parameters`: `separated_string_to_set` (non-string `sep`/`quote_char`), `keys_neither_none_nor_empty` and `validate_dict_keys` (non-dict) raise `TypeError` too. `enforce_boolean` keeps `ValueError`.
+  * `parameters`: `string_in_range` rejects non-integer length limits. `string_in_range('ab', 1.5, 3)` returned `True`.
+  * `hashing`: `hash_available(None)` raises `TypeError`, like the hash functions; an empty name stays a `ValueError`.
 * Security:
   * Added a [security policy](./SECURITY.md) and enabled private vulnerability reporting.
   * Publishing to PyPI now requires the tests, the coverage gate, and the linters to pass for the released commit.
   * Pinned `poetry` and `twine` to exact versions in the release workflow.
   * Bumped the pinned GitHub Actions to the latest versions.
-  * All modules: user-provided values are now logged with `%r` and lazy `%`-arguments instead of `%s` or a pre-formatted f-string. `repr()` escapes newlines and control characters, so a crafted URL, dictionary key or bucket name can no longer forge additional log lines in the host application's log.
-  * `hashing`: `calculate_file_hash` no longer skips verification when `expected_hash` is an empty string. Only `None` skips the check now, so a config field left blank can no longer turn "verify this file against a known hash" into "return success without verifying".
+  * All modules: user-provided values are logged with `%r` and lazy `%`-arguments, so a crafted value can no longer forge log lines.
+  * `hashing`: `calculate_file_hash` no longer skips verification when `expected_hash` is an empty string — only `None` skips the check.
   * `hashing`: `calculate_file_hash` compares hashes with `hmac.compare_digest` instead of `!=`, so the comparison is constant-time.
   * `ip`: `is_potential_ssrf_target` treats a URL whose host it cannot determine as a target instead of reporting it as safe.
   * `ip`: the host is now read from URLs of any length. Padding a URL past 2048 characters hid the host from all four checks.
-  * `url`: `is_shortened_url` matched against the netloc, which carries the userinfo and the port. `https://bit.ly:443/x` and `https://evil.com@bit.ly/x` were therefore not recognized as shortened URLs, defeating the check that is meant to spot disguised link targets. It now matches on the hostname, like the rest of the module.
+  * `url`: `is_shortened_url` matches the hostname instead of the netloc, which carries userinfo and port — `https://bit.ly:443/x` and `https://evil.com@bit.ly/x` went unrecognized.
 * New features:
   * `parameters`: added `strict_int` and `strict_numeric`, the strict counterparts to `int_in_range` and `numeric_in_range`.
-  * `err`: added `HashMismatch` (subclass of `ValueError`), raised by `calculate_file_hash` when a file fails its hash check. Previously indistinguishable from the `ValueError` an unknown algorithm raises.
+  * `err`: added `HashMismatch` (subclass of `ValueError`), raised when a file fails its hash check. It was indistinguishable from an unknown-algorithm error.
 * Bug fixes:
-  * `parameters`: `is_aws_s3_bucket_name` no longer rejects names that merely *start* like an IP address. AWS forbids a name "formatted as an IP address", so `1.2.3.45abc` is legal while `192.168.5.4` stays rejected.
+  * `parameters`: `is_port` rejects `bool`. `is_port(True)` returned `True`, treating a flag as port 1.
+  * `parameters`: `is_aws_s3_bucket_name` accepts names that merely *start* like an IP address (`1.2.3.45abc`); `192.168.5.4` stays rejected.
   * `parameters`: `is_aws_s3_bucket_name` accepts a hyphen next to a dot (`my-.bucket`) and rejects a trailing newline.
-  * `parameters`: `separated_string_to_set` rejects `sep='\'` instead of silently never splitting. The backslash escapes the next character, so it consumed every separator.
+  * `parameters`: `separated_string_to_set` rejects `sep='\'`, which escaped every separator and so never split.
   * `parameters`: fixed the missing space in the `enforce_boolean` error message (`boolean,i.e`).
-  * `hashing`: `calculate_file_hash` no longer raises an unrelated `TypeError` from `hmac.compare_digest` when `expected_hash` contains non-ASCII characters. Such a value cannot match a hexdigest and now counts as a mismatch. A non-string `expected_hash` raises `TypeError` with a clear message.
-  * `url`: a trailing root-label dot (`www.example.com.`) no longer collapses a host onto its public suffix. `extract_domain(drop_subdomain=True)` returned `com.` instead of `example.com`, `extract_tld` returned `.` instead of `.com`, and `url_matches_domain` failed to match such a URL. Without `drop_subdomain` the host is still returned exactly as given.
-  * `url`: `normalize_url` now collapses any run of slashes in the path, not just pairs. `str.replace` consumes non-overlapping matches, so a single pass turned `///a` into `//a` and left a duplicate behind. Two spellings of the same resource therefore produced two different results (`https://example.com//a` became `.../a`, while `https://example.com///a` became `.../​/a`), which defeats the purpose of a normalized URL used as an identity key.
-  * `url`: `extract_domain` and `extract_tld` no longer fall back to the netloc when no hostname can be determined. The netloc carries the userinfo and the port, so `extract_domain('http://user:pass@')` returned the credentials as if they were a domain. Such input now raises `ValueError` (`extract_domain`) or returns an empty string (`extract_tld`).
-  * `url`: `extract_tld` no longer swallows every exception. A URL that cannot be parsed still yields an empty string, but an unexpected error now reaches the caller instead of being reported as "no TLD found".
+  * `hashing`: a non-ASCII `expected_hash` counts as a mismatch instead of raising an unrelated `TypeError`; a non-string one raises `TypeError` with a clear message.
+  * `url`: a trailing root-label dot (`www.example.com.`) no longer collapses a host onto its public suffix — `extract_domain(drop_subdomain=True)` returned `com.` instead of `example.com`.
+  * `url`: `normalize_url` collapses any run of slashes in the path, not just pairs, so `//a` and `///a` normalize alike. Two spellings of one resource used to yield two different identity keys.
+  * `url`: `extract_domain` and `extract_tld` no longer fall back to the netloc, which returned the credentials in `http://user:pass@` as a domain. Such input now raises `ValueError` or returns an empty string.
+  * `url`: `extract_tld` no longer swallows every exception; an unparseable URL still yields an empty string.
   * `url`: `is_url` no longer raises for URLs that `urllib.parse` cannot parse at all, such as an unclosed IPv6 literal (`http://[::1`). Such URLs are now simply invalid.
-  * `url`: `is_url` now rejects a URL whose port is not a number or lies outside the range 0-65535. `urllib.parse` validates the port only on attribute access, so such a URL — which no client could ever dial — was reported as valid. Everything building on `is_url`, among them `normalize_url` and `is_shortened_url`, rejects those URLs as a result.
+  * `url`: `is_url` rejects a port that is not a number or lies outside 0-65535. Everything building on it, like `normalize_url` and `is_shortened_url`, follows.
   * `url`: `normalize_url` raises its own `Malformed URL` message for an invalid port (`https://example.com:notaport`).
   * `hashing`: `calculate_file_hash` compares `expected_hash` case-insensitively and ignores surrounding whitespace.
   * `date`: `date_exists` rejects `bool` and floats with `TypeError` instead of reading `True` as year 1 and truncating `1.9` to January.
   * `mail`: clarified the documentation of `is_email`, which needs ASCII and accepts an internationalized domain only in its punycode form.
-  * `url` and `hashing`: a wrong-typed argument raised a stdlib `AttributeError` from deep inside `normalize_url`, `determine_file_extension`, `hash_available`, `calculate_string_hash` and `calculate_file_hash`. All five now raise `TypeError` with a clear message.
+  * `url` and `hashing`: `normalize_url`, `determine_file_extension`, `hash_available`, `calculate_string_hash` and `calculate_file_hash` raise `TypeError` instead of leaking an `AttributeError`.
 * CI
-  * The release workflow now verifies that the git tag matches the version in `pyproject.toml` before building, instead of failing at the upload step or publishing a mismatched version silently.
+  * The release workflow verifies that the git tag matches the version in `pyproject.toml` before building.
   * Added a doctest workflow, which also gates the release, and a test that checks the README for names the package no longer has.
 
 
