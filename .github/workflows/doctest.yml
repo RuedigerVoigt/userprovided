@@ -1,0 +1,37 @@
+# This workflow checks that the examples in the docstrings still hold.
+
+name: Doctest
+
+on:
+  # Only the long-lived branches: topic and dependabot branches live in this
+  # repository, so a push there would run this twice -- once for the push and
+  # once for the pull request.
+  push:
+    branches: [master, develop]
+  pull_request:
+  # Called by the release workflow, which gates publishing on this check.
+  workflow_call:
+
+# Superseded commits do not need to finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  doctest:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+    - name: Set up Python
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version: '3.14'
+
+    # doctest is part of the standard library, so nothing to install.
+    # The glob also covers modules added later.
+    - name: Run doctests
+      run: python -m doctest userprovided/*.py

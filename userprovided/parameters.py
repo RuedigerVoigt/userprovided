@@ -129,12 +129,15 @@ def separated_string_to_set(
         - Empty fields are dropped after trimming.
 
     Examples:
-        >>> separated_string_to_set("a, b, c")
-        {'a', 'b', 'c'}
-        >>> separated_string_to_set('"hello, world", foo')
-        {'hello, world', 'foo'}
-        >>> separated_string_to_set("a\\,b,c", sep=",")
-        {'a,b', 'c'}
+        The result is a set, whose repr order varies between runs, so the
+        examples compare instead of printing.
+
+        >>> separated_string_to_set("a, b, c") == {'a', 'b', 'c'}
+        True
+        >>> separated_string_to_set('"hello, world", foo') == {'hello, world', 'foo'}
+        True
+        >>> separated_string_to_set("a\\,b,c", sep=",") == {'a,b', 'c'}
+        True
     """
     if raw_string is None:
         return None

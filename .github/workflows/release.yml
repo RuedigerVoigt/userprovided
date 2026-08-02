@@ -19,11 +19,13 @@ jobs:
     uses: ./.github/workflows/mypy.yml
   bandit:
     uses: ./.github/workflows/bandit.yml
+  doctest:
+    uses: ./.github/workflows/doctest.yml
 
   pypi-publish:
     name: upload release to PyPI
     runs-on: ubuntu-latest
-    needs: [tests, coverage, ruff, mypy, bandit]
+    needs: [tests, coverage, ruff, mypy, bandit, doctest]
     if: github.event.release.target_commitish == 'master'
     # Specifying a GitHub environment is optional, but strongly encouraged
     environment: pypi

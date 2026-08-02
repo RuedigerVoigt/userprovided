@@ -38,6 +38,7 @@
   * `date`: `date_exists` rejects `bool` and floats with `TypeError` instead of reading `True` as year 1 and truncating `1.9` to January.
 * CI
   * The release workflow now verifies that the git tag matches the version in `pyproject.toml` before building, instead of failing at the upload step or publishing a mismatched version silently.
+  * Added a doctest workflow, which also gates the release, and a test that checks the README for names the package no longer has.
 
 
 ## Version 2.6.0 (2026-07-11)
