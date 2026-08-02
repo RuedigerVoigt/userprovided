@@ -18,7 +18,7 @@ _EMAIL_PATTERN = re.compile(
     r"@"  # @
     r"[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?"  # Domain label
     r"(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*"  # More domain labels
-    # TLD: min 2 chars; alphanumeric + hyphen for IDN
+    # TLD: min 2 chars; alphanumeric + hyphen for punycode IDNs (xn--...)
     r"\.(?:[a-zA-Z0-9]{2,}|[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9])$"
 )
 
@@ -27,7 +27,13 @@ def is_email(mailaddress: str) -> bool:
     """Validates if a string has a valid email address format.
 
     Performs basic regex-based validation to check if the provided string
-    follows a valid email address pattern. Supports internationalized domains.
+    follows a valid email address pattern.
+
+    The whole address must be ASCII. An internationalized domain is
+    therefore accepted in its punycode form (``a@xn--bung-zra.de``) but not
+    in its Unicode spelling (``a@übung.de``); ``url.normalize_hostname``
+    converts the one into the other. Internationalized local parts
+    (RFC 6531 / SMTPUTF8) are rejected.
 
     Args:
         mailaddress: The email address string to validate.

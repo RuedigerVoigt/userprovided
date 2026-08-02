@@ -799,7 +799,12 @@ userprovided.mail.is_email('example+test@example.com')
 
 userprovided.mail.is_email('invalid.email')
 # => False
+
+userprovided.mail.is_email('a@xn--bung-zra.de')
+# => True
 ```
+
+The address has to be ASCII. An internationalized domain is accepted in its punycode form only, as shown above — the Unicode spelling of the same domain (`a@übung.de`) is rejected. Use [`normalize_hostname`](#normalize-hostnames) to convert one into the other. Internationalized local parts (RFC 6531 / SMTPUTF8, e.g. `müller@example.com`) are rejected as well.
 
 
 ## Hashes

@@ -34,10 +34,16 @@ import userprovided
     ('user_name@example.com', True),
     ('user-name@example.com', True),
     ('first.last@example.com', True),
-    # internationalized domain names (IDN):
+    # internationalized domain names, punycode form only:
     ('test@xn--90ae.com', True),
     ('user@example.xn--node', True),
     ('0@a.xn--90ae', True),
+    ('a@xn--bung-zra.de', True),
+    # the same domain spelled in Unicode is not accepted:
+    ('a@übung.de', False),
+    ('a@example.みんな', False),
+    # nor is an internationalized local part (RFC 6531):
+    ('müller@example.com', False),
     # invalid addresses - consecutive dots in local part:
     ('test..name@example.com', False),
     ('user...name@example.com', False),
