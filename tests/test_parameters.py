@@ -252,6 +252,19 @@ def test_separated_string_to_set_custom_quote():
         '|a,b|,c', sep=',', quote_char='|') == {'a,b', 'c'}
 
 
+def test_separated_string_to_set_wrong_type():
+    # A wrong type is the caller's bug, not a wrong value, so TypeError.
+    with pytest.raises(TypeError, match="sep must be a string"):
+        userprovided.parameters.separated_string_to_set('a,b', sep=5)
+    with pytest.raises(TypeError, match="sep must be a string"):
+        userprovided.parameters.separated_string_to_set('a,b', sep=None)
+    with pytest.raises(TypeError, match="quote_char must be a string"):
+        userprovided.parameters.separated_string_to_set('a,b', quote_char=5)
+    # quote_char is only checked when quoting is enabled:
+    assert userprovided.parameters.separated_string_to_set(
+        'a,b', quote_char=5, allow_quotes=False) == {'a', 'b'}
+
+
 def test_separated_string_to_set_errors():
     # Multi-character separator
     with pytest.raises(ValueError, match="sep must be a single character"):
@@ -339,7 +352,7 @@ def test_separated_string_to_set_parametrized(input_str, expected):
 
 def test_validate_dict_keys():
     # not a dictionary
-    with pytest.raises(AttributeError):
+    with pytest.raises(TypeError):
         userprovided.parameters.validate_dict_keys(
             {'a', 'b', 'c'},
             {'a', 'b'})
@@ -401,10 +414,10 @@ def test_keys_neither_none_nor_empty(
     assert userprovided.parameters.keys_neither_none_nor_empty(dict_to_check) is truth_value
 
 def test_keys_neither_none_nor_empty_false_input():
-    # not a dictionary
-    with pytest.raises(ValueError):
+    # not a dictionary: a wrong type, so TypeError
+    with pytest.raises(TypeError):
         userprovided.parameters.keys_neither_none_nor_empty('foo')
-    # empty dictionary
+    # empty dictionary: a dict, but not a usable one, so ValueError
     with pytest.raises(ValueError):
         userprovided.parameters.keys_neither_none_nor_empty(dict())
 

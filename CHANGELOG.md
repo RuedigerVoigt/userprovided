@@ -7,6 +7,7 @@
   * `parameters`: `numeric_in_range`, `int_in_range` and `is_port` raise `TypeError` instead of `ValueError` when an argument has the wrong type in order to be consistent with the rest of the package.
   * `parameters`: `is_port` now rejects `bool`. `isinstance(True, int)` is `True`, so `is_port(True)` previously returned `True`, treating a flag as port 1.
   * `url`: `extract_domain`, `extract_tld` and `url_matches_domain` raise `TypeError` for non-string arguments.
+  * `parameters`: `separated_string_to_set` (non-string `sep` or `quote_char`), `keys_neither_none_nor_empty` and `validate_dict_keys` (non-dict) now raise `TypeError` as well. `enforce_boolean` keeps raising `ValueError`, as documented since 1.0.
 * Security:
   * Added a [security policy](./SECURITY.md) and enabled private vulnerability reporting.
   * Publishing to PyPI now requires the tests, the coverage gate, and the linters to pass for the released commit.

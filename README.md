@@ -140,7 +140,8 @@ could plausibly have typed is a value problem: the strict validators raise
 `ValidationError` (a subclass of `ValueError`), the tolerant ones fall back.
 A wrong type — `None`, a list, a `bool` — always raises `TypeError`, in both
 families, because that is a bug in the calling code rather than something an
-end user can fix.
+end user can fix. The single exception is [`enforce_boolean`](#enforce-boolean-type),
+which has raised `ValueError` for a non-bool since 1.0 and keeps doing so.
 
 ### Check a Parameter Dictionary
 
@@ -221,6 +222,7 @@ userprovided.parameters.separated_string_to_set(None)
 - `quote_char`: Quote character (default: `'"'`)
 
 **Raises:**
+- `TypeError`: If separator/quote_char is not a string
 - `ValueError`: If separator/quote_char is not a single character, if quote_char equals separator, or if quotes are unclosed
 
 ### Check Range of Numbers and Strings

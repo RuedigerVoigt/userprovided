@@ -73,10 +73,13 @@ def _check_separator_args(sep: str,
         quote_char: The quote character to check.
 
     Raises:
+        TypeError: If sep or quote_char is not a string.
         ValueError: If sep or quote_char is not a single character, if either
             is the backslash escape character, or if they are equal.
     """
-    if not isinstance(sep, str) or len(sep) != 1:
+    if not isinstance(sep, str):
+        raise TypeError("sep must be a string.")
+    if len(sep) != 1:
         raise ValueError("sep must be a single character.")
     if sep == "\\":
         # The backslash escapes the following character, so it would consume
@@ -84,7 +87,9 @@ def _check_separator_args(sep: str,
         raise ValueError("sep cannot be the backslash escape character.")
     if not allow_quotes:
         return
-    if not isinstance(quote_char, str) or len(quote_char) != 1:
+    if not isinstance(quote_char, str):
+        raise TypeError("quote_char must be a string.")
+    if len(quote_char) != 1:
         raise ValueError("quote_char must be a single character.")
     if quote_char == "\\":
         raise ValueError(
@@ -113,6 +118,7 @@ def separated_string_to_set(
         Order not preserved, duplicates collapsed.
 
     Raises:
+        TypeError: If sep or quote_char is not a string.
         ValueError: If sep or quote_char is not a single character,
             if sep or quote_char is the backslash, if quote_char equals
             sep, or if quotes are unclosed.
@@ -214,9 +220,8 @@ def validate_dict_keys(dict_to_check: dict,
     Raises:
         ValueError: If unknown keys are found, necessary keys are missing,
             or necessary_keys contains keys not in allowed_keys.
-        TypeError: If allowed_keys or necessary_keys is not a set, string,
-            list, or tuple.
-        AttributeError: If dict_to_check is not a dictionary.
+        TypeError: If dict_to_check is not a dictionary, or if allowed_keys
+            or necessary_keys is not a set, string, list, or tuple.
     """
 
     if not dict_name:
@@ -240,8 +245,8 @@ def validate_dict_keys(dict_to_check: dict,
     try:
         found_keys = dict_to_check.keys()
     except AttributeError as no_dict:
-        raise AttributeError('Expected a dictionary for the dict_to_check ' +
-                             'parameter!') from no_dict
+        raise TypeError('Expected a dictionary for the dict_to_check '
+                        'parameter!') from no_dict
 
     # Check for unknown keys:
     for key in found_keys:
@@ -280,11 +285,12 @@ def keys_neither_none_nor_empty(dict_to_check: dict) -> bool:
         True if all values are non-None and non-empty, False otherwise.
 
     Raises:
-        ValueError: If dict_to_check is not a dictionary or is completely empty.
+        TypeError: If dict_to_check is not a dictionary.
+        ValueError: If dict_to_check is completely empty.
     """
 
     if not isinstance(dict_to_check, dict):
-        raise ValueError('This is not a dictionary')
+        raise TypeError('This is not a dictionary')
     if len(dict_to_check) == 0:
         raise ValueError('This dictionary is empty')
 
@@ -618,6 +624,9 @@ def enforce_boolean(parameter_value: bool,
         ValueError: If parameter_value is not of type bool.
     """
     if type(parameter_value) != bool:  # pylint: disable=unidiomatic-typecheck  # noqa: E721
+        # ValueError, not the TypeError the rest of the package raises for a
+        # wrong type: this function has promised ValueError since 1.0 and its
+        # README example shows it. Deliberate carve-out, see AGENTS.md.
         parameter_name = parameter_name or 'parameter'
         raise ValueError(f"Value of {parameter_name} must be boolean, " +
                          "i.e True / False (without quotation marks).")
