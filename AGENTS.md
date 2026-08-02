@@ -35,8 +35,7 @@ The Python package userprovided checks input for validity and plausibility. It a
   * CHANGELOG.md        # list the changes in any new version
   * CONTRIBUTING.md     # a guide on how to contribute to this project
   * LICENSE             # text of the License
-  * pyproject.toml      # project metadata and dependencies managed by Poetry
-  * pytest.ini          # instructions for pytest
+  * pyproject.toml      # project metadata, dependencies, and the pytest, ruff, mypy and coverage settings
   * README.md           # the homepage of the project and also the documentation
   * SECURITY.md         # how to report a vulnerability privately
 

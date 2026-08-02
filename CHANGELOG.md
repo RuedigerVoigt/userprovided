@@ -1,6 +1,6 @@
 # Changelog / History
 
-## Version 3.0.0 (2026-08-01)
+## Version 3.0.0 (2026-08-02)
 
 * Breaking changes:
   * Dropped support for Python 3.10, which reaches EOL in October 2026. The minimum version is now 3.11.
