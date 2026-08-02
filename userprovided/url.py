@@ -83,8 +83,8 @@ def _host_from_url(url: str) -> str | None:
     """
     if not isinstance(url, str):
         raise TypeError('URL must be a string.')
-    if len(url) > _MAX_URL_LENGTH:
-        return None
+    # Deliberately no length limit: the SSRF guard in ip.py builds on this,
+    # and padding the query string must not hide the host from it.
     try:
         host = urllib.parse.urlparse(url.strip()).hostname
         return host.lower() if host else None

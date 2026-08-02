@@ -129,9 +129,11 @@ def test_ip_is_potential_ssrf_target():
     assert userprovided.ip.is_potential_ssrf_target('https://example.com/') is False
     assert userprovided.ip.is_potential_ssrf_target('http://8.8.8.8/') is False
     assert userprovided.ip.is_potential_ssrf_target('https://www.example.co.uk/') is False
-    # Malformed
-    assert userprovided.ip.is_potential_ssrf_target('not-a-url') is False
-    assert userprovided.ip.is_potential_ssrf_target('') is False
+    # No host to check: the guard refuses rather than authorizing a fetch.
+    assert userprovided.ip.is_potential_ssrf_target('not-a-url') is True
+    assert userprovided.ip.is_potential_ssrf_target('') is True
+    # Unclosed IPv6 literal, which urllib cannot parse at all
+    assert userprovided.ip.is_potential_ssrf_target('http://[::1') is True
     # Alternate IP encodings that bypass naive ipaddress.ip_address() checks:
     # Decimal integer encoding of 127.0.0.1
     assert userprovided.ip.is_potential_ssrf_target('http://2130706433/') is True
@@ -145,3 +147,20 @@ def test_ip_is_potential_ssrf_target():
     assert userprovided.ip.is_potential_ssrf_target('http://2852039166/') is True
     # A large integer that is not a valid IP address
     assert userprovided.ip.is_potential_ssrf_target('http://99999999999999/') is False
+
+
+def test_ip_long_url_does_not_hide_the_host():
+    # An attacker controls the whole URL, so a length limit must not turn
+    # a padded URL into "no host found" and therefore "safe".
+    padding = 'a' * 4096
+    metadata = f'http://169.254.169.254/latest/meta-data/?p={padding}'
+    assert userprovided.ip.is_potential_ssrf_target(metadata) is True
+    assert userprovided.ip.is_link_local(metadata) is True
+    loopback = f'http://127.0.0.1/?x={padding}'
+    assert userprovided.ip.is_potential_ssrf_target(loopback) is True
+    assert userprovided.ip.is_loopback(loopback) is True
+    private = f'http://192.168.1.1/?x={padding}'
+    assert userprovided.ip.is_private(private) is True
+    # A long URL to a public host stays safe.
+    assert userprovided.ip.is_potential_ssrf_target(
+        f'https://example.com/?x={padding}') is False

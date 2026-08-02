@@ -15,6 +15,8 @@
   * All modules: user-provided values are now logged with `%r` and lazy `%`-arguments instead of `%s` or a pre-formatted f-string. `repr()` escapes newlines and control characters, so a crafted URL, dictionary key or bucket name can no longer forge additional log lines in the host application's log.
   * `hashing`: `calculate_file_hash` no longer skips verification when `expected_hash` is an empty string. Only `None` skips the check now, so a config field left blank can no longer turn "verify this file against a known hash" into "return success without verifying".
   * `hashing`: `calculate_file_hash` compares hashes with `hmac.compare_digest` instead of `!=`, so the comparison is constant-time.
+  * `ip`: `is_potential_ssrf_target` treats a URL whose host it cannot determine as a target instead of reporting it as safe.
+  * `ip`: the host is now read from URLs of any length. Padding a URL past 2048 characters hid the host from all four checks.
   * `url`: `is_shortened_url` matched against the netloc, which carries the userinfo and the port. `https://bit.ly:443/x` and `https://evil.com@bit.ly/x` were therefore not recognized as shortened URLs, defeating the check that is meant to spot disguised link targets. It now matches on the hostname, like the rest of the module.
 * New features:
   * `parameters`: added `strict_int` and `strict_numeric`, the strict counterparts to `int_in_range` and `numeric_in_range`.

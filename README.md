@@ -746,7 +746,13 @@ Combines `is_loopback`, `is_private`, and `is_link_local`. Use this as a preflig
 userprovided.ip.is_potential_ssrf_target('http://169.254.169.254/') # => True
 userprovided.ip.is_potential_ssrf_target('http://192.168.1.1/')     # => True
 userprovided.ip.is_potential_ssrf_target('https://example.com/')    # => False
+
+userprovided.ip.is_potential_ssrf_target('http://[::1')             # => True
+# => a URL with no determinable host is reported as a target, so a
+#    malformed URL is refused instead of fetched
 ```
+
+Unlike `is_loopback`, `is_private` and `is_link_local`, which describe a host and return `False` for a URL without one, this function is a guard: it answers `True` whenever it cannot determine the host.
 
 ## Finance
 

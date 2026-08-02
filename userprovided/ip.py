@@ -162,6 +162,9 @@ def is_potential_ssrf_target(url: str) -> bool:
     not IP addresses (other than ``localhost`` and ``.local``) are not
     flagged even if they might resolve to a private address.
 
+    A URL whose host cannot be determined — because it is malformed, or
+    carries no host at all — is reported as a potential target.
+
     Args:
         url: The URL to check.
 
@@ -172,16 +175,23 @@ def is_potential_ssrf_target(url: str) -> bool:
     Raises:
         TypeError: If url is not a string.
     """
+    host = _host_from_url(url)
+    if host is None:
+        # Unlike the predicates above, this is a guard: callers fetch the URL
+        # when it answers False. "I cannot tell" must therefore not be
+        # answered with "safe".
+        logging.debug('No host to check, treating as potential SSRF target: %r',
+                      url)
+        return True
+
     if is_loopback(url) or is_private(url) or is_link_local(url):
         logging.debug('Potential SSRF target detected: %r', url)
         return True
 
     # RFC 6598 carrier-grade NAT is not covered by is_private above.
-    host = _host_from_url(url)
-    if host is not None:
-        ip = _parse_ip(host)
-        if ip is not None and ip in _CGNAT_NETWORK:
-            logging.debug('Potential SSRF target detected (CGNAT): %r', url)
-            return True
+    ip = _parse_ip(host)
+    if ip is not None and ip in _CGNAT_NETWORK:
+        logging.debug('Potential SSRF target detected (CGNAT): %r', url)
+        return True
 
     return False
