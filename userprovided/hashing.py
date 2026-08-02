@@ -45,12 +45,17 @@ def hash_available(hash_method: str,
         True if the hash method is available and allowed, False otherwise.
 
     Raises:
-        ValueError: If no hash method is provided or empty string given.
+        TypeError: If hash_method is not a string. ``None`` counts as a
+            wrong type here, as it does for the two hash functions.
+        ValueError: If an empty or whitespace-only string is given.
         DeprecatedHashAlgorithm: If hash_method is deprecated and
             fail_on_deprecated is True.
     """
 
-    if not hash_method or not hash_method.strip():
+    if not isinstance(hash_method, str):
+        raise TypeError('hash_method must be a string.')
+
+    if not hash_method.strip():
         raise ValueError('No hash method provided')
     hash_method = hash_method.strip()
 
@@ -82,10 +87,16 @@ def _new_hash(hash_method: str) -> 'hashlib._Hash':
         A new hashlib hash object for the requested algorithm.
 
     Raises:
+        TypeError: If hash_method is not a string.
         DeprecatedHashAlgorithm: If hash_method is deprecated, or resolves
             to a deprecated algorithm.
         ValueError: If the hash method is not available or not supported.
     """
+    # Checked here rather than in each caller: this helper is the one gate
+    # both public hash functions pass through.
+    if not isinstance(hash_method, str):
+        raise TypeError('hash_method must be a string.')
+
     if _hash_is_deprecated(hash_method):
         raise err.DeprecatedHashAlgorithm(
             'Deprecated hash method not supported')
@@ -137,7 +148,8 @@ def calculate_file_hash(file_path: pathlib.Path | str,
             Subclasses ValueError, so it is caught by handlers for the plain
             ValueError this function raised before.
         ValueError: If the hash method is not supported.
-        TypeError: If expected_hash is neither a string nor None.
+        TypeError: If hash_method is not a string, or if expected_hash is
+            neither a string nor None.
         FileNotFoundError: If the specified file doesn't exist.
         PermissionError: If insufficient permissions to read the file.
 
@@ -213,7 +225,7 @@ def calculate_string_hash(data: str,
     Raises:
         DeprecatedHashAlgorithm: If hash_method is MD5 or SHA1.
         ValueError: If hash method is not supported or data is empty.
-        TypeError: If data is not a string.
+        TypeError: If data or hash_method is not a string.
         UnicodeEncodeError: If data cannot be encoded with specified encoding.
     """
     if not isinstance(data, str):

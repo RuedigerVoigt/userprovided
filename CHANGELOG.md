@@ -8,6 +8,8 @@
   * `parameters`: `is_port` now rejects `bool`. `isinstance(True, int)` is `True`, so `is_port(True)` previously returned `True`, treating a flag as port 1.
   * `url`: `extract_domain`, `extract_tld` and `url_matches_domain` raise `TypeError` for non-string arguments.
   * `parameters`: `separated_string_to_set` (non-string `sep` or `quote_char`), `keys_neither_none_nor_empty` and `validate_dict_keys` (non-dict) now raise `TypeError` as well. `enforce_boolean` keeps raising `ValueError`, as documented since 1.0.
+  * `parameters`: `string_in_range` rejects length limits that are not integers. A float limit was compared as given (`string_in_range('ab', 1.5, 3)` returned `True`), and string limits raised an unhelpful comparison error.
+  * `hashing`: `hash_available(None)` raises `TypeError` instead of `ValueError`, matching the two hash functions. An empty or whitespace-only name stays a `ValueError`.
 * Security:
   * Added a [security policy](./SECURITY.md) and enabled private vulnerability reporting.
   * Publishing to PyPI now requires the tests, the coverage gate, and the linters to pass for the released commit.
@@ -38,6 +40,7 @@
   * `hashing`: `calculate_file_hash` compares `expected_hash` case-insensitively and ignores surrounding whitespace.
   * `date`: `date_exists` rejects `bool` and floats with `TypeError` instead of reading `True` as year 1 and truncating `1.9` to January.
   * `mail`: clarified the documentation of `is_email`, which needs ASCII and accepts an internationalized domain only in its punycode form.
+  * `url` and `hashing`: a wrong-typed argument raised a stdlib `AttributeError` from deep inside `normalize_url`, `determine_file_extension`, `hash_available`, `calculate_string_hash` and `calculate_file_hash`. All five now raise `TypeError` with a clear message.
 * CI
   * The release workflow now verifies that the git tag matches the version in `pyproject.toml` before building, instead of failing at the upload step or publishing a mismatched version silently.
   * Added a doctest workflow, which also gates the release, and a test that checks the README for names the package no longer has.

@@ -242,10 +242,14 @@ def normalize_url(url: str,
         Normalized URL string with consistent formatting.
 
     Raises:
+        TypeError: If url is not a string.
         ValueError: If the URL is malformed.
         ContradictoryParameters: If both drop_keys and do_not_change_query_part
             are specified.
     """
+    if not isinstance(url, str):
+        raise TypeError('URL must be a string.')
+
     url = url.strip()
 
     if not is_url(url):
@@ -440,7 +444,17 @@ def determine_file_extension(url: str,
     Returns:
         File extension with leading dot (e.g., '.pdf', '.html') or
         '.unknown' if extension cannot be determined.
+
+    Raises:
+        TypeError: If url is not a string, or if provided_mime_type is
+            neither a string nor None.
     """
+    if not isinstance(url, str):
+        raise TypeError('URL must be a string.')
+    if provided_mime_type is not None and not isinstance(provided_mime_type,
+                                                         str):
+        raise TypeError('provided_mime_type must be a string or None.')
+
     if provided_mime_type:
         provided_mime_type = provided_mime_type.strip()
     if provided_mime_type == '':

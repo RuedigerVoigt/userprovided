@@ -680,6 +680,18 @@ def test_url_functions_reject_non_string():
                 'https://example.com', wrong_type)
         with pytest.raises(TypeError):
             userprovided.url.url_matches_domain(wrong_type, 'example.com')
+        with pytest.raises(TypeError):
+            userprovided.url.normalize_url(wrong_type)
+        with pytest.raises(TypeError):
+            userprovided.url.determine_file_extension(wrong_type)
+        # determine_file_extension checks the mime type as well, but None
+        # is its documented "no mime type given" value:
+        if wrong_type is not None:
+            with pytest.raises(TypeError):
+                userprovided.url.determine_file_extension(
+                    'https://example.com/file.pdf', wrong_type)
+    assert userprovided.url.determine_file_extension(
+        'https://example.com/file.pdf', None) == '.pdf'
 
 
 def test_is_url_malformed_does_not_raise():

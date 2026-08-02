@@ -585,6 +585,21 @@ def test_int_in_range():
         userprovided.parameters.int_in_range('foo', math.nan, 1, 100, 50)
 
 
+@pytest.mark.parametrize("minimum,maximum", [
+    # a length limit is a count of characters, so only int will do:
+    ('a', 'z'),
+    (1.5, 3),
+    (1, 3.0),
+    (None, 3),
+    # bool is a subclass of int, but True is not a length:
+    (True, 3),
+    (1, False),
+])
+def test_string_in_range_limits_must_be_integers(minimum, maximum):
+    with pytest.raises(TypeError, match="Length limits must be integers"):
+        userprovided.parameters.string_in_range('ab', minimum, maximum)
+
+
 def test_string_in_range():
     # string within range
     assert userprovided.parameters.string_in_range('foo', 1, 5) is True

@@ -473,13 +473,20 @@ def string_in_range(string_to_check: str,
         True if string length is within range, False otherwise.
 
     Raises:
-        TypeError: If string_to_check is not a string.
+        TypeError: If string_to_check is not a string, or if a length limit
+            is not an integer.
         ContradictoryParameters: If minimum_length > maximum_length.
         ValueError: If strip_string is not a boolean.
     """
 
     if not isinstance(string_to_check, str):
         raise TypeError('string_to_check must be a string.')
+
+    for limit in (minimum_length, maximum_length):
+        # A length is a count of characters: a float would compare as a
+        # silently different limit, and bool is a subclass of int.
+        if type(limit) != int:  # pylint: disable=unidiomatic-typecheck  # noqa: E721
+            raise TypeError('Length limits must be integers.')
 
     if minimum_length > maximum_length:
         raise err.ContradictoryParameters(

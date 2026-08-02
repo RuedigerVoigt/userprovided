@@ -24,7 +24,7 @@ def test_hash_available():
     with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
         userprovided.hashing.hash_available('md5-sha1', True)
     # Invalid input
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         userprovided.hashing.hash_available(None, True)
     with pytest.raises(ValueError):
         userprovided.hashing.hash_available('  ', True)
@@ -320,3 +320,18 @@ def test_hash_is_deprecated():
     assert userprovided.hashing._hash_is_deprecated('sha512') is False
     assert userprovided.hashing._hash_is_deprecated('sha3_256') is False
     assert userprovided.hashing._hash_is_deprecated('blake2b') is False
+
+
+def test_hashing_rejects_non_string_hash_method():
+    # A wrong type is a caller error: these used to leak an AttributeError
+    # from .strip() or .lower() instead of raising TypeError.
+    for wrong_type in (5, None, ['sha256']):
+        with pytest.raises(TypeError):
+            userprovided.hashing.calculate_string_hash('data', wrong_type)
+        with pytest.raises(TypeError):
+            userprovided.hashing.calculate_file_hash(__file__, wrong_type)
+        with pytest.raises(TypeError):
+            userprovided.hashing.hash_available(wrong_type)
+    # An empty or whitespace-only name stays a value problem:
+    with pytest.raises(ValueError):
+        userprovided.hashing.hash_available('   ')
