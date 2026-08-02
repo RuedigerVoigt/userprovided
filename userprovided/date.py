@@ -39,9 +39,17 @@ def date_exists(year: int | str,
         that does not represent an integer (e.g. ``'abc'``) yields False.
 
     Raises:
-        TypeError: If a part is of a type ``int()`` cannot convert
-            (e.g. ``None`` or a list).
+        TypeError: If a part is neither an integer nor a string
+            (e.g. ``None``, ``1.9``, or ``True``).
     """
+    for part in (year, month, day):
+        # bool is a subclass of int, but True is not January 1st. A float
+        # would be truncated by int(), silently turning 1.9 into January.
+        if isinstance(part, bool) or not isinstance(part, (int, str)):
+            raise TypeError(
+                'Year, month and day must each be an integer or a string '
+                'spelling one.')
+
     try:
         # int() will convert something like '01' to 1
         year = int(year)

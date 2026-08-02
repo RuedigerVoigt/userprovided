@@ -32,6 +32,7 @@
   * `url`: `is_url` now rejects a URL whose port is not a number or lies outside the range 0-65535. `urllib.parse` validates the port only on attribute access, so such a URL — which no client could ever dial — was reported as valid. Everything building on `is_url`, among them `normalize_url` and `is_shortened_url`, rejects those URLs as a result.
   * `url`: `normalize_url` raises its own `Malformed URL` message for an invalid port (`https://example.com:notaport`).
   * `hashing`: `calculate_file_hash` compares `expected_hash` case-insensitively and ignores surrounding whitespace.
+  * `date`: `date_exists` rejects `bool` and floats with `TypeError` instead of reading `True` as year 1 and truncating `1.9` to January.
 * CI
   * The release workflow now verifies that the git tag matches the version in `pyproject.toml` before building, instead of failing at the upload step or publishing a mismatched version silently.
 

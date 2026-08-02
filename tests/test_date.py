@@ -32,6 +32,24 @@ def test_date_exists_string_input():
     assert userprovided.date.date_exists(2020, '2', 29) is True
 
 
+@pytest.mark.parametrize("year,month,day", [
+    # bool is a subclass of int, but not a date part:
+    (True, True, True),
+    (2021, True, 1),
+    (2021, 1, False),
+    # floats would be truncated to a different date:
+    (2021, 1.9, 1),
+    (2021.0, 1, 1),
+    (2021, 1, 31.5),
+    # types int() cannot convert at all:
+    (None, 1, 1),
+    (2021, [1], 1),
+])
+def test_date_exists_wrong_type(year, month, day):
+    with pytest.raises(TypeError):
+        userprovided.date.date_exists(year, month, day)
+
+
 @settings(print_blob=True,
           verbosity=Verbosity.normal)
 @given(x=dates())
