@@ -22,18 +22,21 @@ jobs:
   doctest:
     uses: ./.github/workflows/doctest.yml
 
-  pypi-publish:
-    name: upload release to PyPI
+  # Everything that installs third-party code runs here, without the OIDC
+  # token: pinning poetry and twine to exact versions does not pin the ~90
+  # transitive packages pip resolves for them, and any of those executes code
+  # during installation. The distributions travel to the publishing job as an
+  # artifact instead.
+  build:
+    name: build the distributions
     runs-on: ubuntu-latest
     needs: [tests, coverage, ruff, mypy, bandit, doctest]
     if: github.event.release.target_commitish == 'master'
-    # Specifying a GitHub environment is optional, but strongly encouraged
-    environment: pypi
     permissions:
-      id-token: write
-      attestations: write
       contents: read
     steps:
+      # Actions are pinned to commit SHAs instead of mutable tags, so a
+      # retagged upstream release cannot change what runs here.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Python
@@ -41,9 +44,6 @@ jobs:
         with:
           python-version: '3.14'
 
-      # This job holds `id-token: write` and can mint a PyPI OIDC token, so the
-      # tooling installed here is pinned to exact versions — the same reason the
-      # actions above are pinned to commit SHAs instead of mutable tags.
       - name: Install Poetry
         run: |
           python -m pip install --upgrade pip
@@ -69,6 +69,34 @@ jobs:
 
       - name: Validate built distributions with Twine
         run: twine check dist/*
+
+      - name: Store the distributions
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  # Only this job can mint a PyPI OIDC token, so it holds two steps and no
+  # third-party code: no checkout, no package installs, nothing that could
+  # read the token out of the runner environment.
+  pypi-publish:
+    name: upload release to PyPI
+    runs-on: ubuntu-latest
+    needs: build
+    # Repeated from the build job so this gate does not depend on reading
+    # another job's definition.
+    if: github.event.release.target_commitish == 'master'
+    # Specifying a GitHub environment is optional, but strongly encouraged
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download the distributions
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: python-package-distributions
+          # gh-action-pypi-publish reads from dist/ by default.
+          path: dist/
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247 # v1.14.1

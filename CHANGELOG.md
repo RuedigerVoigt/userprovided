@@ -15,6 +15,7 @@ This release makes the checks stricter: a wrong-typed argument now raises `TypeE
   * Added a [security policy](./SECURITY.md) and enabled private vulnerability reporting.
   * Publishing to PyPI now requires the tests, the coverage gate, and the linters to pass for the released commit.
   * Pinned `poetry` and `twine` to exact versions in the release workflow.
+  * The release workflow builds in a separate job. Only the publishing job can mint a PyPI OIDC token, and it installs no third-party code.
   * Bumped the pinned GitHub Actions to the latest versions.
   * All modules: user-provided values are logged with `%r` and lazy `%`-arguments, so a crafted value can no longer forge log lines.
   * `hashing`: `calculate_file_hash` no longer skips verification when `expected_hash` is an empty string — only `None` skips the check.
