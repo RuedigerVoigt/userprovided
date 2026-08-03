@@ -21,6 +21,8 @@ This release makes the checks stricter: a wrong-typed argument now raises `TypeE
   * `hashing`: `calculate_file_hash` compares hashes with `hmac.compare_digest` instead of `!=`, so the comparison is constant-time.
   * `ip`: `is_potential_ssrf_target` treats a URL whose host it cannot determine as a target instead of reporting it as safe.
   * `ip`: the host is now read from URLs of any length. Padding a URL past 2048 characters hid the host from all four checks.
+  * `ip`: all four checks recognize every IPv4 encoding `inet_aton` accepts. Short and mixed-base forms of a loopback address, like `127.1` and `0177.0.0.1`, passed the SSRF guard as safe.
+  * `ip`: a trailing root dot no longer hides the host. `http://localhost./` passed the SSRF guard as safe.
   * `url`: `is_shortened_url` matches the hostname instead of the netloc, which carries userinfo and port — `https://bit.ly:443/x` and `https://evil.com@bit.ly/x` went unrecognized.
 * New features:
   * `parameters`: added `strict_int` and `strict_numeric`, the strict counterparts to `int_in_range` and `numeric_in_range`.

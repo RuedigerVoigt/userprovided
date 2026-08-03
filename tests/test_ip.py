@@ -22,10 +22,41 @@ def test_parse_ip():
     assert userprovided.ip._parse_ip('0x7f000001') == ipaddress.ip_address('127.0.0.1')
     # Old-style octal encoding
     assert userprovided.ip._parse_ip('017700000001') == ipaddress.ip_address('127.0.0.1')
-    # Octal string too large to be a valid IP address — exercises the except branch
+    # Octal string too large to be a valid IP address
     assert userprovided.ip._parse_ip('0' + '7' * 44) is None
     # Plain hostname — not an IP in any encoding
     assert userprovided.ip._parse_ip('example.com') is None
+    # Fewer than four parts: the last part covers the remaining octets
+    assert userprovided.ip._parse_ip('127.1') == ipaddress.ip_address('127.0.0.1')
+    assert userprovided.ip._parse_ip('127.0.1') == ipaddress.ip_address('127.0.0.1')
+    # Mixed per-part bases
+    assert userprovided.ip._parse_ip('0177.0.0.1') == ipaddress.ip_address('127.0.0.1')
+    assert userprovided.ip._parse_ip('0x7f.0.0.1') == ipaddress.ip_address('127.0.0.1')
+    assert userprovided.ip._parse_ip('0177.0.1') == ipaddress.ip_address('127.0.0.1')
+    # A leading zero makes the part octal, so this is 8.0.0.1 and not 10.0.0.1
+    assert userprovided.ip._parse_ip('010.0.0.1') == ipaddress.ip_address('8.0.0.1')
+    # More than four parts
+    assert userprovided.ip._parse_ip('127.0.0.0.1') is None
+    # An empty part
+    assert userprovided.ip._parse_ip('127..0.1') is None
+    assert userprovided.ip._parse_ip('127.0.0.') is None
+    assert userprovided.ip._parse_ip('0x') is None
+    # Digits outside the base the prefix announces
+    assert userprovided.ip._parse_ip('0199.0.0.1') is None
+    assert userprovided.ip._parse_ip('0xzz.0.0.1') is None
+    assert userprovided.ip._parse_ip('12a.0.0.1') is None
+    # Forms int() would accept but inet_aton does not
+    assert userprovided.ip._parse_ip('1_0.0.0.1') is None
+    assert userprovided.ip._parse_ip('+127.0.0.1') is None
+    assert userprovided.ip._parse_ip('-1.0.0.1') is None
+    assert userprovided.ip._parse_ip('0b11.0.0.1') is None
+    # A non-final part above 255
+    assert userprovided.ip._parse_ip('256.0.0.1') is None
+    # A final part too large for the octets it has to fill
+    assert userprovided.ip._parse_ip('127.16777216') is None
+    assert userprovided.ip._parse_ip('127.0.65536') is None
+    assert userprovided.ip._parse_ip('127.0.0.256') is None
+    assert userprovided.ip._parse_ip('4294967296') is None
 
 
 def test_ip_non_string():
@@ -147,6 +178,31 @@ def test_ip_is_potential_ssrf_target():
     assert userprovided.ip.is_potential_ssrf_target('http://2852039166/') is True
     # A large integer that is not a valid IP address
     assert userprovided.ip.is_potential_ssrf_target('http://99999999999999/') is False
+    # Short dotted forms the C library parser expands to a loopback address
+    assert userprovided.ip.is_potential_ssrf_target('http://127.1/') is True
+    assert userprovided.ip.is_potential_ssrf_target('http://127.0.1/') is True
+    # Mixed per-part bases
+    assert userprovided.ip.is_potential_ssrf_target('http://0177.0.0.1/') is True
+    assert userprovided.ip.is_potential_ssrf_target('http://0x7f.0.0.1/') is True
+    assert userprovided.ip.is_potential_ssrf_target('http://0xa.0.0.1/') is True
+    # Short form of the cloud metadata endpoint
+    assert userprovided.ip.is_potential_ssrf_target('http://169.254.43518/') is True
+
+
+def test_ip_trailing_root_dot():
+    # A trailing dot denotes the DNS root: the name resolves to the same
+    # host, so the guard must not read it as a different, unknown one.
+    assert userprovided.ip.is_potential_ssrf_target('http://localhost./') is True
+    assert userprovided.ip.is_potential_ssrf_target('http://127.0.0.1./') is True
+    assert userprovided.ip.is_potential_ssrf_target('http://192.168.1.1./') is True
+    assert userprovided.ip.is_loopback('http://localhost./') is True
+    assert userprovided.ip.is_loopback('http://127.0.0.1./') is True
+    assert userprovided.ip.is_private('http://10.0.0.1./') is True
+    assert userprovided.ip.is_link_local('http://nas.local./') is True
+    # A public host with a trailing dot stays public
+    assert userprovided.ip.is_potential_ssrf_target('https://example.com./') is False
+    # A host that is nothing but the root dot leaves no host to check
+    assert userprovided.ip.is_potential_ssrf_target('http://./') is True
 
 
 def test_ip_long_url_does_not_hide_the_host():

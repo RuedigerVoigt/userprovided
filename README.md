@@ -752,9 +752,17 @@ userprovided.ip.is_potential_ssrf_target('https://example.com/')    # => False
 userprovided.ip.is_potential_ssrf_target('http://[::1')             # => True
 # => a URL with no determinable host is reported as a target, so a
 #    malformed URL is refused instead of fetched
+
+userprovided.ip.is_potential_ssrf_target('http://127.1/')           # => True
+userprovided.ip.is_potential_ssrf_target('http://0177.0.0.1/')      # => True
+userprovided.ip.is_potential_ssrf_target('http://2130706433/')      # => True
+# => IPv4 hosts are recognized in every encoding the C library parser
+#    accepts, not just dotted decimal
 ```
 
 Unlike `is_loopback`, `is_private` and `is_link_local`, which describe a host and return `False` for a URL without one, this function is a guard: it answers `True` whenever it cannot determine the host.
+
+A `False` result is not authorization to connect: this function does not resolve DNS, so a hostname that is not an IP address is never flagged, however it resolves. If you need an actual guarantee, resolve the host yourself, reject every non-global address in the result, connect to that validated address instead of re-resolving the name, and re-check each redirect.
 
 ## Finance
 

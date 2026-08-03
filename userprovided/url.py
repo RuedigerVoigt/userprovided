@@ -87,9 +87,15 @@ def _host_from_url(url: str) -> str | None:
     # and padding the query string must not hide the host from it.
     try:
         host = urllib.parse.urlparse(url.strip()).hostname
-        return host.lower() if host else None
     except Exception:
         return None
+    if not host:
+        return None
+    # A single trailing dot denotes the DNS root and is resolved away, so
+    # "localhost." reaches the same host as "localhost". Without this the
+    # SSRF guard in ip.py would not recognise the dotted form.
+    host = host.removesuffix('.')
+    return host.lower() if host else None
 
 
 def is_url(url: str,
