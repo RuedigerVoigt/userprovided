@@ -1,11 +1,16 @@
-[tool.poetry]
+[project]
 name = "userprovided"
 version = "3.0.0"
 description = "Validate, normalize, and convert user input: URLs, emails, dates, hashes, parameters — pure stdlib, no dependencies"
-authors = ["Rüdiger Voigt <projects@ruediger-voigt.eu>"]
+authors = [{name = "Rüdiger Voigt", email = "projects@ruediger-voigt.eu"}]
 readme = "README.md"
+requires-python = ">=3.11"
+# PEP 639: an SPDX expression plus the license file, not the deprecated
+# free-text 'License:' field and 'License ::' classifier. PyPI rejects a
+# distribution that carries both a License-Expression and a license
+# classifier, so the classifier must stay out of the list below.
 license = "Apache-2.0"
-packages = [{include = "userprovided"}]
+license-files = ["LICENSE"]
 keywords = ["validation", "input", "sanitization", "url", "normalize", "hashing", "email", "parameters", "user-input", "type-checking", "finance", "data-cleaning", "no-dependencies"]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -13,7 +18,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
@@ -22,17 +26,17 @@ classifiers = [
     "Topic :: Utilities",
     "Topic :: Software Development :: Quality Assurance"
 ]
-include = ["userprovided/py.typed"]
 
-[tool.poetry.urls]
+[project.urls]
 Homepage = "https://github.com/RuedigerVoigt/userprovided"
 Documentation = "https://github.com/RuedigerVoigt/userprovided#readme"
 Repository = "https://github.com/RuedigerVoigt/userprovided"
 Changelog = "https://github.com/RuedigerVoigt/userprovided/blob/master/CHANGELOG.md"
 "Bug Tracker" = "https://github.com/RuedigerVoigt/userprovided/issues"
 
-[tool.poetry.dependencies]
-python = ">=3.11"
+[tool.poetry]
+packages = [{include = "userprovided"}]
+include = ["userprovided/py.typed"]
 
 [tool.poetry.group.dev.dependencies]
 hypothesis = "*"
@@ -71,5 +75,9 @@ source = ["userprovided"]
 title = "Coverage Report for the userprovided Python Package"
 
 [build-system]
-requires = ["poetry-core>=2.0.0"]
+# 2.2.0 is the first release that emits License-Expression instead of the
+# deprecated free-text 'License:' field; 2.1.x still writes metadata 2.3.
+# The upper bound keeps an isolated build from picking a future major
+# version whose output nobody has checked.
+requires = ["poetry-core>=2.2.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
