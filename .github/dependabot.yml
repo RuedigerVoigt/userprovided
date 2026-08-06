@@ -5,6 +5,9 @@ updates:
   # pip/poetry ecosystem to watch here.
   - package-ecosystem: "github-actions"
     directory: "/"
+    # Without this, Dependabot opens against the default branch (master),
+    # which contradicts the rule that every PR targets develop.
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
