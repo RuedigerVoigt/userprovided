@@ -67,8 +67,49 @@ jobs:
       - name: Install Twine
         run: pip install twine==7.0.0
 
+      # --strict promotes warnings to errors: a README that renders badly on
+      # PyPI is only a warning by default, and PyPI will not let it be fixed
+      # without a new version. The counts guard the globs below, which would
+      # otherwise silently pick up a second artifact.
       - name: Validate built distributions with Twine
-        run: twine check dist/*
+        run: |
+          twine check --strict dist/*
+          test "$(ls dist/*.whl | wc -l)" -eq 1
+          test "$(ls dist/*.tar.gz | wc -l)" -eq 1
+
+      # The tag check above compares the tag to pyproject.toml, so it only
+      # proves the source is consistent. These two compare it to what the
+      # artifacts actually install.
+      - name: Smoke-test the wheel
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          python -m venv "$RUNNER_TEMP/wheel-test"
+          "$RUNNER_TEMP/wheel-test/bin/pip" install dist/*.whl
+          # Run from outside the checkout. The repository root contains
+          # userprovided/, which sys.path[0] would put ahead of the installed
+          # package -- the test would pass while testing the source tree.
+          cd "$RUNNER_TEMP"
+          VERSION="$VERSION" "$RUNNER_TEMP/wheel-test/bin/python" - <<'PY'
+          import importlib.metadata, importlib.resources, os, userprovided
+          assert importlib.metadata.version("userprovided") == os.environ["VERSION"]
+          assert importlib.resources.files("userprovided").joinpath("py.typed").is_file()
+          PY
+
+      # Rebuilding from the sdist is what catches a file missing from it.
+      # py.typed is the one that fails silently: type checking stops working
+      # for every downstream user without an import error anywhere.
+      - name: Rebuild from the sdist and smoke-test that
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          python -m pip wheel --no-deps dist/*.tar.gz --wheel-dir "$RUNNER_TEMP/from-sdist"
+          python -m venv "$RUNNER_TEMP/sdist-test"
+          "$RUNNER_TEMP/sdist-test/bin/pip" install "$RUNNER_TEMP"/from-sdist/*.whl
+          cd "$RUNNER_TEMP"
+          VERSION="$VERSION" "$RUNNER_TEMP/sdist-test/bin/python" - <<'PY'
+          import importlib.metadata, importlib.resources, os
+          assert importlib.metadata.version("userprovided") == os.environ["VERSION"]
+          assert importlib.resources.files("userprovided").joinpath("py.typed").is_file()
+          PY
 
       - name: Store the distributions
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

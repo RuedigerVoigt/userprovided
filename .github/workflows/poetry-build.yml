@@ -32,4 +32,25 @@ jobs:
     - name: Build package
       run: poetry build
     - name: Validate package
-      run: twine check dist/*
+      run: |
+        twine check --strict dist/*
+        test "$(ls dist/*.whl | wc -l)" -eq 1
+        test "$(ls dist/*.tar.gz | wc -l)" -eq 1
+    # The release workflow runs this too, against the artifact it ships. Here
+    # it catches a packaging regression on the push that causes it, instead of
+    # at tag time. There is no tag to read on a push, so the version comes
+    # from pyproject.toml.
+    - name: Smoke-test the wheel
+      run: |
+        VERSION="$(poetry version --short)"
+        python -m venv "$RUNNER_TEMP/wheel-test"
+        "$RUNNER_TEMP/wheel-test/bin/pip" install dist/*.whl
+        # Run from outside the checkout. The repository root contains
+        # userprovided/, which sys.path[0] would put ahead of the installed
+        # package -- the test would pass while testing the source tree.
+        cd "$RUNNER_TEMP"
+        VERSION="$VERSION" "$RUNNER_TEMP/wheel-test/bin/python" - <<'PY'
+        import importlib.metadata, importlib.resources, os, userprovided
+        assert importlib.metadata.version("userprovided") == os.environ["VERSION"]
+        assert importlib.resources.files("userprovided").joinpath("py.typed").is_file()
+        PY
