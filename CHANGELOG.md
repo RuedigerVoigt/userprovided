@@ -1,6 +1,6 @@
 # Changelog / History
 
-## Version 3.0.0 (2026-08-03)
+## Version 3.0.0 (2026-08-07)
 
 This release makes the checks stricter: a wrong-typed argument now raises `TypeError` throughout the package (`enforce_boolean` is the one documented exception), and validators that quietly accepted bad input no longer do. Several security-relevant functions were hardened as well, and support for Python 3.10 ends.
 
