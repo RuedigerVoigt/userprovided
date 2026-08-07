@@ -10,7 +10,10 @@ on:
 
 # Superseded commits do not need to finish.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # A literal, not github.workflow: that resolves to the *caller's* name when
+  # one workflow calls another. Nothing calls this one today, but the literal
+  # keeps that from becoming a silent trap if something ever does.
+  group: codeql-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

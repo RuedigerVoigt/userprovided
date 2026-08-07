@@ -14,7 +14,10 @@ on:
 
 # Superseded commits do not need to finish.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # A literal, not github.workflow: that resolves to the *caller's* name when
+  # one workflow calls another, so every check the release calls would share
+  # one group and cancel its siblings.
+  group: ruff-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
