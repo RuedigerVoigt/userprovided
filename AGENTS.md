@@ -47,7 +47,7 @@ The Python package userprovided checks input for validity and plausibility. It a
 
 ## Supported Python versions
 
-* The code must run with all supported Python versions from 3.11 to 3.14 (inclusive). CI runs the full matrix on Linux, macOS and Windows.
+* The code must run with all supported Python versions from 3.11 to 3.15 (inclusive). CI runs the full matrix on Linux, macOS and Windows.
 
 ## Coding Style
 

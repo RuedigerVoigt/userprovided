@@ -1,6 +1,6 @@
 # Changelog / History
 
-## Version 3.0.0 (2026-08-07)
+## Version 3.0.0 (2026-09-23)
 
 This release makes the checks stricter: a wrong-typed argument now raises `TypeError` throughout the package (`enforce_boolean` is the one documented exception), and validators that quietly accepted bad input no longer do. Several security-relevant functions were hardened as well, and support for Python 3.10 ends.
 
@@ -26,6 +26,7 @@ This release makes the checks stricter: a wrong-typed argument now raises `TypeE
   * `ip`: a trailing root dot no longer hides the host. `http://localhost./` passed the SSRF guard as safe.
   * `url`: `is_shortened_url` matches the hostname instead of the netloc, which carries userinfo and port — `https://bit.ly:443/x` and `https://evil.com@bit.ly/x` went unrecognized.
 * New features:
+  * Added support for Python 3.15 (as tested with the last release candidate).
   * `parameters`: added `strict_int` and `strict_numeric`, the strict counterparts to `int_in_range` and `numeric_in_range`.
   * `err`: added `HashMismatch` (subclass of `ValueError`), raised when a file fails its hash check. It was indistinguishable from an unknown-algorithm error.
 * Bug fixes:
