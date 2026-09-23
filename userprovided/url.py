@@ -451,6 +451,8 @@ def determine_file_extension(url: str,
         url: The URL to analyze for file extension hints.
         provided_mime_type: MIME type from server response headers.
             Used as fallback when URL doesn't provide clear extension.
+            May be a full Content-Type value: parameters such as
+            ``; charset=utf-8`` are ignored, and case does not matter.
             Defaults to None.
 
     Returns:
@@ -468,7 +470,11 @@ def determine_file_extension(url: str,
         raise TypeError('provided_mime_type must be a string or None.')
 
     if provided_mime_type:
-        provided_mime_type = provided_mime_type.strip()
+        # A Content-Type header value carries parameters after the media
+        # type (RFC 9110, section 8.3.1), which mimetypes does not recognize:
+        # 'text/html; charset=utf-8' -> 'text/html'.
+        # Type and subtype are case-insensitive: 'Text/HTML' -> 'text/html'.
+        provided_mime_type = provided_mime_type.split(';', 1)[0].strip().lower()
     if provided_mime_type == '':
         provided_mime_type = None
 

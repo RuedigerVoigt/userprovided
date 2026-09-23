@@ -838,3 +838,25 @@ def test_log_records_escape_control_characters(caplog):
         userprovided.url.url_matches_domain(forged, 'example.com')
     for record in caplog.records:
         assert '\n' not in record.getMessage()
+
+
+@pytest.mark.parametrize('mime_type, expected', [
+    ('text/html; charset=utf-8', '.html'),
+    ('text/html;charset=UTF-8', '.html'),
+    ('Text/HTML;Charset="utf-8"', '.html'),   # RFC 9110, section 8.3.1
+    ('application/pdf; qs=0.9', '.pdf'),
+    ('  application/pdf ; foo="a;b"  ', '.pdf'),
+    ('; charset=utf-8', '.unknown'),           # parameters but no type
+])
+def test_determine_file_extension_content_type_parameters(mime_type, expected):
+    # A Content-Type header value carries parameters. Without an extension
+    # in the URL they made the mime type fallback return '.unknown'.
+    assert userprovided.url.determine_file_extension(
+        'https://example.com/page', mime_type) == expected
+
+
+@given(parameters=st.text(max_size=30))
+def test_determine_file_extension_ignores_any_parameters(parameters):
+    assert userprovided.url.determine_file_extension(
+        'https://example.com/page',
+        f"application/pdf;{parameters}") == '.pdf'
