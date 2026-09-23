@@ -2,15 +2,18 @@
 
 ## Version 3.0.0 (2026-09-23)
 
-This release makes the checks stricter: a wrong-typed argument now raises `TypeError` throughout the package (`enforce_boolean` is the one documented exception), and validators that quietly accepted bad input no longer do. Several security-relevant functions were hardened as well, and support for Python 3.10 ends.
-
-* Breaking changes:
+* Version support:
   * Dropped Python 3.10 (EOL October 2026); the minimum is now 3.11.
+  * Added support for Python 3.15 (as tested with the last release candidate).
+* Breaking changes:
   * `parameters`: `numeric_in_range`, `int_in_range` and `is_port` raise `TypeError` instead of `ValueError` for a wrong-typed argument.
   * `url`: `extract_domain`, `extract_tld` and `url_matches_domain` raise `TypeError` for non-string arguments.
   * `parameters`: `separated_string_to_set` (non-string `sep`/`quote_char`), `keys_neither_none_nor_empty` and `validate_dict_keys` (non-dict) raise `TypeError` too. `enforce_boolean` keeps `ValueError`.
   * `parameters`: `string_in_range` rejects non-integer length limits. `string_in_range('ab', 1.5, 3)` returned `True`.
   * `hashing`: `hash_available(None)` raises `TypeError`, like the hash functions; an empty name stays a `ValueError`.
+* New features:
+  * `parameters`: added `strict_int` and `strict_numeric`, the strict counterparts to `int_in_range` and `numeric_in_range`.
+  * `err`: added `HashMismatch` (subclass of `ValueError`), raised when a file fails its hash check. It was indistinguishable from an unknown-algorithm error.
 * Security:
   * Added a [security policy](./SECURITY.md) and enabled private vulnerability reporting.
   * Publishing to PyPI now requires the tests, the coverage gate, and the linters to pass for the released commit.
@@ -20,43 +23,38 @@ This release makes the checks stricter: a wrong-typed argument now raises `TypeE
   * All modules: user-provided values are logged with `%r` and lazy `%`-arguments, so a crafted value can no longer forge log lines.
   * `hashing`: `calculate_file_hash` no longer skips verification when `expected_hash` is an empty string — only `None` skips the check.
   * `hashing`: `calculate_file_hash` compares hashes with `hmac.compare_digest` instead of `!=`, so the comparison is constant-time.
-  * `ip`: `is_potential_ssrf_target` treats a URL whose host it cannot determine as a target instead of reporting it as safe.
-  * `ip`: the host is now read from URLs of any length. Padding a URL past 2048 characters hid the host from all four checks.
-  * `ip`: all four checks recognize every IPv4 encoding `inet_aton` accepts. Short and mixed-base forms of a loopback address, like `127.1` and `0177.0.0.1`, passed the SSRF guard as safe.
-  * `ip`: a trailing root dot no longer hides the host. `http://localhost./` passed the SSRF guard as safe.
-  * `url`: `is_shortened_url` matches the hostname instead of the netloc, which carries userinfo and port — `https://bit.ly:443/x` and `https://evil.com@bit.ly/x` went unrecognized.
-* New features:
-  * Added support for Python 3.15 (as tested with the last release candidate).
-  * `parameters`: added `strict_int` and `strict_numeric`, the strict counterparts to `int_in_range` and `numeric_in_range`.
-  * `err`: added `HashMismatch` (subclass of `ValueError`), raised when a file fails its hash check. It was indistinguishable from an unknown-algorithm error.
-* Bug fixes:
-  * `parameters`: `is_port` rejects `bool`. `is_port(True)` returned `True`, treating a flag as port 1.
-  * `parameters`: `is_aws_s3_bucket_name` accepts names that merely *start* like an IP address (`1.2.3.45abc`); `192.168.5.4` stays rejected.
-  * `parameters`: `is_aws_s3_bucket_name` accepts a hyphen next to a dot (`my-.bucket`) and rejects a trailing newline.
-  * `parameters`: `separated_string_to_set` rejects `sep='\'`, which escaped every separator and so never split.
-  * `parameters`: fixed the missing space in the `enforce_boolean` error message (`boolean,i.e`).
-  * `hashing`: a non-ASCII `expected_hash` counts as a mismatch instead of raising an unrelated `TypeError`; a non-string one raises `TypeError` with a clear message.
-  * `url`: a trailing root-label dot (`www.example.com.`) no longer collapses a host onto its public suffix — `extract_domain(drop_subdomain=True)` returned `com.` instead of `example.com`.
-  * `url`: `normalize_url` collapses any run of slashes in the path, not just pairs, so `//a` and `///a` normalize alike. Two spellings of one resource used to yield two different identity keys.
-  * `url`: `extract_domain` and `extract_tld` no longer fall back to the netloc, which returned the credentials in `http://user:pass@` as a domain. Such input now raises `ValueError` or returns an empty string.
-  * `url`: `extract_tld` no longer swallows every exception; an unparseable URL still yields an empty string.
-  * `url`: `is_url` no longer raises for URLs that `urllib.parse` cannot parse at all, such as an unclosed IPv6 literal (`http://[::1`). Such URLs are now simply invalid.
-  * `url`: `is_url` rejects a port that is not a number or lies outside 0-65535. Everything building on it, like `normalize_url` and `is_shortened_url`, follows.
-  * `url`: `normalize_url` raises its own `Malformed URL` message for an invalid port (`https://example.com:notaport`).
-  * `url`: `is_url` rejects a URL without a host, and so `normalize_url` raises for it. `http://:8080/path` normalized to `http://None:8080/path`.
-  * `url`: `determine_file_extension` ignores Content-Type parameters. `text/html; charset=utf-8` yielded `.unknown`.
-  * `url`: `normalize_hostname` is idempotent as documented. `example.com .` and `example。com。` kept a trailing space or dot.
-  * `hashing`: `calculate_file_hash` compares `expected_hash` case-insensitively and ignores surrounding whitespace.
-  * `hashing`: hash names ignore case and surrounding whitespace, and error messages quote them with `repr()`. `SHA256` was reported as unavailable, and `' sha256'` passed `hash_available` but failed to hash.
-  * `date`: `date_exists` rejects `bool` and floats with `TypeError` instead of reading `True` as year 1 and truncating `1.9` to January.
-  * `date`: `date_en_long_to_iso` and `date_de_long_to_iso` accept only ASCII digits. `July ٤, 1776` returned `1776-07-0٤`.
-  * `date`: `date_en_long_to_iso` and `date_de_long_to_iso` raise `TypeError` for a non-string instead of leaking an `AttributeError`.
-  * `mail`: clarified the documentation of `is_email`, which needs ASCII and accepts an internationalized domain only in its punycode form.
+  * `ip`:
+    * `is_potential_ssrf_target` treats a URL whose host it cannot determine as a target instead of reporting it as safe.
+    * The host is now read from URLs of any length. Padding a URL past 2048 characters hid the host from all four checks.
+    * All four checks recognize every IPv4 encoding `inet_aton` accepts. Short and mixed-base forms of a loopback address, like `127.1` and `0177.0.0.1`, passed the SSRF guard as safe.
+    * A trailing root dot no longer hides the host. `http://localhost./` passed the SSRF guard as safe.
+  * `url`: `is_shortened_url` matches the hostname instead of the netloc, which carries userinfo and port (`https://evil.com@bit.ly/x` went unrecognized).
+* Bug fixes and Improvements:
+  * `parameters`:
+    * `is_port` rejects `bool`. `is_port(True)` returned `True`, treating a flag as port 1.
+    * `is_aws_s3_bucket_name` accepts names that merely *start* like an IP address (`1.2.3.45abc`);
+    * `is_aws_s3_bucket_name` accepts a hyphen next to a dot (`my-.bucket`) and rejects a trailing newline.
+    * `separated_string_to_set` rejects `sep='\'`, which escaped every separator and so never split.
+  * `url`:
+    * a trailing root-label dot (`www.example.com.`) no longer collapses a host onto its public suffix — `extract_domain(drop_subdomain=True)` returned `com.` instead of `example.com`.
+    * `normalize_url` collapses any run of slashes in the path, not just pairs, so `//a` and `///a` normalize alike. Two spellings of one resource used to yield two different identity keys.
+    * `normalize_url` raises its own `Malformed URL` message for an invalid port (`https://example.com:notaport`).
+    * `extract_domain` and `extract_tld` no longer fall back to the netloc, which returned the credentials in `http://user:pass@` as a domain. Such input now raises `ValueError` or returns an empty string.
+    * `extract_tld` no longer swallows every exception; an unparseable URL still yields an empty string.
+    * `is_url`:
+      * no longer raises for URLs that `urllib.parse` cannot parse at all, such as an unclosed IPv6 literal (`http://[::1`). Such URLs are now simply invalid.
+      * Rejects a port that is not a number or lies outside 0-65535. Everything building on it, like `normalize_url` and `is_shortened_url`, follows.
+      * Rejects a URL without a host, and so `normalize_url` raises for it. `http://:8080/path` normalized to `http://None:8080/path`.
+    * `determine_file_extension` ignores Content-Type parameters. `text/html; charset=utf-8` yielded `.unknown`.
+    * `normalize_hostname` is idempotent as documented. `example.com .` and `example。com。` kept a trailing space or dot.
+  * `hashing.calculate_file_hash` compares `expected_hash` case-insensitively and ignores surrounding whitespace.
+  * `date`:
+    * `date_exists` rejects `bool` and floats with `TypeError` instead of reading `True` as year 1 and truncating `1.9` to January.
+    * `date_en_long_to_iso` and `date_de_long_to_iso`: Accept only ASCII digits. / Raise `TypeError` for a non-string instead of leaking an `AttributeError`.
   * `url` and `hashing`: `normalize_url`, `determine_file_extension`, `hash_available`, `calculate_string_hash` and `calculate_file_hash` raise `TypeError` instead of leaking an `AttributeError`.
 * CI
   * The release workflow verifies that the git tag matches the version in `pyproject.toml` before building.
   * Added a doctest workflow, which also gates the release, and a test that checks the README for names the package no longer has.
-  * The Python 3.15 release candidate jobs (Linux, macOS, Windows, mypy) must pass; they were allowed to fail.
 
 
 ## Version 2.6.0 (2026-07-11)
