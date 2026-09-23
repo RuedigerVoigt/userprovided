@@ -44,6 +44,7 @@ This release makes the checks stricter: a wrong-typed argument now raises `TypeE
   * `url`: `normalize_url` raises its own `Malformed URL` message for an invalid port (`https://example.com:notaport`).
   * `url`: `is_url` rejects a URL without a host, and so `normalize_url` raises for it. `http://:8080/path` normalized to `http://None:8080/path`.
   * `url`: `determine_file_extension` ignores Content-Type parameters. `text/html; charset=utf-8` yielded `.unknown`.
+  * `url`: `normalize_hostname` is idempotent as documented. `example.com .` and `example。com。` kept a trailing space or dot.
   * `hashing`: `calculate_file_hash` compares `expected_hash` case-insensitively and ignores surrounding whitespace.
   * `date`: `date_exists` rejects `bool` and floats with `TypeError` instead of reading `True` as year 1 and truncating `1.9` to January.
   * `date`: `date_en_long_to_iso` and `date_de_long_to_iso` accept only ASCII digits. `July ٤, 1776` returned `1776-07-0٤`.

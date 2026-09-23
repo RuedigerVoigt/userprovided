@@ -639,6 +639,36 @@ def test_normalize_hostname_idempotent(host):
     assert userprovided.url.normalize_hostname(normalized) == normalized
 
 
+@pytest.mark.parametrize('host, expected', [
+    # whitespace in front of a trailing dot:
+    ('0 .', '0'),
+    ('example.com .', 'example.com'),
+    ('example.com\t. .', 'example.com'),
+    ('[::1] .', '::1'),
+    # the IDNA codec turns these into dots after the trailing dot is gone:
+    ('example\N{IDEOGRAPHIC FULL STOP}com\N{IDEOGRAPHIC FULL STOP}',
+     'example.com'),
+    ('example.com\N{FULLWIDTH FULL STOP}', 'example.com'),
+    ('m\N{LATIN SMALL LETTER U WITH DIAERESIS}nchen'
+     '\N{HALFWIDTH IDEOGRAPHIC FULL STOP}', 'xn--mnchen-3ya'),
+    ('example.com\N{DIGIT ONE FULL STOP}', 'example.com1'),
+    # the IDNA codec drops invisible characters:
+    ('[::1]\N{SOFT HYPHEN}', '::1'),
+    ('[::1]\N{ZERO WIDTH SPACE}', '::1'),
+])
+def test_normalize_hostname_idempotent_edge_cases(host, expected):
+    # Hypothesis finds these only by chance, so a fresh CI run could miss them.
+    normalized = userprovided.url.normalize_hostname(host)
+    assert normalized == expected
+    assert userprovided.url.normalize_hostname(normalized) == normalized
+
+
+def test_normalize_hostname_dot_after_idna_is_empty():
+    # The IDNA codec turns it into a bare dot.
+    with pytest.raises(ValueError):
+        userprovided.url.normalize_hostname('\N{ONE DOT LEADER}')
+
+
 @pytest.mark.parametrize("host,drop_subdomain,expected", [
     ('www.example.co.uk', True, 'example.co.uk'),
     ('deep.sub.example.com', True, 'example.com'),

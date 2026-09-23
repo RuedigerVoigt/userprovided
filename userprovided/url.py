@@ -21,6 +21,7 @@ from userprovided import err
 # HTTP servers and browsers reject URLs beyond 2048–8192 characters.
 # Accepting arbitrarily long strings risks slow regex processing and memory use.
 _MAX_URL_LENGTH = 2048
+_TRAILING_DOTS_AND_SPACE = re.compile(r'[\s.]+\Z')
 
 # Known 2-part TLDs (country code second-level domains).
 # This is a hand-maintained subset of the most common ones, because full
@@ -370,7 +371,9 @@ def normalize_hostname(host: str) -> str:
         raise ValueError(
             f"Hostname exceeds maximum length of {_MAX_URL_LENGTH} characters.")
 
-    candidate = host.strip().lower().rstrip('.')
+    # Whitespace and dots together: stripped one after the other,
+    # 'example.com .' kept its space ('example.com ').
+    candidate = _TRAILING_DOTS_AND_SPACE.sub('', host.strip().lower())
 
     unbracketed = candidate
     if candidate.startswith('[') and candidate.endswith(']'):
@@ -387,11 +390,17 @@ def normalize_hostname(host: str) -> str:
 
     if not candidate.isascii():
         try:
-            return candidate.encode('idna').decode('ascii')
+            encoded = candidate.encode('idna').decode('ascii')
         except UnicodeError:
             logging.debug(
                 'Hostname could not be IDNA-encoded. '
                 'Returning the lowercased unicode form.')
+        else:
+            # Normalize the ASCII result once more, or the output is not
+            # idempotent: the codec turns '。' and '⒈' into dots after the
+            # trailing dots were stripped ('example.com。' -> 'example.com.'),
+            # and drops invisible characters ('[::1]\xad' -> '[::1]').
+            return normalize_hostname(encoded)
 
     return candidate
 
