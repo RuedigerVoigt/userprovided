@@ -55,6 +55,7 @@ This release makes the checks stricter: a wrong-typed argument now raises `TypeE
 * CI
   * The release workflow verifies that the git tag matches the version in `pyproject.toml` before building.
   * Added a doctest workflow, which also gates the release, and a test that checks the README for names the package no longer has.
+  * The Python 3.15 release candidate jobs (Linux, macOS, Windows, mypy) must pass; they were allowed to fail.
 
 
 ## Version 2.6.0 (2026-07-11)
