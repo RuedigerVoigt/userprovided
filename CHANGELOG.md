@@ -45,6 +45,8 @@ This release makes the checks stricter: a wrong-typed argument now raises `TypeE
   * `url`: `is_url` rejects a URL without a host, and so `normalize_url` raises for it. `http://:8080/path` normalized to `http://None:8080/path`.
   * `hashing`: `calculate_file_hash` compares `expected_hash` case-insensitively and ignores surrounding whitespace.
   * `date`: `date_exists` rejects `bool` and floats with `TypeError` instead of reading `True` as year 1 and truncating `1.9` to January.
+  * `date`: `date_en_long_to_iso` and `date_de_long_to_iso` accept only ASCII digits. `July ٤, 1776` returned `1776-07-0٤`.
+  * `date`: `date_en_long_to_iso` and `date_de_long_to_iso` raise `TypeError` for a non-string instead of leaking an `AttributeError`.
   * `mail`: clarified the documentation of `is_email`, which needs ASCII and accepts an internationalized domain only in its punycode form.
   * `url` and `hashing`: `normalize_url`, `determine_file_extension`, `hash_available`, `calculate_string_hash` and `calculate_file_hash` raise `TypeError` instead of leaking an `AttributeError`.
 * CI

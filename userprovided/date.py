@@ -12,12 +12,14 @@ import logging
 import re
 
 
-# Compiled regex patterns for performance optimization
+# Compiled regex patterns for performance optimization.
+# [0-9], not \d: \d matches any Unicode digit, and the matched digits end up
+# in the returned ISO string ('July ٤, 1776' -> '1776-07-0٤').
 _REGEX_LONG_DATE_EN = re.compile(
-    r"(?P<monthL>[a-zA-Z\.]{3,9})\s+(?P<day>\d{1,2})(?:st|nd|rd|th)?"
-    r",\s*(?P<year>\d\d\d\d)")
+    r"(?P<monthL>[a-zA-Z\.]{3,9})\s+(?P<day>[0-9]{1,2})(?:st|nd|rd|th)?"
+    r",\s*(?P<year>[0-9]{4})")
 _REGEX_LONG_DATE_DE = re.compile(
-    r"(?P<day>\d{1,2})\.\s+(?P<monthL>[a-zA-ZÄä\.]{3,9})\s+(?P<year>\d{4})")
+    r"(?P<day>[0-9]{1,2})\.\s+(?P<monthL>[a-zA-ZÄä\.]{3,9})\s+(?P<year>[0-9]{4})")
 
 
 def date_exists(year: int | str,
@@ -80,10 +82,13 @@ def date_en_long_to_iso(date_string: str) -> str:
         Date string in ISO format (YYYY-MM-DD).
 
     Raises:
+        TypeError: If date_string is not a string.
         AttributeError: If the date string format is not recognized.
         KeyError: If the month name is not recognized.
         ValueError: If the parsed date is invalid (e.g., February 30).
     """
+    if not isinstance(date_string, str):
+        raise TypeError('date_string must be a string.')
     date_string = date_string.strip()
     try:
         match = _REGEX_LONG_DATE_EN.search(date_string)
@@ -141,10 +146,13 @@ def date_de_long_to_iso(date_string: str) -> str:
         Date string in ISO format (YYYY-MM-DD).
 
     Raises:
+        TypeError: If date_string is not a string.
         AttributeError: If the date string format is not recognized.
         KeyError: If the month name is not recognized.
         ValueError: If the parsed date is invalid (e.g., 30. Februar).
     """
+    if not isinstance(date_string, str):
+        raise TypeError('date_string must be a string.')
     date_string = date_string.strip()
     try:
         match = _REGEX_LONG_DATE_DE.search(date_string)

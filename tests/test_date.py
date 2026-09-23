@@ -10,7 +10,7 @@ Released under the Apache License 2.0
 from hypothesis import given
 from hypothesis import settings
 from hypothesis import Verbosity
-from hypothesis.strategies import dates
+from hypothesis.strategies import characters, dates
 import pytest
 
 import userprovided
@@ -137,3 +137,32 @@ def test_date_de_long_to_iso_exceptions():
         userprovided.date.date_de_long_to_iso('30 2020')
     with pytest.raises(AttributeError):
         userprovided.date.date_de_long_to_iso('Februar 30')
+
+
+# \d matches any Unicode digit. int() still reads such a digit, so the date
+# passed the calendar check and the digit ended up in the ISO string.
+_NON_ASCII_DIGITS = characters(categories=['Nd']).filter(
+    lambda c: not c.isascii())
+
+
+@given(digit=_NON_ASCII_DIGITS)
+def test_long_to_iso_rejects_non_ascii_digits(digit):
+    with pytest.raises(AttributeError):
+        userprovided.date.date_en_long_to_iso(f"July {digit}, 1776")
+    with pytest.raises(AttributeError):
+        userprovided.date.date_en_long_to_iso(f"July 4, 177{digit}")
+    with pytest.raises(AttributeError):
+        userprovided.date.date_de_long_to_iso(f"{digit}. Oktober 1990")
+    with pytest.raises(AttributeError):
+        userprovided.date.date_de_long_to_iso(f"3. Oktober 199{digit}")
+
+
+@pytest.mark.parametrize('wrong_type', [5, None, 1.5, b'July 4, 1776',
+                                        ['July 4, 1776']])
+def test_long_to_iso_non_string(wrong_type):
+    # A wrong type is a caller error, not a malformed date: TypeError, not
+    # the AttributeError that signals an unrecognized format.
+    with pytest.raises(TypeError):
+        userprovided.date.date_en_long_to_iso(wrong_type)
+    with pytest.raises(TypeError):
+        userprovided.date.date_de_long_to_iso(wrong_type)
