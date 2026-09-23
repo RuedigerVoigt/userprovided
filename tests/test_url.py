@@ -261,9 +261,9 @@ def test_is_shortened_url_exception_handling():
         # Make is_url succeed but then fail in is_shortened_url
         mock_parse.side_effect = [
             # First call, inside is_url. Needs every attribute is_url reads,
-            # including the port it validates.
+            # including the host and the port it validates.
             type('obj', (object,), {'scheme': 'https', 'netloc': 'bit.ly',
-                                    'port': None})(),
+                                    'hostname': 'bit.ly', 'port': None})(),
             Exception('Unexpected error')  # Second call in is_shortened_url
         ]
         # Should return False and not raise
@@ -797,6 +797,32 @@ def test_is_url_rejects_invalid_port(test_url):
 ])
 def test_is_url_accepts_valid_port(test_url):
     assert userprovided.url.is_url(test_url) is True
+
+
+@pytest.mark.parametrize('test_url', [
+    'http://user@/path',
+    'http://user:pw@/path',
+    'http://@/path',
+    'http://:80/path',
+    'http://:8080/path',
+    'http://user@:8080/path',
+])
+def test_url_without_host_is_rejected(test_url):
+    # netloc is not empty (userinfo or port), but there is no host.
+    # normalize_url reassembled these as 'http:///path' or, with a
+    # non-standard port, as the dialable 'http://None:8080/path'.
+    assert userprovided.url.is_url(test_url) is False
+    with pytest.raises(ValueError, match='Malformed URL'):
+        userprovided.url.normalize_url(test_url)
+
+
+@given(userinfo=st.text(alphabet='abcXYZ019-._~:', max_size=10),
+       port=st.integers(min_value=0, max_value=65535))
+def test_url_without_host_is_rejected_property(userinfo, port):
+    test_url = f"https://{userinfo}@:{port}/path"
+    assert userprovided.url.is_url(test_url) is False
+    with pytest.raises(ValueError, match='Malformed URL'):
+        userprovided.url.normalize_url(test_url)
 
 
 def test_log_records_escape_control_characters(caplog):

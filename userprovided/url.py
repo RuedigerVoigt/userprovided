@@ -146,8 +146,10 @@ def is_url(url: str,
             logging.debug('Scheme %r not supported.', parsed.scheme)
             return False
 
-    if parsed.netloc == '':
-        logging.debug('URL is missing or malformed.')
+    # hostname, not netloc: netloc also carries userinfo and port, so
+    # 'http://user@/path' and 'http://:8080/path' have one but no host.
+    if parsed.hostname is None:
+        logging.debug('URL has no host.')
         return False
 
     try:
@@ -278,7 +280,11 @@ def normalize_url(url: str,
     port = parsed.port
 
     host = parsed.hostname
-    if host and ':' in host:
+    if host is None:  # pragma: no cover
+        # is_url above rejects a URL without a host. This narrows the type;
+        # without it None was reassembled as 'http:///' or 'http://None:8080'.
+        raise ValueError('Malformed URL')
+    if ':' in host:
         # urlparse strips the square brackets from IPv6 literals.
         # Restore them, otherwise the reassembled URL is invalid.
         host = f"[{host}]"
@@ -286,12 +292,12 @@ def normalize_url(url: str,
     if not port:
         # There is no port to begin with
         # hostname is lowercase without port
-        reassemble.append(host)  # type: ignore[arg-type]
+        reassemble.append(host)
     elif (parsed.scheme in standard_ports and
             port == standard_ports[parsed.scheme]):
         # There is a port and it equals the standard.
         # That means it is redundant.
-        reassemble.append(host)  # type: ignore[arg-type]
+        reassemble.append(host)
     else:
         # There is a port but it is not in the list or not standard
         reassemble.append(f"{host}:{port}")

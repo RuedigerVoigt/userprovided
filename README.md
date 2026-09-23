@@ -511,6 +511,8 @@ userprovided.url.is_url('https://www.example.com')
 # => True
 userprovided.url.is_url('www.example.com')
 # => False
+userprovided.url.is_url('https://user@:8080/path')
+# => False (no host)
 ```
 
 You can insist on specific schemes:

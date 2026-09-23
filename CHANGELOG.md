@@ -42,6 +42,7 @@ This release makes the checks stricter: a wrong-typed argument now raises `TypeE
   * `url`: `is_url` no longer raises for URLs that `urllib.parse` cannot parse at all, such as an unclosed IPv6 literal (`http://[::1`). Such URLs are now simply invalid.
   * `url`: `is_url` rejects a port that is not a number or lies outside 0-65535. Everything building on it, like `normalize_url` and `is_shortened_url`, follows.
   * `url`: `normalize_url` raises its own `Malformed URL` message for an invalid port (`https://example.com:notaport`).
+  * `url`: `is_url` rejects a URL without a host, and so `normalize_url` raises for it. `http://:8080/path` normalized to `http://None:8080/path`.
   * `hashing`: `calculate_file_hash` compares `expected_hash` case-insensitively and ignores surrounding whitespace.
   * `date`: `date_exists` rejects `bool` and floats with `TypeError` instead of reading `True` as year 1 and truncating `1.9` to January.
   * `mail`: clarified the documentation of `is_email`, which needs ASCII and accepts an internationalized domain only in its punycode form.
