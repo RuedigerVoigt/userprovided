@@ -10,6 +10,7 @@ Released under the Apache License 2.0
 from unittest.mock import patch
 import pathlib
 
+from hypothesis import given, strategies as st
 import pytest
 
 import userprovided
@@ -190,7 +191,7 @@ def test_calculate_file_hash_hashlib_error():
     # This shouldn't normally happen as hash_available checks first,
     # but tests the fallback error handling
     with patch('hashlib.new', side_effect=ValueError('Invalid hash')):
-        with pytest.raises(ValueError, match='Hash method sha256 not supported'):
+        with pytest.raises(ValueError, match="Hash method 'sha256' not supported"):
             userprovided.hashing.calculate_file_hash('tests/testfile','sha256')
 
 
@@ -289,7 +290,7 @@ def test_calculate_string_hash_hashlib_error():
     # This shouldn't normally happen as hash_available checks first,
     # but tests the fallback error handling
     with patch('hashlib.new', side_effect=ValueError('Invalid hash')):
-        with pytest.raises(ValueError, match='Hash method sha256 not supported'):
+        with pytest.raises(ValueError, match="Hash method 'sha256' not supported"):
             userprovided.hashing.calculate_string_hash('test', 'sha256')
 
 
@@ -313,6 +314,8 @@ def test_hash_is_deprecated():
     assert userprovided.hashing._hash_is_deprecated('SHA1') is True  # Case insensitive
     assert userprovided.hashing._hash_is_deprecated('md5-sha1') is True
     assert userprovided.hashing._hash_is_deprecated('MD5-SHA1') is True  # Case insensitive
+    assert userprovided.hashing._hash_is_deprecated('md4') is True
+    assert userprovided.hashing._hash_is_deprecated('MD4') is True  # Case insensitive
     # Secure algorithms
     assert userprovided.hashing._hash_is_deprecated('sha224') is False
     assert userprovided.hashing._hash_is_deprecated('sha256') is False
@@ -335,3 +338,46 @@ def test_hashing_rejects_non_string_hash_method():
     # An empty or whitespace-only name stays a value problem:
     with pytest.raises(ValueError):
         userprovided.hashing.hash_available('   ')
+
+
+def _respell(name, upper, padding):
+    """Spell a hash name with the given letter case and surrounding space."""
+    cased = ''.join(c.upper() if flag else c
+                    for c, flag in zip(name, upper + [False] * len(name)))
+    return f"{padding}{cased}{padding}"
+
+
+@given(name=st.sampled_from(['sha256', 'sha512', 'sha3_256', 'blake2b']),
+       upper=st.lists(st.booleans(), max_size=8),
+       padding=st.sampled_from(['', ' ', '\t', '\n']))
+def test_hash_name_ignores_case_and_whitespace(name, upper, padding):
+    # 'SHA256' was reported as unavailable, and ' sha256' passed
+    # hash_available() but reached hashlib.new() unstripped.
+    spelled = _respell(name, upper, padding)
+    assert userprovided.hashing.hash_available(spelled) is True
+    assert (userprovided.hashing.calculate_string_hash('data', spelled) ==
+            userprovided.hashing.calculate_string_hash('data', name))
+    assert (userprovided.hashing.calculate_file_hash('tests/testfile', spelled)
+            == userprovided.hashing.calculate_file_hash('tests/testfile', name))
+
+
+@given(name=st.sampled_from(['md4', 'md5', 'sha1', 'md5-sha1']),
+       upper=st.lists(st.booleans(), max_size=8),
+       padding=st.sampled_from(['', ' ', '\t', '\n']))
+def test_deprecated_hash_rejected_in_any_spelling(name, upper, padding):
+    # Rejected even where the platform does not offer it at all (md4).
+    spelled = _respell(name, upper, padding)
+    with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
+        userprovided.hashing.hash_available(spelled)
+    with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
+        userprovided.hashing.calculate_string_hash('data', spelled)
+    with pytest.raises(userprovided.err.DeprecatedHashAlgorithm):
+        userprovided.hashing.calculate_file_hash('tests/testfile', spelled)
+
+
+def test_hash_error_messages_escape_the_name():
+    # The name is caller input: repr() keeps a newline out of the message.
+    with pytest.raises(ValueError) as excinfo:
+        userprovided.hashing.calculate_string_hash('data', 'no-such-hash\n')
+    assert '\n' not in str(excinfo.value)
+    assert "'no-such-hash\\n'" in str(excinfo.value)

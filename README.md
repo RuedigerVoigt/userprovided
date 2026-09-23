@@ -823,7 +823,7 @@ The address has to be ASCII. An internationalized domain is accepted in its puny
 
 ### Check Hash Availability
 
-You can check whether a specific hash method is available. This will raise a DeprecatedHashAlgorithm exception for `MD5` and `SHA1` *even if they are available*, because they are deprecated.
+You can check whether a specific hash method is available. This will raise a DeprecatedHashAlgorithm exception for `MD4`, `MD5` and `SHA1` *even if they are available*, because they are deprecated.
 
 ```python
 print(userprovided.hashing.hash_available('md5'))
@@ -887,7 +887,7 @@ userprovided.hashing.calculate_string_hash('example data', encoding='utf-8')
 
 This is a generic hash utility for non-security scenarios only. For security-sensitive applications, use proper cryptographic libraries with salting, key derivation functions (like bcrypt, scrypt, or Argon2), or HMAC.
 
-The function supports the same hash methods as `calculate_file_hash`: SHA224, SHA256 (default), SHA384, SHA512, SHA3 variants, BLAKE2 variants, and other algorithms available in hashlib, but rejects deprecated algorithms (MD5, SHA1).
+The function supports the same hash methods as `calculate_file_hash`: SHA224, SHA256 (default), SHA384, SHA512, SHA3 variants, BLAKE2 variants, and other algorithms available in hashlib, but rejects deprecated algorithms (MD4, MD5, SHA1).
 
 ## Handle Calendar Dates
 
@@ -940,7 +940,7 @@ The `userprovided.err` module defines the exceptions this package raises:
 | `ValidationError` | `ValueError` | A [strict validator](#tolerant-vs-strict-validators) rejects a user-supplied value instead of falling back to a default. |
 | `ContradictoryParameters` | `ValueError` | Parameters contradict each other, like dropping query keys while leaving the query part unchanged. |
 | `QueryKeyConflict` | — | A URL query part repeats a key with conflicting values. |
-| `DeprecatedHashAlgorithm` | — | MD5 or SHA1 was requested, even if available on the system. |
+| `DeprecatedHashAlgorithm` | — | MD4, MD5 or SHA1 was requested, even if available on the system. |
 | `HashMismatch` | `ValueError` | A file's hash does not match the expected value. |
 
 Every exception inherits from `UserprovidedException`, so one handler catches

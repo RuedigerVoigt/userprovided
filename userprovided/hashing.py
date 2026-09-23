@@ -24,8 +24,14 @@ def _hash_is_deprecated(hash_method: str) -> bool:
     Returns:
         True if the hash method is deprecated, False otherwise.
     """
-    deprecated_algorithms = {'md5', 'sha1', 'md5-sha1'}
+    # md4 is broken worse than md5; OpenSSL offers it with the legacy provider.
+    deprecated_algorithms = {'md4', 'md5', 'sha1', 'md5-sha1'}
     return hash_method.lower() in deprecated_algorithms
+
+
+def _clean_hash_name(hash_method: str) -> str:
+    """Return the hash name stripped and lowercased, as hashlib lists it."""
+    return hash_method.strip().lower()
 
 
 def hash_available(hash_method: str,
@@ -38,8 +44,9 @@ def hash_available(hash_method: str,
 
     Args:
         hash_method: Name of the hash algorithm to check (e.g., 'sha256').
+            Case and surrounding whitespace are ignored.
         fail_on_deprecated: If True, raises exception for deprecated algorithms
-            like MD5 and SHA1. Defaults to True.
+            like MD4, MD5 and SHA1. Defaults to True.
 
     Returns:
         True if the hash method is available and allowed, False otherwise.
@@ -55,18 +62,20 @@ def hash_available(hash_method: str,
     if not isinstance(hash_method, str):
         raise TypeError('hash_method must be a string.')
 
-    if not hash_method.strip():
+    hash_method = _clean_hash_name(hash_method)
+    if not hash_method:
         raise ValueError('No hash method provided')
-    hash_method = hash_method.strip()
 
     # Is the chosen method available and supported?
 
     if fail_on_deprecated:
         if _hash_is_deprecated(hash_method):
             raise err.DeprecatedHashAlgorithm(
-                f'The supplied hash method {hash_method} is deprecated!')
+                f'The supplied hash method {hash_method!r} is deprecated!')
 
-    if hash_method in hashlib.algorithms_available:
+    # Compared lowercased on both sides: 'SHA256' is the same algorithm, and
+    # hashlib.new() is not case-insensitive for all of them ('SHA3_256').
+    if hash_method in {name.lower() for name in hashlib.algorithms_available}:
         logging.debug('Hash method %r is available.', hash_method)
         return True
     return False
@@ -97,22 +106,27 @@ def _new_hash(hash_method: str) -> 'hashlib._Hash':
     if not isinstance(hash_method, str):
         raise TypeError('hash_method must be a string.')
 
-    if _hash_is_deprecated(hash_method):
+    # Cleaned once and used for every step below: hash_available() used to
+    # strip the name, but hashlib.new() got it unstripped (' sha256').
+    name = _clean_hash_name(hash_method)
+
+    if _hash_is_deprecated(name):
         raise err.DeprecatedHashAlgorithm(
             'Deprecated hash method not supported')
 
-    if not hash_available(hash_method):
-        raise ValueError(f"Hash method {hash_method} not available on system.")
+    if not hash_available(name):
+        raise ValueError(f"Hash method {hash_method!r} not available on system.")
 
     try:
-        hash_object = hashlib.new(hash_method)
+        hash_object = hashlib.new(name)
     except ValueError as e:
-        raise ValueError(f"Hash method {hash_method} not supported: {e}") from e
+        raise ValueError(
+            f"Hash method {hash_method!r} not supported: {e}") from e
 
     if _hash_is_deprecated(hash_object.name):
         raise err.DeprecatedHashAlgorithm(
-            f"Hash method '{hash_method}' resolves to "
-            f"deprecated algorithm '{hash_object.name}'")
+            f"Hash method {hash_method!r} resolves to "
+            f"deprecated algorithm {hash_object.name!r}")
 
     return hash_object
 
@@ -130,7 +144,8 @@ def calculate_file_hash(file_path: pathlib.Path | str,
         file_path: Path to the file to hash. Can be string or Path object.
         hash_method: Hash algorithm to use. Supports all algorithms available
             in hashlib (sha224, sha256, sha384, sha512, sha3_*, blake2*, etc.)
-            excluding deprecated algorithms (MD5, SHA1). Defaults to 'sha256'.
+            excluding deprecated algorithms (MD4, MD5, SHA1). Case and
+            surrounding whitespace are ignored. Defaults to 'sha256'.
         expected_hash: Expected hash value for verification. Compared
             case-insensitively and in constant time, ignoring surrounding
             whitespace. A mismatch raises HashMismatch. Only None skips the
@@ -143,7 +158,7 @@ def calculate_file_hash(file_path: pathlib.Path | str,
         Hexadecimal string representation of the file's hash digest.
 
     Raises:
-        DeprecatedHashAlgorithm: If hash_method is MD5 or SHA1.
+        DeprecatedHashAlgorithm: If hash_method is MD4, MD5 or SHA1.
         HashMismatch: If the calculated hash does not match expected_hash.
             Subclasses ValueError, so it is caught by handlers for the plain
             ValueError this function raised before.
@@ -190,7 +205,7 @@ def calculate_file_hash(file_path: pathlib.Path | str,
         if not normalized.isascii() or not hmac.compare_digest(normalized,
                                                                calculated_hash):
             mismatch_message = ("Mismatch between calculated and expected " +
-                                f"{hash_method} hash for {file_path}")
+                                f"{hash_method!r} hash for {file_path!r}")
             logging.debug('Mismatch between calculated and expected '
                           '%r hash for %r', hash_method, file_path)
             raise err.HashMismatch(mismatch_message)
@@ -215,7 +230,8 @@ def calculate_string_hash(data: str,
         data: String data to hash.
         hash_method: Hash algorithm to use. Supports algorithms available in
             `hashlib` (sha224, sha256, sha384, sha512, sha3_*, blake2*, etc.)
-            excluding deprecated algorithms (MD5, SHA1). Defaults to 'sha256'.
+            excluding deprecated algorithms (MD4, MD5, SHA1). Case and
+            surrounding whitespace are ignored. Defaults to 'sha256'.
         encoding: Text encoding to use when converting string to bytes
             (for this helper we only accept text input). Defaults to 'utf-8'.
 
@@ -223,7 +239,7 @@ def calculate_string_hash(data: str,
         Hexadecimal string representation of the hash digest.
 
     Raises:
-        DeprecatedHashAlgorithm: If hash_method is MD5 or SHA1.
+        DeprecatedHashAlgorithm: If hash_method is MD4, MD5 or SHA1.
         ValueError: If hash method is not supported or data is empty.
         TypeError: If data or hash_method is not a string.
         UnicodeEncodeError: If data cannot be encoded with specified encoding.

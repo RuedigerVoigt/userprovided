@@ -26,7 +26,7 @@ class DeprecatedHashAlgorithm(UserprovidedException):
     """Raised when attempting to use deprecated hash algorithms.
 
     This exception is thrown when trying to use cryptographically weak or
-    deprecated hashing algorithms like MD5 or SHA1 for security reasons.
+    deprecated hashing algorithms like MD4, MD5 or SHA1 for security reasons.
     """
 
 
