@@ -890,3 +890,41 @@ def test_determine_file_extension_ignores_any_parameters(parameters):
     assert userprovided.url.determine_file_extension(
         'https://example.com/page',
         f"application/pdf;{parameters}") == '.pdf'
+
+
+# Tab, LF and CR are missing: urlparse and the WHATWG parser both drop them.
+_FORBIDDEN_IN_HOST = st.sampled_from(
+    [' ', '\x00', '\x01', '\x0b', '\x1f', '\x7f', '<', '>', '\\', '^', '|',
+     '\N{NO-BREAK SPACE}', '\N{IDEOGRAPHIC SPACE}'])
+_LABEL = st.from_regex(r'[a-z0-9]{1,10}', fullmatch=True)
+
+
+@given(before=_LABEL, char=_FORBIDDEN_IN_HOST, after=_LABEL)
+def test_forbidden_host_character_is_rejected(before, char, after):
+    url = f'https://{before}{char}{after}.com/path'
+    assert userprovided.url.is_url(url) is False
+    with pytest.raises(ValueError):
+        userprovided.url.normalize_url(url)
+    with pytest.raises(ValueError, match='forbidden character'):
+        userprovided.url.extract_domain(url)
+    assert userprovided.url.extract_tld(url) == ''
+    assert userprovided.url.url_matches_domain(url, f'{after}.com') is False
+
+
+@pytest.mark.parametrize('url', ['http:// /', 'http://\N{IDEOGRAPHIC SPACE}/'])
+def test_whitespace_only_host_is_rejected(url):
+    # extract_domain returned '' for these.
+    assert userprovided.url.is_url(url) is False
+    with pytest.raises(ValueError):
+        userprovided.url.extract_domain(url)
+
+
+@pytest.mark.parametrize('url', [
+    'https://-bad-.com/',       # no hyphen check in the WHATWG host parser
+    'https://ex_ample.com/',
+    'https://ex%61mple.com/',   # percent-decoded by the host parser
+    'https://example.com \t\n',
+])
+def test_valid_unusual_hosts_stay_valid(url):
+    assert userprovided.url.is_url(url) is True
+    assert userprovided.url.extract_domain(url)

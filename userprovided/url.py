@@ -24,6 +24,10 @@ logger = logging.getLogger(__name__)
 # Accepting arbitrarily long strings risks slow regex processing and memory use.
 _MAX_URL_LENGTH = 2048
 _TRAILING_DOTS_AND_SPACE = re.compile(r'[\s.]+\Z')
+# Forbidden domain code points of the WHATWG URL Standard that urlparse can
+# leave in a hostname, plus all Unicode whitespace: IDNA maps characters like
+# U+3000 to a space. '%' is allowed, the host parser percent-decodes it.
+_FORBIDDEN_HOST_CHAR = re.compile(r'[\s\x00-\x1f\x7f<>\\^|]')
 
 # Known 2-part TLDs (country code second-level domains).
 # This is a hand-maintained subset of the most common ones, because full
@@ -92,7 +96,7 @@ def _host_from_url(url: str) -> str | None:
         host = urllib.parse.urlparse(url.strip()).hostname
     except Exception:
         return None
-    if not host:
+    if not host or _FORBIDDEN_HOST_CHAR.search(host):
         return None
     # A single trailing dot denotes the DNS root and is resolved away, so
     # "localhost." reaches the same host as "localhost". Without this the
@@ -107,6 +111,8 @@ def is_url(url: str,
 
     Performs basic structural validation of a URL including scheme and
     network location presence. Optionally restricts to specific schemes.
+    A host containing whitespace, control characters or one of
+    ``< > \\ ^ |`` is invalid. Surrounding whitespace is ignored.
 
     Args:
         url: The URL string to validate.
@@ -128,7 +134,9 @@ def is_url(url: str,
         return False
 
     try:
-        parsed = urllib.parse.urlparse(url)
+        # strip: urlparse drops leading whitespace itself, but keeps trailing
+        # whitespace in the hostname ('http://example.com ').
+        parsed = urllib.parse.urlparse(url.strip())
     except ValueError:
         # urllib raises for malformed input like an unclosed IPv6 literal
         # ('http://[::1'). Classifying a URL as invalid is what this function
@@ -153,6 +161,9 @@ def is_url(url: str,
     # 'http://user@/path' and 'http://:8080/path' have one but no host.
     if parsed.hostname is None:
         logger.debug('URL has no host.')
+        return False
+    if _FORBIDDEN_HOST_CHAR.search(parsed.hostname):
+        logger.debug('URL host contains a forbidden character.')
         return False
 
     try:
@@ -641,7 +652,8 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
 
     Raises:
         TypeError: If url is not a string.
-        ValueError: If url is empty or domain extraction fails
+        ValueError: If url is empty, its host contains whitespace, control
+            characters or one of ``< > \\ ^ |``, or domain extraction fails.
 
     Examples:
         >>> extract_domain('https://www.example.com:8080/path')
@@ -678,7 +690,11 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
         # as if it were a domain.
         raise ValueError("Could not extract domain from URL.")
 
-    domain = domain.lower().strip()
+    if _FORBIDDEN_HOST_CHAR.search(domain):
+        # A host of spaces only was stripped to '' and returned as a domain.
+        raise ValueError("URL host contains a forbidden character.")
+
+    domain = domain.lower()
 
     if drop_subdomain:
         domain = _extract_registrable_domain(domain, TWO_PART_TLDS)
@@ -739,14 +755,14 @@ def extract_tld(url: str) -> str:
         # could be determined" with an empty string instead of raising.
         return ''
 
-    if not domain:
+    if not domain or _FORBIDDEN_HOST_CHAR.search(domain):
         # netloc is deliberately not used as a fallback -- see extract_domain.
         return ''
 
     # rstrip: a trailing root-label dot ('example.com.') is legal in a fully
     # qualified name and would otherwise be counted as an empty final label,
     # making every such host report '.' as its TLD.
-    domain = domain.lower().strip().rstrip('.')
+    domain = domain.lower().rstrip('.')
 
     if not domain:
         # The host consisted of dots only.

@@ -220,3 +220,11 @@ def test_ip_long_url_does_not_hide_the_host():
     # A long URL to a public host stays safe.
     assert userprovided.ip.is_potential_ssrf_target(
         f'https://example.com/?x={padding}') is False
+
+
+@pytest.mark.parametrize('url', [
+    'http://127.0.0.1 /', 'http:// /', 'http://a<b.com/'])
+def test_ip_forbidden_host_character_is_ssrf_target(url):
+    # The host cannot be determined, so the guard must not call it safe.
+    assert userprovided.ip.is_potential_ssrf_target(url) is True
+    assert userprovided.ip.is_loopback(url) is False
