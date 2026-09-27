@@ -1,5 +1,10 @@
 # Changelog / History
 
+## Upcoming
+
+* Security:
+  * Bumped `github/codeql-action` to 4.38.1. Dependabot now groups its sub-actions into one PR, because mixed versions break the CodeQL job.
+
 ## Version 3.0.0 (2026-09-23)
 
 * Version support:
