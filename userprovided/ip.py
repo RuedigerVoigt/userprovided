@@ -13,6 +13,8 @@ import logging
 from userprovided.url import _host_from_url
 
 
+logger = logging.getLogger(__name__)
+
 # RFC 6598 carrier-grade NAT ("shared address space"). Python's
 # ``ipaddress.is_private`` does NOT classify this range as private, but it is
 # routinely used inside cloud and carrier networks, so it is a realistic
@@ -226,18 +228,18 @@ def is_potential_ssrf_target(url: str) -> bool:
         # Unlike the predicates above, this is a guard: callers fetch the URL
         # when it answers False. "I cannot tell" must therefore not be
         # answered with "safe".
-        logging.debug('No host to check, treating as potential SSRF target: %r',
-                      url)
+        logger.debug('No host to check, treating as potential SSRF target: %r',
+                     url)
         return True
 
     if is_loopback(url) or is_private(url) or is_link_local(url):
-        logging.debug('Potential SSRF target detected: %r', url)
+        logger.debug('Potential SSRF target detected: %r', url)
         return True
 
     # RFC 6598 carrier-grade NAT is not covered by is_private above.
     ip = _parse_ip(host)
     if ip is not None and ip in _CGNAT_NETWORK:
-        logging.debug('Potential SSRF target detected (CGNAT): %r', url)
+        logger.debug('Potential SSRF target detected (CGNAT): %r', url)
         return True
 
     return False

@@ -4,6 +4,8 @@
 
 * Security:
   * Bumped `github/codeql-action` to 4.38.1. Dependabot now groups its sub-actions into one PR, because mixed versions break the CodeQL job.
+* Bug fixes:
+  * All modules log to the `userprovided.*` loggers instead of the root logger. Logging to the root logger could call `logging.basicConfig()` and override the host application's logging setup.
 
 ## Version 3.0.0 (2026-09-23)
 

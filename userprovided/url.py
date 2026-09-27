@@ -17,6 +17,8 @@ import urllib.parse
 from userprovided import err
 
 
+logger = logging.getLogger(__name__)
+
 # Practical upper bound for URL length. No hard RFC limit exists, but most
 # HTTP servers and browsers reject URLs beyond 2048–8192 characters.
 # Accepting arbitrarily long strings risks slow regex processing and memory use.
@@ -122,7 +124,7 @@ def is_url(url: str,
         raise TypeError('URL must be a string.')
 
     if len(url) > _MAX_URL_LENGTH:
-        logging.debug('URL exceeds maximum length of %d characters.', _MAX_URL_LENGTH)
+        logger.debug('URL exceeds maximum length of %d characters.', _MAX_URL_LENGTH)
         return False
 
     try:
@@ -131,11 +133,11 @@ def is_url(url: str,
         # urllib raises for malformed input like an unclosed IPv6 literal
         # ('http://[::1'). Classifying a URL as invalid is what this function
         # is for, so return False instead of raising at the caller.
-        logging.debug('URL could not be parsed.')
+        logger.debug('URL could not be parsed.')
         return False
 
     if parsed.scheme == '':
-        logging.debug('The URL has no scheme (like http or https)')
+        logger.debug('The URL has no scheme (like http or https)')
         return False
     if require_specific_schemes:
         if isinstance(require_specific_schemes, str):
@@ -144,13 +146,13 @@ def is_url(url: str,
             # tuple — would accept http URLs. Treat it as one scheme name.
             require_specific_schemes = (require_specific_schemes,)
         if parsed.scheme not in require_specific_schemes:
-            logging.debug('Scheme %r not supported.', parsed.scheme)
+            logger.debug('Scheme %r not supported.', parsed.scheme)
             return False
 
     # hostname, not netloc: netloc also carries userinfo and port, so
     # 'http://user@/path' and 'http://:8080/path' have one but no host.
     if parsed.hostname is None:
-        logging.debug('URL has no host.')
+        logger.debug('URL has no host.')
         return False
 
     try:
@@ -159,7 +161,7 @@ def is_url(url: str,
         # or a port above 65535) would be reported as valid.
         parsed.port
     except ValueError:
-        logging.debug('URL has an invalid port.')
+        logger.debug('URL has an invalid port.')
         return False
 
     return True
@@ -208,7 +210,7 @@ def _normalize_query_part(query: str,
                     if keep[key] != value:
                         raise err.QueryKeyConflict(
                             'Duplicate URL query key with conflicting values')
-                    logging.debug(
+                    logger.debug(
                         'Duplicate key in URL query part, but no conflict.')
                 elif drop_keys and key in drop_keys:
                     # i.e. the key is in the list of keys to drop
@@ -392,7 +394,7 @@ def normalize_hostname(host: str) -> str:
         try:
             encoded = candidate.encode('idna').decode('ascii')
         except UnicodeError:
-            logging.debug(
+            logger.debug(
                 'Hostname could not be IDNA-encoded. '
                 'Returning the lowercased unicode form.')
         else:
@@ -501,7 +503,7 @@ def determine_file_extension(url: str,
         # the server provides a mime type.
         extension = mimetypes.guess_extension(provided_mime_type)
         if extension is None:
-            logging.debug('No hint in URL and mime-type malformed for %r', url)
+            logger.debug('No hint in URL and mime-type malformed for %r', url)
             return '.unknown'
     elif type_by_url is not None and provided_mime_type is None:
         # There is a usable file extension in the URL, but the misconfigured
@@ -511,15 +513,15 @@ def determine_file_extension(url: str,
         # guessed a type once we got here and can guess a matching extension.
     elif type_by_url is None and provided_mime_type is None:
         # Neither the URL nor the server does hint to a extension
-        logging.debug('Neither URL %r nor mime-type %r suggests a '
-                      'file extension.', url, provided_mime_type)
+        logger.debug('Neither URL %r nor mime-type %r suggests a '
+                     'file extension.', url, provided_mime_type)
         return '.unknown'
     elif type_by_url != provided_mime_type:  # pragma: no branch
         # The suggestions contradict each other
-        logging.debug('The mime type %r suggested by the URL %r does not '
-                      'match the mime type supplied by the server (%r). '
-                      'Using the extension suggested by the URL.',
-                      type_by_url, url, provided_mime_type)
+        logger.debug('The mime type %r suggested by the URL %r does not '
+                     'match the mime type supplied by the server (%r). '
+                     'Using the extension suggested by the URL.',
+                     type_by_url, url, provided_mime_type)
         extension = mimetypes.guess_extension(type_by_url)  # type: ignore[arg-type]
 
     # Handle errors and irregularities in mimetypes:
@@ -559,7 +561,7 @@ def is_shortened_url(url: str) -> bool:
         they do not have random targets but the specific platform YouTube.
     """
     if not is_url(url):
-        logging.debug('Invalid URL provided to shortened URL check')
+        logger.debug('Invalid URL provided to shortened URL check')
         return False
 
     try:
@@ -604,7 +606,7 @@ def is_shortened_url(url: str) -> bool:
         return domain in shortener_domains
 
     except Exception:
-        logging.debug('Error parsing URL for shortened URL detection')
+        logger.debug('Error parsing URL for shortened URL detection')
         return False
 
 
@@ -888,7 +890,7 @@ def url_matches_domain(url: str, domain: str) -> bool:
     try:
         url_domain = extract_domain(url, drop_subdomain=True)
     except ValueError:
-        logging.debug('Could not extract domain from URL: %r', url)
+        logger.debug('Could not extract domain from URL: %r', url)
         return False
 
     return url_domain == domain

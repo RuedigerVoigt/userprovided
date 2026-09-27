@@ -13,6 +13,8 @@ import re
 from userprovided import err
 
 
+logger = logging.getLogger(__name__)
+
 # Compiled regex patterns for performance optimization
 _AWS_S3_BUCKET_CHARS = re.compile(r"[a-z0-9\-\.]*")
 _AWS_S3_BUCKET_IPV4 = re.compile(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
@@ -238,7 +240,7 @@ def validate_dict_keys(dict_to_check: dict,
         if len(necessary_keys - allowed_keys) != 0:
             msg = ("Contradiction: Not all necessary keys " +
                    "are in the allowed keys set!")
-            logging.error(msg)
+            logger.error(msg)
             raise ValueError(msg)
 
     # Get all keys in the dictionary:
@@ -254,19 +256,19 @@ def validate_dict_keys(dict_to_check: dict,
             # repr() the key: it comes from the caller's dictionary and
             # may contain newlines or control characters.
             msg = f"Unknown key {key!r} in {dict_name!r}"
-            logging.error('Unknown key %r in %r', key, dict_name)
+            logger.error('Unknown key %r in %r', key, dict_name)
             raise ValueError(msg)
-    logging.debug('No unknown keys found.')
+    logger.debug('No unknown keys found.')
 
     # Check if all necessary keys are present:
     if necessary_keys:
         for key in necessary_keys:
             if key not in found_keys:
                 msg = f"Necessary key {key!r} missing in {dict_name!r}"
-                logging.error('Necessary key %r missing in %r',
-                              key, dict_name)
+                logger.error('Necessary key %r missing in %r',
+                             key, dict_name)
                 raise ValueError(msg)
-        logging.debug('All necessary keys found.')
+        logger.debug('All necessary keys found.')
 
     return True
 
@@ -295,7 +297,7 @@ def keys_neither_none_nor_empty(dict_to_check: dict) -> bool:
         raise ValueError('This dictionary is empty')
 
     def error_found() -> None:
-        logging.debug("Dictionary contains key that is either empty or None!")
+        logger.debug("Dictionary contains key that is either empty or None!")
 
     for _, value in dict_to_check.items():
         if value is None:
@@ -368,20 +370,20 @@ def numeric_in_range(parameter_name: str,
             "Fallback value outside the allowed range.")
 
     if math.isnan(given_value):
-        logging.debug("Value of %r is NaN. Falling back to %r.",
-                      parameter_name, fallback_value)
+        logger.debug("Value of %r is NaN. Falling back to %r.",
+                     parameter_name, fallback_value)
         return fallback_value
 
     if given_value < minimum_value:
-        logging.debug("Value of %r is below the minimum allowed. "
-                      "Falling back to %r.",
-                      parameter_name, fallback_value)
+        logger.debug("Value of %r is below the minimum allowed. "
+                     "Falling back to %r.",
+                     parameter_name, fallback_value)
         return fallback_value
 
     if given_value > maximum_value:
-        logging.debug("Value of %r is above the maximum allowed. "
-                      "Falling back to %r.",
-                      parameter_name, fallback_value)
+        logger.debug("Value of %r is above the maximum allowed. "
+                     "Falling back to %r.",
+                     parameter_name, fallback_value)
         return fallback_value
 
     # passed all checks:
@@ -447,9 +449,9 @@ def is_port(port_number: int) -> bool:
         raise TypeError('Port has to be an integer.')
 
     if 0 <= port_number <= 65535:
-        logging.debug('Port within range')
+        logger.debug('Port within range')
         return True
-    logging.debug('Port not within valid range from 0 to 65535')
+    logger.debug('Port not within valid range from 0 to 65535')
     return False
 
 
@@ -496,10 +498,10 @@ def string_in_range(string_to_check: str,
     if strip_string:
         string_to_check = string_to_check.strip()
     if len(string_to_check) < minimum_length:
-        logging.debug("String length below minimum length.")
+        logger.debug("String length below minimum length.")
         return False
     if len(string_to_check) > maximum_length:
-        logging.debug("String longer than maximum.")
+        logger.debug("String longer than maximum.")
         return False
     return True
 
@@ -529,52 +531,52 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
     # Lengthy code which could be written as a single regular expression.
     # However written in this way to provide useful error messages.
     if len(bucket_name) < 3:
-        logging.debug(
+        logger.debug(
             'Any AWS bucket name has to be at least 3 characters long.')
         return False
     if len(bucket_name) > 63:
-        logging.debug(
+        logger.debug(
             'The AWS bucket name exceeds the maximum length of 63 characters.')
         return False
     # fullmatch, not match: '$' also matches in front of a trailing newline,
     # so 'my-bucket\n' would pass an anchored match.
     if not _AWS_S3_BUCKET_CHARS.fullmatch(bucket_name):
-        logging.debug('The AWS bucket name contains invalid characters.')
+        logger.debug('The AWS bucket name contains invalid characters.')
         return False
     if _AWS_S3_BUCKET_IPV4.fullmatch(bucket_name):
         # AWS forbids a name "formatted as an IP address", i.e. the whole name
         # is one. fullmatch, not match: anchored only at the start it would
         # also reject '1.2.3.45abc', which is a legal bucket name.
         # No need to check IPv6 as the colon is not an allowed character.
-        logging.debug('An AWS bucket name must not resemble an IP address.')
+        logger.debug('An AWS bucket name must not resemble an IP address.')
         return False
     # Check for invalid start/end characters
     if bucket_name.startswith('.') or bucket_name.startswith('-'):
-        logging.debug('AWS bucket name cannot start with dot or hyphen.')
+        logger.debug('AWS bucket name cannot start with dot or hyphen.')
         return False
     if bucket_name.endswith('.') or bucket_name.endswith('-'):
-        logging.debug('AWS bucket name cannot end with dot or hyphen.')
+        logger.debug('AWS bucket name cannot end with dot or hyphen.')
         return False
 
     # Check for forbidden prefixes
     forbidden_prefixes = ('xn--', 'sthree-', 'amzn-s3-demo-')
     if bucket_name.startswith(forbidden_prefixes):
-        logging.debug('AWS bucket name cannot start with reserved prefixes: %r',
-                      ', '.join(forbidden_prefixes))
+        logger.debug('AWS bucket name cannot start with reserved prefixes: %r',
+                     ', '.join(forbidden_prefixes))
         return False
 
     # Check for forbidden suffixes
     forbidden_suffixes = ('-s3alias', '--ol-s3', '.mrap', '--x-s3', '--table-s3')
     if bucket_name.endswith(forbidden_suffixes):
-        logging.debug('AWS bucket name cannot end with reserved suffixes: %r',
-                      ', '.join(forbidden_suffixes))
+        logger.debug('AWS bucket name cannot end with reserved suffixes: %r',
+                     ', '.join(forbidden_suffixes))
         return False
 
     # Only two adjacent periods are forbidden. A hyphen next to a period
     # ('my-.bucket') was banned by the legacy US East rules, but is legal
     # under the current ones, which constrain only the whole name's ends.
     if '..' in bucket_name:
-        logging.debug('AWS bucket name cannot contain consecutive dots.')
+        logger.debug('AWS bucket name cannot contain consecutive dots.')
         return False
 
     return True

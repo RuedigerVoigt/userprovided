@@ -8,6 +8,7 @@ Released under the Apache License 2.0
 """
 
 from importlib.metadata import version
+import logging
 
 from userprovided import date
 from userprovided import err
@@ -19,6 +20,10 @@ from userprovided import mail
 from userprovided import parameters
 from userprovided import url
 
+
+# The host application decides where records go; without a handler here,
+# they would reach logging's last-resort stderr handler.
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __version__ = version("userprovided")
 __author__ = "Rüdiger Voigt"

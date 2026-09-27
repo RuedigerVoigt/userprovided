@@ -863,7 +863,7 @@ def test_log_records_escape_control_characters(caplog):
     """
     import logging
     forged = 'https://example.com/\nERROR:root:transfer approved'
-    with caplog.at_level(logging.DEBUG, logger='root'):
+    with caplog.at_level(logging.DEBUG, logger='userprovided'):
         userprovided.ip.is_potential_ssrf_target('http://127.0.0.1/')
         userprovided.url.url_matches_domain(forged, 'example.com')
     for record in caplog.records:

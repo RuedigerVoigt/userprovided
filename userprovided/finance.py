@@ -9,6 +9,9 @@ Released under the Apache License 2.0
 import logging
 
 
+logger = logging.getLogger(__name__)
+
+
 def _iban_mod97(rearranged: str) -> int:
     """Compute the ISO 7064 mod-97 value of a rearranged IBAN.
 
@@ -83,29 +86,29 @@ def is_iban(iban_candidate: str) -> bool:
 
     # Absolute ISO 13616 bounds (shortest is NO with 15, spec maximum 34).
     if not 15 <= len(iban) <= 34:
-        logging.debug('IBAN length outside the allowed range (15-34).')
+        logger.debug('IBAN length outside the allowed range (15-34).')
         return False
 
     # Positions 1-2: two ASCII letters (country code).
     # isalpha() alone would accept Unicode like umlauts (ä, ö, ü).
     country = iban[:2]
     if not (country.isascii() and country.isalpha()):
-        logging.debug('IBAN must start with a two letter country code.')
+        logger.debug('IBAN must start with a two letter country code.')
         return False
 
     # Positions 3-4: two check digits.
     if not iban[2:4].isdigit():
-        logging.debug('IBAN check digits must be numeric.')
+        logger.debug('IBAN check digits must be numeric.')
         return False
 
     # The whole IBAN must be ASCII alphanumeric (guards the BBAN).
     if not (iban.isascii() and iban.isalnum()):
-        logging.debug('IBAN must be alphanumeric.')
+        logger.debug('IBAN must be alphanumeric.')
         return False
 
     # Move the first four characters to the end, then validate mod-97.
     if _iban_mod97(iban[4:] + iban[:4]) != 1:
-        logging.debug('IBAN mod-97 checksum verification failed.')
+        logger.debug('IBAN mod-97 checksum verification failed.')
         return False
 
     return True
@@ -186,28 +189,28 @@ def is_isin(isin_candidate: str) -> bool:
     isin_candidate = isin_candidate.strip().upper()
 
     if len(isin_candidate) != 12:
-        logging.debug('ISIN must be exactly 12 characters.')
+        logger.debug('ISIN must be exactly 12 characters.')
         return False
 
     # Positions 1-2: two ASCII letters only.
     # isalpha() alone would accept Unicode like umlauts (ä, ö, ü).
     if not (isin_candidate[:2].isascii() and isin_candidate[:2].isalpha()):
-        logging.debug('ISIN must start with a two letter country code.')
+        logger.debug('ISIN must start with a two letter country code.')
         return False
 
     # Positions 3-11: nine ASCII alphanumeric characters only.
     # isalnum() alone would accept Unicode characters.
     if not (isin_candidate[2:11].isascii() and isin_candidate[2:11].isalnum()):
-        logging.debug('ISIN positions 3 to 11 must be alphanumeric.')
+        logger.debug('ISIN positions 3 to 11 must be alphanumeric.')
         return False
 
     # Position 12: single digit
     if not isin_candidate[11].isdigit():
-        logging.debug('Last position of an ISIN must be a digit for checksum.')
+        logger.debug('Last position of an ISIN must be a digit for checksum.')
         return False
 
     if not _luhn_check_isin(isin_candidate):
-        logging.debug('ISIN Luhn checksum verification failed.')
+        logger.debug('ISIN Luhn checksum verification failed.')
         return False
 
     return True

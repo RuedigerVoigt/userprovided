@@ -27,7 +27,7 @@ Specific instructions for these agents are found in the [AGENTS.md](AGENTS.md) f
 
 * Respect [PEP 8](https://peps.python.org/pep-0008/) style guidelines.
 * The use of type hints ([PEP 484](https://peps.python.org/pep-0484/)) is encouraged. Use modern [PEP 604](https://peps.python.org/pep-0604/) / [PEP 585](https://peps.python.org/pep-0585/) syntax (`X | None`, built-in generics like `list[str]`) rather than `typing.Optional`/`Union`/`List`.
-* Please provide useful log and error messages. Use `logging.debug` for handled validation failures so the library does not spam the host application's logs.
+* Please provide useful log and error messages. Log through the module's `logger = logging.getLogger(__name__)`, never the root logger (`logging.debug(...)`), and use `logger.debug` for handled validation failures so the library does not spam the host application's logs.
 * Docstrings are required for all functions and classes using [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings), with the `Args`, `Returns`, and `Raises` sections filled in where they apply.
 * Naming: `snake_case` for functions and variables, `CapWords` for classes, `UPPER_SNAKE` for constants.
 

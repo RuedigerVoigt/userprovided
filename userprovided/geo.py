@@ -10,6 +10,9 @@ import logging
 import math
 
 
+logger = logging.getLogger(__name__)
+
+
 def is_valid_coordinates(latitude: float | int | str,
                          longitude: float | int | str) -> bool:
     """Validate if latitude and longitude are within possible Earth ranges.
@@ -32,30 +35,30 @@ def is_valid_coordinates(latitude: float | int | str,
     """
     # Explicitly reject booleans (bool is a subclass of int)
     if isinstance(latitude, bool) or isinstance(longitude, bool):
-        logging.debug("Boolean passed as coordinate: lat=%r, lng=%r",
-                      latitude, longitude)
+        logger.debug("Boolean passed as coordinate: lat=%r, lng=%r",
+                     latitude, longitude)
         return False
 
     try:
         lat = float(latitude)
         lng = float(longitude)
     except (ValueError, TypeError):
-        logging.debug("Invalid coordinate format provided: lat=%r, lng=%r",
-                      latitude, longitude)
+        logger.debug("Invalid coordinate format provided: lat=%r, lng=%r",
+                     latitude, longitude)
         return False
 
     # Reject NaN and Infinity
     if not (math.isfinite(lat) and math.isfinite(lng)):
-        logging.debug("Non-finite coordinate(s): lat=%r, lng=%r", lat, lng)
+        logger.debug("Non-finite coordinate(s): lat=%r, lng=%r", lat, lng)
         return False
 
     if not (-90.0 <= lat <= 90.0):
-        logging.debug("Latitude %r is outside valid range (-90 to +90)", lat)
+        logger.debug("Latitude %r is outside valid range (-90 to +90)", lat)
         return False
 
     if not (-180.0 <= lng <= 180.0):
-        logging.debug("Longitude %r is outside valid range (-180 to +180)", lng)
+        logger.debug("Longitude %r is outside valid range (-180 to +180)", lng)
         return False
 
-    logging.debug("Coordinates validated: lat=%r, lng=%r", lat, lng)
+    logger.debug("Coordinates validated: lat=%r, lng=%r", lat, lng)
     return True

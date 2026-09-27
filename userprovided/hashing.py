@@ -15,6 +15,9 @@ import pathlib
 from userprovided import err
 
 
+logger = logging.getLogger(__name__)
+
+
 def _hash_is_deprecated(hash_method: str) -> bool:
     """Checks if a hash algorithm is deprecated for security reasons.
 
@@ -76,7 +79,7 @@ def hash_available(hash_method: str,
     # Compared lowercased on both sides: 'SHA256' is the same algorithm, and
     # hashlib.new() is not case-insensitive for all of them ('SHA3_256').
     if hash_method in {name.lower() for name in hashlib.algorithms_available}:
-        logging.debug('Hash method %r is available.', hash_method)
+        logger.debug('Hash method %r is available.', hash_method)
         return True
     return False
 
@@ -181,12 +184,12 @@ def calculate_file_hash(file_path: pathlib.Path | str,
             while chunk := file.read(65536):
                 hash_object.update(chunk)
     except FileNotFoundError:
-        logging.debug(
+        logger.debug(
             'Cannot calculate hash: File not found or not readable.',
             exc_info=True)
         raise
     except PermissionError:
-        logging.debug(
+        logger.debug(
             'Cannot calculate file hash: insufficient permissions.',
             exc_info=True)
         raise
@@ -206,8 +209,8 @@ def calculate_file_hash(file_path: pathlib.Path | str,
                                                                calculated_hash):
             mismatch_message = ("Mismatch between calculated and expected " +
                                 f"{hash_method!r} hash for {file_path!r}")
-            logging.debug('Mismatch between calculated and expected '
-                          '%r hash for %r', hash_method, file_path)
+            logger.debug('Mismatch between calculated and expected '
+                         '%r hash for %r', hash_method, file_path)
             raise err.HashMismatch(mismatch_message)
 
     return calculated_hash
@@ -255,11 +258,11 @@ def calculate_string_hash(data: str,
     try:
         byte_data = data.encode(encoding)
     except UnicodeEncodeError:
-        logging.debug('Cannot encode string with %r encoding', encoding)
+        logger.debug('Cannot encode string with %r encoding', encoding)
         raise
 
     hash_object.update(byte_data)
     calculated_hash = hash_object.hexdigest()
 
-    logging.debug('String hash calculated successfully using %r', hash_method)
+    logger.debug('String hash calculated successfully using %r', hash_method)
     return calculated_hash

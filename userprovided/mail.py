@@ -11,6 +11,8 @@ import logging
 import re
 
 
+logger = logging.getLogger(__name__)
+
 # Compiled regex pattern for performance optimization
 _EMAIL_PATTERN = re.compile(
     r"^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+"  # Local part start
@@ -49,27 +51,27 @@ def is_email(mailaddress: str) -> bool:
         raise TypeError('Email address must be a string')
 
     if not mailaddress or mailaddress == '':
-        logging.debug('No mail address supplied.')
+        logger.debug('No mail address supplied.')
         return False
 
     mailaddress = mailaddress.strip()
 
     # RFC 5321: max 254 characters total, max 64 for the local part
     if len(mailaddress) > 254:
-        logging.debug('Email address exceeds RFC 5321 maximum of 254 characters.')
+        logger.debug('Email address exceeds RFC 5321 maximum of 254 characters.')
         return False
     local_part = mailaddress.split('@')[0]
     if len(local_part) > 64:
-        logging.debug('Email local part exceeds RFC 5321 maximum of 64 characters.')
+        logger.debug('Email local part exceeds RFC 5321 maximum of 64 characters.')
         return False
 
     if not _EMAIL_PATTERN.match(mailaddress):
         # Use %r, not %s: this is rejected, attacker-controlled input that
         # may contain newlines or control characters. repr() escapes them
         # and prevents log injection / forged log lines.
-        logging.debug(
+        logger.debug(
             'The supplied mailaddress %r has an unknown format.', mailaddress)
         return False
 
-    logging.debug('%r seems to have a valid format', mailaddress)
+    logger.debug('%r seems to have a valid format', mailaddress)
     return True

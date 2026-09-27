@@ -12,6 +12,8 @@ import logging
 import re
 
 
+logger = logging.getLogger(__name__)
+
 # Compiled regex patterns for performance optimization.
 # [0-9], not \d: \d matches any Unicode digit, and the matched digits end up
 # in the returned ISO string ('July ٤, 1776' -> '1776-07-0٤').
@@ -58,13 +60,13 @@ def date_exists(year: int | str,
         month = int(month)
         day = int(day)
     except ValueError:
-        logging.debug('Could not convert date parts to integer.')
+        logger.debug('Could not convert date parts to integer.')
         return False
 
     try:
         datetime.datetime(year, month, day)
     except ValueError:
-        logging.debug('Provided date does not exist in the calendar.')
+        logger.debug('Provided date does not exist in the calendar.')
         return False
     return True
 
@@ -99,7 +101,7 @@ def date_en_long_to_iso(date_string: str) -> str:
         else:
             raise AttributeError('No date provided')
     except AttributeError:
-        logging.debug('Malformed date')
+        logger.debug('Malformed date')
         raise
 
     # add a zero to day if <10
@@ -124,7 +126,7 @@ def date_en_long_to_iso(date_string: str) -> str:
     except KeyError:
         # String for month matched the regular expression but is no
         # recognized month.
-        logging.debug('Do not recognize month.')
+        logger.debug('Do not recognize month.')
         raise
 
     if not date_exists(int(match_year), int(match_month), int(match_day)):
@@ -163,7 +165,7 @@ def date_de_long_to_iso(date_string: str) -> str:
         else:
             raise AttributeError('No date provided')
     except AttributeError:
-        logging.debug('Malformed date')
+        logger.debug('Malformed date')
         raise
 
     # add a zero to day if <10
@@ -188,7 +190,7 @@ def date_de_long_to_iso(date_string: str) -> str:
     except KeyError:
         # String for month matched the regular expression but is no
         # recognized month.
-        logging.debug('Do not recognize month.')
+        logger.debug('Do not recognize month.')
         raise
 
     if not date_exists(int(match_year), int(match_month), int(match_day)):

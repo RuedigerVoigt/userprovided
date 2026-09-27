@@ -115,7 +115,7 @@ def test_mail_is_email_log_injection(caplog):
     # a second log line: %r escapes the newline so the log record stays on
     # one line.
     malicious = 'a\n2026-06-14 ERROR forged log line@example.com'
-    with caplog.at_level('DEBUG', logger='root'):
+    with caplog.at_level('DEBUG', logger='userprovided'):
         assert userprovided.mail.is_email(malicious) is False
     messages = [rec.getMessage() for rec in caplog.records]
     assert any('has an unknown format' in m for m in messages)
