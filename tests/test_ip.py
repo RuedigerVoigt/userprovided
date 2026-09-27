@@ -225,8 +225,20 @@ def test_ip_long_url_does_not_hide_the_host():
 @pytest.mark.parametrize('url', [
     'http://127.0.0.1 /', 'http:// /', 'http://a<b.com/',
     # A browser connects to 127.0.0.1, urlparse reports example.com.
-    'https://127.0.0.1\\@example.com/'])
+    'https://127.0.0.1\\@example.com/',
+    # A browser percent-decodes these hosts to internal targets.
+    'http://%31%32%37.0.0.1/', 'http://%31%36%39.254.169.254/',
+    'http://loc%61lhost/', 'http://127.0.0.1%2e/', 'http://%5b::1%5d/',
+    # Other clients may decode too.
+    'gopher://%31%32%37.0.0.1/'])
 def test_ip_forbidden_host_character_is_ssrf_target(url):
     # The host cannot be determined, so the guard must not call it safe.
     assert userprovided.ip.is_potential_ssrf_target(url) is True
     assert userprovided.ip.is_loopback(url) is False
+
+
+def test_ip_zone_id_stays_link_local():
+    # In an IPv6 literal, '%' starts a zone ID instead of an escape.
+    url = 'http://[fe80::1%25eth0]/'
+    assert userprovided.ip.is_link_local(url) is True
+    assert userprovided.ip.is_potential_ssrf_target(url) is True

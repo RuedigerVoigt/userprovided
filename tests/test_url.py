@@ -922,7 +922,6 @@ def test_whitespace_only_host_is_rejected(url):
 @pytest.mark.parametrize('url', [
     'https://-bad-.com/',       # no hyphen check in the WHATWG host parser
     'https://ex_ample.com/',
-    'https://ex%61mple.com/',   # percent-decoded by the host parser
     'https://example.com \t\n',
 ])
 def test_valid_unusual_hosts_stay_valid(url):
@@ -950,3 +949,25 @@ def test_backslash_in_authority_is_rejected(scheme, real, claimed):
 ])
 def test_backslash_outside_special_authority_stays_valid(url):
     assert userprovided.url.is_url(url) is True
+
+
+@given(scheme=st.sampled_from(['ftp', 'file', 'http', 'https', 'ws', 'wss']),
+       before=st.from_regex(r'[a-z0-9]{0,10}', fullmatch=True),
+       encoded=st.characters(min_codepoint=0x21, max_codepoint=0x7e),
+       after=_LABEL)
+def test_percent_encoded_host_is_rejected(scheme, before, encoded, after):
+    # A browser decodes the host, so 'ex%61mple.com' goes to example.com.
+    url = f'{scheme}://{before}%{ord(encoded):02x}{after}.com/'
+    decoded = f'{before}{encoded}{after}.com'
+    assert userprovided.url.is_url(url) is False
+    with pytest.raises(ValueError):
+        userprovided.url.normalize_url(url)
+    with pytest.raises(ValueError, match='percent-encoded'):
+        userprovided.url.extract_domain(url)
+    assert userprovided.url.extract_tld(url) == ''
+    assert userprovided.url.url_matches_domain(url, decoded) is False
+
+
+def test_percent_in_host_of_other_scheme_stays_valid():
+    # Only special schemes percent-decode the host.
+    assert userprovided.url.is_url('foo://ex%61mple/') is True
