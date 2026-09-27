@@ -28,6 +28,8 @@ _TRAILING_DOTS_AND_SPACE = re.compile(r'[\s.]+\Z')
 # leave in a hostname, plus all Unicode whitespace: IDNA maps characters like
 # U+3000 to a space. '%' is allowed, the host parser percent-decodes it.
 _FORBIDDEN_HOST_CHAR = re.compile(r'[\s\x00-\x1f\x7f<>\\^|]')
+# WHATWG "special" schemes: their parser reads '\' as '/'.
+_SPECIAL_SCHEMES = frozenset({'ftp', 'file', 'http', 'https', 'ws', 'wss'})
 
 # Known 2-part TLDs (country code second-level domains).
 # This is a hand-maintained subset of the most common ones, because full
@@ -80,6 +82,13 @@ TWO_PART_TLDS = {
 }
 
 
+def _backslash_in_authority(parsed: urllib.parse.ParseResult) -> bool:
+    """True if browsers would read a different host than urlparse."""
+    # Browsers end the authority at the backslash, urlparse does not:
+    # 'http://evil.com\@good.com' goes to evil.com, urlparse says good.com.
+    return parsed.scheme in _SPECIAL_SCHEMES and '\\' in parsed.netloc
+
+
 def _host_from_url(url: str) -> str | None:
     """Extract the lowercase hostname from a URL, or None on failure.
 
@@ -93,10 +102,12 @@ def _host_from_url(url: str) -> str | None:
     # Deliberately no length limit: the SSRF guard in ip.py builds on this,
     # and padding the query string must not hide the host from it.
     try:
-        host = urllib.parse.urlparse(url.strip()).hostname
+        parsed = urllib.parse.urlparse(url.strip())
+        host = parsed.hostname
     except Exception:
         return None
-    if not host or _FORBIDDEN_HOST_CHAR.search(host):
+    if (not host or _FORBIDDEN_HOST_CHAR.search(host)
+            or _backslash_in_authority(parsed)):
         return None
     # A single trailing dot denotes the DNS root and is resolved away, so
     # "localhost." reaches the same host as "localhost". Without this the
@@ -112,7 +123,8 @@ def is_url(url: str,
     Performs basic structural validation of a URL including scheme and
     network location presence. Optionally restricts to specific schemes.
     A host containing whitespace, control characters or one of
-    ``< > \\ ^ |`` is invalid. Surrounding whitespace is ignored.
+    ``< > \\ ^ |`` is invalid, as is a backslash in the authority of an
+    http(s), ws(s), ftp or file URL. Surrounding whitespace is ignored.
 
     Args:
         url: The URL string to validate.
@@ -164,6 +176,9 @@ def is_url(url: str,
         return False
     if _FORBIDDEN_HOST_CHAR.search(parsed.hostname):
         logger.debug('URL host contains a forbidden character.')
+        return False
+    if _backslash_in_authority(parsed):
+        logger.debug('URL authority contains a backslash.')
         return False
 
     try:
@@ -653,7 +668,9 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
     Raises:
         TypeError: If url is not a string.
         ValueError: If url is empty, its host contains whitespace, control
-            characters or one of ``< > \\ ^ |``, or domain extraction fails.
+            characters or one of ``< > \\ ^ |``, the authority of an
+            http(s), ws(s), ftp or file URL contains a backslash, or domain
+            extraction fails.
 
     Examples:
         >>> extract_domain('https://www.example.com:8080/path')
@@ -679,10 +696,11 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
         raise ValueError(f"URL exceeds maximum length of {_MAX_URL_LENGTH} characters.")
 
     try:
-        domain = urllib.parse.urlparse(url.strip()).hostname
+        parsed = urllib.parse.urlparse(url.strip())
     except ValueError as e:
         # urllib rejects malformed input such as an unclosed IPv6 literal.
         raise ValueError("Invalid URL format.") from e
+    domain = parsed.hostname
 
     if not domain:
         # netloc is deliberately not used as a fallback: it carries the
@@ -693,6 +711,9 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
     if _FORBIDDEN_HOST_CHAR.search(domain):
         # A host of spaces only was stripped to '' and returned as a domain.
         raise ValueError("URL host contains a forbidden character.")
+
+    if _backslash_in_authority(parsed):
+        raise ValueError("URL authority contains a backslash.")
 
     domain = domain.lower()
 
@@ -749,13 +770,15 @@ def extract_tld(url: str) -> str:
         raise ValueError(f"URL exceeds maximum length of {_MAX_URL_LENGTH} characters.")
 
     try:
-        domain = urllib.parse.urlparse(url.strip()).hostname
+        parsed = urllib.parse.urlparse(url.strip())
     except ValueError:
         # Same failure as in extract_domain, but this function reports "no TLD
         # could be determined" with an empty string instead of raising.
         return ''
+    domain = parsed.hostname
 
-    if not domain or _FORBIDDEN_HOST_CHAR.search(domain):
+    if (not domain or _FORBIDDEN_HOST_CHAR.search(domain)
+            or _backslash_in_authority(parsed)):
         # netloc is deliberately not used as a fallback -- see extract_domain.
         return ''
 

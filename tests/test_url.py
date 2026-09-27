@@ -928,3 +928,25 @@ def test_whitespace_only_host_is_rejected(url):
 def test_valid_unusual_hosts_stay_valid(url):
     assert userprovided.url.is_url(url) is True
     assert userprovided.url.extract_domain(url)
+
+
+@given(scheme=st.sampled_from(['ftp', 'file', 'http', 'https', 'ws', 'wss']),
+       real=_LABEL, claimed=_LABEL)
+def test_backslash_in_authority_is_rejected(scheme, real, claimed):
+    # A browser reads the backslash as '/' and goes to {real}.com.
+    url = f'{scheme}://{real}.com\\@{claimed}.com/'
+    assert userprovided.url.is_url(url) is False
+    with pytest.raises(ValueError):
+        userprovided.url.normalize_url(url)
+    with pytest.raises(ValueError, match='backslash'):
+        userprovided.url.extract_domain(url)
+    assert userprovided.url.extract_tld(url) == ''
+    assert userprovided.url.url_matches_domain(url, f'{claimed}.com') is False
+
+
+@pytest.mark.parametrize('url', [
+    'smb://CORP\\alice@server/share',   # not a special scheme
+    'https://example.com/a\\b',         # outside the authority
+])
+def test_backslash_outside_special_authority_stays_valid(url):
+    assert userprovided.url.is_url(url) is True

@@ -5,6 +5,7 @@
 * Security:
   * Bumped `github/codeql-action` to 4.38.1. Dependabot now groups its sub-actions into one PR, because mixed versions break the CodeQL job.
   * `ip`: `is_potential_ssrf_target` treats a host with whitespace or control characters as a target. `http://127.0.0.1 /` was reported as safe.
+  * `url`, `ip`: a backslash in the authority of an http(s), ws(s), ftp or file URL makes it invalid. Browsers read it as `/`, so `https://127.0.0.1\@example.com/` connects to 127.0.0.1, while `urlparse` reported `example.com`: the SSRF guard called it safe and `url_matches_domain` matched `example.com`.
 * Bug fixes:
   * All modules log to the `userprovided.*` loggers instead of the root logger. Logging to the root logger could call `logging.basicConfig()` and override the host application's logging setup.
   * `url`: `is_url`, `normalize_url`, `extract_domain` and `extract_tld` reject a host containing whitespace, control characters or `< > \ ^ |`, as the WHATWG URL Standard does. `extract_domain('http:// /')` returned an empty string.
