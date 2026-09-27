@@ -1,6 +1,6 @@
 [project]
 name = "userprovided"
-version = "3.0.0"
+version = "3.0.1"
 description = "Validate, normalize, and convert user input: URLs, emails, dates, hashes, parameters — pure stdlib, no dependencies"
 authors = [{name = "Rüdiger Voigt", email = "projects@ruediger-voigt.eu"}]
 readme = "README.md"
