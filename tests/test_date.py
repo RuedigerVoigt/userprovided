@@ -10,7 +10,7 @@ Released under the Apache License 2.0
 from hypothesis import given
 from hypothesis import settings
 from hypothesis import Verbosity
-from hypothesis.strategies import characters, dates
+from hypothesis.strategies import characters, dates, sampled_from
 import pytest
 
 import userprovided
@@ -155,6 +155,23 @@ def test_long_to_iso_rejects_non_ascii_digits(digit):
         userprovided.date.date_de_long_to_iso(f"{digit}. Oktober 1990")
     with pytest.raises(AttributeError):
         userprovided.date.date_de_long_to_iso(f"3. Oktober 199{digit}")
+
+
+@given(digit=sampled_from('0123456789'))
+def test_long_to_iso_rejects_overlong_numbers(digit):
+    with pytest.raises(AttributeError):
+        userprovided.date.date_en_long_to_iso(f"July 4, 1776{digit}")
+    with pytest.raises(AttributeError):
+        userprovided.date.date_de_long_to_iso(f"{digit}23. Oktober 1990")
+    with pytest.raises(AttributeError):
+        userprovided.date.date_de_long_to_iso(f"3. Oktober 1990{digit}")
+
+
+def test_long_to_iso_finds_date_in_text():
+    assert userprovided.date.date_en_long_to_iso(
+        'signed on July 4, 1776.') == '1776-07-04'
+    assert userprovided.date.date_de_long_to_iso(
+        'am 3. Oktober 1990, abends') == '1990-10-03'
 
 
 @pytest.mark.parametrize('wrong_type', [5, None, 1.5, b'July 4, 1776',

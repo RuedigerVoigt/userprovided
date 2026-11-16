@@ -17,11 +17,14 @@ logger = logging.getLogger(__name__)
 # Compiled regex patterns for performance optimization.
 # [0-9], not \d: \d matches any Unicode digit, and the matched digits end up
 # in the returned ISO string ('July ٤, 1776' -> '1776-07-0٤').
+# The lookarounds keep a match from starting or ending inside a longer
+# number: '123. Oktober 1990' was read as the 23rd, '17760' as the year 1776.
 _REGEX_LONG_DATE_EN = re.compile(
     r"(?P<monthL>[a-zA-Z\.]{3,9})\s+(?P<day>[0-9]{1,2})(?:st|nd|rd|th)?"
-    r",\s*(?P<year>[0-9]{4})")
+    r",\s*(?P<year>[0-9]{4})(?![0-9])")
 _REGEX_LONG_DATE_DE = re.compile(
-    r"(?P<day>[0-9]{1,2})\.\s+(?P<monthL>[a-zA-ZÄä\.]{3,9})\s+(?P<year>[0-9]{4})")
+    r"(?<![0-9])(?P<day>[0-9]{1,2})\.\s+(?P<monthL>[a-zA-ZÄä\.]{3,9})\s+"
+    r"(?P<year>[0-9]{4})(?![0-9])")
 
 
 def date_exists(year: int | str,
