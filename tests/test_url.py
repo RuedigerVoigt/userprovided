@@ -275,11 +275,30 @@ def test_is_shortened_url_exception_handling():
 # depending on the Python version used.
 def test_determine_file_extension_version_inconsistencies():
     with patch('mimetypes.guess_extension', return_value='.bat'):
-        assert userprovided.url.determine_file_extension('https://www.example.com/test.txt', 'text/plain') == '.txt'
+        assert userprovided.url.determine_file_extension('https://www.example.com/', 'text/plain') == '.txt'
     with patch('mimetypes.guess_extension', return_value='.htm'):
-        assert userprovided.url.determine_file_extension('https://www.example.com/test.htm', 'text/plain') == '.html'
+        assert userprovided.url.determine_file_extension('https://www.example.com/', 'text/html') == '.html'
     with patch('mimetypes.guess_extension', return_value=None):
-        assert userprovided.url.determine_file_extension('https://www.example.com/test.htm', 'text/plain') == '.unknown'
+        assert userprovided.url.determine_file_extension('https://www.example.com/', 'text/plain') == '.unknown'
+
+
+@pytest.mark.parametrize('path, expected', [
+    # the compression suffix belongs to the extension:
+    ('a.tar.gz', '.tar.gz'),
+    ('a.txt.gz', '.txt.gz'),
+    ('a.tgz', '.tgz'),
+    ('a.svgz', '.svgz'),
+    # extensions the platform may list behind another one for their type:
+    ('a.csv', '.csv'),
+    ('a.zip', '.zip'),
+    ('a.jpeg', '.jpeg'),
+    ('a.JPG', '.jpg'),
+])
+def test_determine_file_extension_keeps_extension_in_url(path, expected):
+    url = f"https://www.example.com/{path}"
+    assert userprovided.url.determine_file_extension(url) == expected
+    assert userprovided.url.determine_file_extension(
+        url, 'text/html') == expected
 
 
 @pytest.mark.parametrize("test_url,expected_domain", [

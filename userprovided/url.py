@@ -11,6 +11,7 @@ Released under the Apache License 2.0
 import ipaddress
 import logging
 import mimetypes
+import posixpath
 import re
 import urllib.parse
 
@@ -497,7 +498,9 @@ def determine_file_extension(url: str,
 
     Attempts to guess the correct file extension by analyzing the URL path
     and optionally using a provided MIME type as fallback. Handles cases
-    where URLs lack extensions or have ambiguous formats.
+    where URLs lack extensions or have ambiguous formats. An extension in
+    the URL that ``mimetypes`` recognizes is returned in lowercase,
+    including a compression suffix (``.tar.gz``); ``.htm`` becomes ``.html``.
 
     Args:
         url: The URL to analyze for file extension hints.
@@ -530,52 +533,47 @@ def determine_file_extension(url: str,
     if provided_mime_type == '':
         provided_mime_type = None
 
-    extension: str | None = None
     type_by_url: str | None = None
+    encoding: str | None = None
     parsed_url = urllib.parse.urlparse(url)
     if parsed_url.path not in ('', '/'):
-        type_by_url = mimetypes.guess_type(parsed_url.path)[0]
+        type_by_url, encoding = mimetypes.guess_type(parsed_url.path)
 
-    if type_by_url is not None and type_by_url == provided_mime_type:
-        # Best case: URL and server header suggest the same filetype.
-        extension = mimetypes.guess_extension(provided_mime_type)
-    elif type_by_url is None and provided_mime_type is not None:
+    if type_by_url is not None:
+        if provided_mime_type not in (None, type_by_url):
+            logger.debug('The mime type %r suggested by the URL %r does not '
+                         'match the mime type supplied by the server (%r). '
+                         'Using the extension in the URL.',
+                         type_by_url, url, provided_mime_type)
+        # Taken from the URL itself, not mapped back from the mime type:
+        # that lost the compression suffix ('.tar.gz' -> '.tar') and
+        # returned whatever extension the platform lists first for the type
+        # (on Windows '.csv' -> '.xls').
+        base, extension = posixpath.splitext(parsed_url.path)
+        if encoding and extension.lower() not in mimetypes.suffix_map:
+            # '.gz' and the like only name the compression.
+            extension = posixpath.splitext(base)[1] + extension
+        extension = extension.lower()
+    elif provided_mime_type is not None:
         # The URL does not contain an usable extension, but
         # the server provides a mime type.
-        extension = mimetypes.guess_extension(provided_mime_type)
-        if extension is None:
+        guessed = mimetypes.guess_extension(provided_mime_type)
+        if guessed is None:
             logger.debug('No hint in URL and mime-type malformed for %r', url)
             return '.unknown'
-    elif type_by_url is not None and provided_mime_type is None:
-        # There is a usable file extension in the URL, but the misconfigured
-        # server does not provide a mime type.
-        extension = mimetypes.guess_extension(type_by_url)
-        # Here no code for extension is None, because mimetypes already
-        # guessed a type once we got here and can guess a matching extension.
-    elif type_by_url is None and provided_mime_type is None:
+        if guessed == '.bat' and provided_mime_type == 'text/plain':
+            # text/plain is mapped to .bat in python 3.6.
+            # Python 3.8 correctly guesses .txt as extension.
+            return '.txt'
+        extension = guessed
+    else:
         # Neither the URL nor the server does hint to a extension
         logger.debug('Neither URL %r nor mime-type %r suggests a '
                      'file extension.', url, provided_mime_type)
         return '.unknown'
-    elif type_by_url != provided_mime_type:  # pragma: no branch
-        # The suggestions contradict each other
-        logger.debug('The mime type %r suggested by the URL %r does not '
-                     'match the mime type supplied by the server (%r). '
-                     'Using the extension suggested by the URL.',
-                     type_by_url, url, provided_mime_type)
-        extension = mimetypes.guess_extension(type_by_url)  # type: ignore[arg-type]
-
-    # Handle errors and irregularities in mimetypes:
-    if extension == '.bat' and provided_mime_type == 'text/plain':
-        # text/plain is mapped to .bat in python 3.6.
-        # Python 3.8 correctly guesses .txt as extension.
-        return '.txt'
 
     if extension == '.htm':
         return '.html'
-
-    if extension is None:
-        return '.unknown'
 
     return extension
 
