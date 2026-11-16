@@ -6,6 +6,7 @@
   * `url`: `is_shortened_url` recognizes a shortener behind a trailing dot or fullwidth characters (`https://bit.ly./x`).
 * Bug fixes:
   * `date`: `date_en_long_to_iso` and `date_de_long_to_iso` no longer read a date out of longer numbers. `123. Oktober 1990` returned `1990-10-23`.
+  * `date`: `date_de_long_to_iso` accepts the abbreviations `Mär.` and `Mrz.` for March.
 
 ## Version 3.0.1 (2026-09-28)
 

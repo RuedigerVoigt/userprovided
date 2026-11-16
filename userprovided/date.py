@@ -177,7 +177,7 @@ def date_de_long_to_iso(date_string: str) -> str:
     months = {
         'Januar': '01', 'Jan.': '01',
         'Februar': '02', 'Feb.': '02',
-        'März': '03', 'Mar.': '03',
+        'März': '03', 'Mär.': '03', 'Mrz.': '03', 'Mar.': '03',
         'April': '04', 'Apr.': '04',
         'Mai': '05',
         'Juni': '06', 'Jun.': '06',
