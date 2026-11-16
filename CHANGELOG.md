@@ -1,5 +1,10 @@
 # Changelog / History
 
+## Version 3.1.0 (upcoming)
+
+* Security:
+  * `url`: `is_shortened_url` recognizes a shortener behind a trailing dot or fullwidth characters (`https://bit.ly./x`).
+
 ## Version 3.0.1 (2026-09-28)
 
 * Security:

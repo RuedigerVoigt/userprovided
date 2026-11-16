@@ -748,6 +748,10 @@ def test_normalize_url_uses_its_own_message(malformed):
     ('https://bit.ly:443/x', True),
     ('https://evil.com@bit.ly/x', True),
     ('https://www.bit.ly/x', True),
+    # other spellings of the same host:
+    ('https://bit.ly./x', True),
+    ('https://bit\N{IDEOGRAPHIC FULL STOP}ly/x', True),
+    ('https://\N{FULLWIDTH LATIN SMALL LETTER B}it.ly/x', True),
     # not a shortener, even though the userinfo names one:
     ('https://bit.ly@example.com/x', False),
     ('https://example.com/x', False),

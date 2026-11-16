@@ -610,7 +610,9 @@ def is_shortened_url(url: str) -> bool:
         # hostname, not netloc: netloc carries the userinfo and the port, so
         # 'https://evil.com@bit.ly/' and 'https://bit.ly:443/' would both slip
         # past the lookup.
-        domain = (parsed.hostname or '').lower()
+        # Normalized, or other spellings of the host slip past the lookup:
+        # 'bit.ly.' and 'bit。ly' both resolve to bit.ly.
+        domain = normalize_hostname(parsed.hostname or '')
 
         # Remove 'www.' prefix if present
         if domain.startswith('www.'):
