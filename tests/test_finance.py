@@ -76,6 +76,10 @@ def _valid_ibans(draw):
     ('DE00072#6101', False),
     # Invalid characters in NSIN - umlauts (Unicode but not ASCII):
     ('DE000ä236101', False),
+    # Letters that upper() turns into ASCII ('ſ' -> 'S', 'ß' -> 'SS'):
+    ('US0378331005', True),
+    ('U\N{LATIN SMALL LETTER LONG S}0378331005', False),
+    ('DEß00BAY001', False),
     ('DEöööööööö01', False),
     # Non-digit check digit (letter in position 11):
     ('DE000723610A', False),
@@ -131,6 +135,9 @@ def test_finance_luhn_check_isin_invalid_char():
     ('D189370400440532013000', False),
     # Country code is Unicode but not ASCII (umlauts):
     ('ÜÄ370400440532013000', False),
+    # A ligature that upper() turns into the ASCII country code 'FI':
+    ('FI2112345600000785', True),
+    ('\N{LATIN SMALL LIGATURE FI}2112345600000785', False),
     # Check digit positions are not numeric:
     ('DEAB370400440532013000', False),
     # Non-alphanumeric character in the BBAN:

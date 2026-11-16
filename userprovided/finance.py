@@ -82,7 +82,14 @@ def is_iban(iban_candidate: str) -> bool:
         raise TypeError('IBAN must be a string.')
 
     # Accept the printed format (groups separated by spaces) and any case.
-    iban = ''.join(iban_candidate.split()).upper()
+    iban = ''.join(iban_candidate.split())
+
+    # Before upper(): it maps 'ﬁ' to 'FI' and 'ſ' to 'S', which then pass
+    # the ASCII checks below.
+    if not iban.isascii():
+        logger.debug('IBAN must be alphanumeric.')
+        return False
+    iban = iban.upper()
 
     # Absolute ISO 13616 bounds (shortest is NO with 15, spec maximum 34).
     if not 15 <= len(iban) <= 34:
@@ -186,7 +193,14 @@ def is_isin(isin_candidate: str) -> bool:
     if not isinstance(isin_candidate, str):
         raise TypeError('ISIN must be a string.')
 
-    isin_candidate = isin_candidate.strip().upper()
+    isin_candidate = isin_candidate.strip()
+
+    # Before upper(): it maps 'ß' to 'SS' and 'ſ' to 'S', which then pass
+    # the ASCII checks below.
+    if not isin_candidate.isascii():
+        logger.debug('ISIN must be alphanumeric.')
+        return False
+    isin_candidate = isin_candidate.upper()
 
     if len(isin_candidate) != 12:
         logger.debug('ISIN must be exactly 12 characters.')
