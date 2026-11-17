@@ -13,6 +13,7 @@ import logging
 import mimetypes
 import posixpath
 import re
+import unicodedata
 import urllib.parse
 
 from userprovided import err
@@ -29,10 +30,12 @@ _TRAILING_DOTS_AND_SPACE = re.compile(r'[\s.]+\Z')
 # leave in a hostname, plus all Unicode whitespace: IDNA maps characters like
 # U+3000 to a space. '%' is handled separately, see _browser_reads_other_host.
 _FORBIDDEN_HOST_CHAR = re.compile(r'[\s\x00-\x1f\x7f<>\\^|]')
+# What a non-ASCII host may consist of after it was mapped to ASCII.
+_MAPPED_HOST = re.compile(r'[a-z0-9._-]+')
+_COMPRESSION_SUFFIXES = frozenset({'.gz', '.z', '.bz2', '.xz', '.br'})
 # WHATWG "special" schemes: their parser reads '\' as '/' and percent-decodes
 # the host.
-_COMPRESSION_SUFFIXES = frozenset({'.gz', '.z', '.bz2', '.xz', '.br'})
-_SPECIAL_SCHEMES =frozenset({'ftp', 'file', 'http', 'https', 'ws', 'wss'})
+_SPECIAL_SCHEMES = frozenset({'ftp', 'file', 'http', 'https', 'ws', 'wss'})
 
 # Known 2-part TLDs (country code second-level domains).
 # This is a hand-maintained subset of the most common ones, because full
@@ -118,6 +121,18 @@ def _host_from_url(url: str) -> str | None:
     if parsed.scheme in _SPECIAL_SCHEMES and '\\' in parsed.netloc:
         # See _browser_reads_other_host.
         return None
+    if not host.isascii():
+        # Clients map such a host to ASCII before they resolve it:
+        # '１２７.0.0.1', '127。0。0。1' and 'local\xadhost' all reach loopback.
+        # NFKC first, as the codec only knows the mappings of Unicode 3.2.
+        try:
+            host = unicodedata.normalize('NFKC', host).encode('idna').decode('ascii').lower()
+        except UnicodeError:
+            return None
+        # A mapping can produce delimiters ('＋' -> '+') that clients treat
+        # differently, so the target cannot be told.
+        if not _MAPPED_HOST.fullmatch(host):
+            return None
     if '%' in host and ':' not in host:
         # Browsers percent-decode the host, other clients may too, so the
         # SSRF guard cannot tell the target. This applies to any scheme.

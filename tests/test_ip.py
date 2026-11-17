@@ -7,6 +7,8 @@ Released under the Apache License 2.0
 
 # ruff: noqa
 
+from hypothesis import given
+from hypothesis.strategies import integers, sampled_from, sets
 import pytest
 
 import userprovided
@@ -242,3 +244,58 @@ def test_ip_zone_id_stays_link_local():
     url = 'http://[fe80::1%25eth0]/'
     assert userprovided.ip.is_link_local(url) is True
     assert userprovided.ip.is_potential_ssrf_target(url) is True
+
+
+@pytest.mark.parametrize('host, predicate', [
+    # fullwidth digits
+    ('１２７.0.0.1', 'is_loopback'),
+    ('１０.0.0.1', 'is_private'),
+    ('１６９.254.169.254', 'is_link_local'),
+    # ideographic, fullwidth and halfwidth full stops
+    ('127。0．0｡1', 'is_loopback'),
+    ('localhost。', 'is_loopback'),
+    # circled digits
+    ('①②⑦.0.0.1', 'is_loopback'),
+    # fullwidth hexadecimal
+    ('０ｘ７ｆ.1', 'is_loopback'),
+    # soft hyphen and zero width space
+    ('local\xadhost', 'is_loopback'),
+    ('loc​alhost', 'is_loopback'),
+    # fullwidth and squared letters
+    ('ｌocalhost', 'is_loopback'),
+    ('\U0001f13bocalhost', 'is_loopback'),
+    ('printer.ｌocal', 'is_link_local'),
+])
+def test_ip_unicode_spelling_of_internal_host(host, predicate):
+    url = f"http://{host}/"
+    assert getattr(userprovided.ip, predicate)(url) is True
+    assert userprovided.ip.is_potential_ssrf_target(url) is True
+
+
+@given(sampled_from(['127.0.0.1', '10.0.0.1', '169.254.169.254', '0x7f.1',
+                     'localhost', 'printer.local']),
+       sets(integers(min_value=0, max_value=14), min_size=1))
+def test_ip_fullwidth_characters_do_not_hide_internal_host(host, positions):
+    # U+FF01 to U+FF5E are the fullwidth forms of ASCII '!' to '~'.
+    disguised = ''.join(
+        chr(ord(char) + 0xfee0) if index in positions else char
+        for index, char in enumerate(host))
+    assert userprovided.ip.is_potential_ssrf_target(
+        f"http://{disguised}/") is True
+
+
+@pytest.mark.parametrize('host', [
+    # mapped to ASCII that is no hostname: '1+1.example'
+    '1＋1.example',
+    # cannot be mapped: label longer than 63 characters
+    '\xfc' * 64 + '.example'])
+def test_ip_unmappable_host_is_ssrf_target(host):
+    url = f"http://{host}/"
+    assert userprovided.ip.is_potential_ssrf_target(url) is True
+    assert userprovided.ip.is_loopback(url) is False
+    assert userprovided.ip.is_private(url) is False
+    assert userprovided.ip.is_link_local(url) is False
+
+
+def test_ip_internationalized_domain_is_no_ssrf_target():
+    assert userprovided.ip.is_potential_ssrf_target('http://m\xfcnchen.de/') is False
