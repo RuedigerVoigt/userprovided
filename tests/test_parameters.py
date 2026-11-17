@@ -882,10 +882,44 @@ def test_strict_numeric_accepts(value, expected):
     'abc', '', '   ',
     'nan', 'inf', '-inf',           # would slip through any range check
     float('nan'), float('inf'), float('-inf'),
+    10 ** 400, -10 ** 400,          # beyond the float range
 ])
 def test_strict_numeric_rejects_value(value):
     with pytest.raises(userprovided.err.ValidationError):
         userprovided.parameters.strict_numeric(value)
+
+
+HUGE = 10 ** 400
+
+
+@pytest.mark.parametrize('given, minimum, maximum, fallback, expected', [
+    (HUGE, 0, 10, 5, 5),
+    (-HUGE, 0, 10, 5, 5),
+    (3, 0, HUGE, 5, 3),
+    (HUGE, 0, HUGE, 5, HUGE),
+    (HUGE, -HUGE, HUGE, HUGE, HUGE),
+])
+def test_in_range_huge_ints(given, minimum, maximum, fallback, expected):
+    assert userprovided.parameters.int_in_range(
+        'x', given, minimum, maximum, fallback) == expected
+    assert userprovided.parameters.numeric_in_range(
+        'x', given, minimum, maximum, fallback) == expected
+
+
+def test_numeric_in_range_huge_int_with_float_bounds():
+    assert userprovided.parameters.numeric_in_range(
+        'x', HUGE, 0.5, 10.5, 5.5) == 5.5
+    assert userprovided.parameters.numeric_in_range(
+        'x', 1.5, 0.5, HUGE, 5.5) == 1.5
+
+
+@pytest.mark.parametrize('func', [userprovided.parameters.strict_int,
+                                  userprovided.parameters.strict_numeric])
+def test_strict_value_too_long_to_display(func):
+    # More digits than Python renders: the message must not fail on them.
+    with pytest.raises(userprovided.err.ValidationError,
+                       match='too large to display'):
+        func(10 ** 5000, maximum=5)
 
 
 @pytest.mark.parametrize('value', [True, False, None, [1], {'a': 1}])

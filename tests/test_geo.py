@@ -65,3 +65,6 @@ def test_is_valid_coordinates():
     assert userprovided.geo.is_valid_coordinates(0.0, float('nan')) is False
     assert userprovided.geo.is_valid_coordinates(float('inf'), 0.0) is False
     assert userprovided.geo.is_valid_coordinates(0.0, float('-inf')) is False
+    # ints beyond the float range:
+    assert userprovided.geo.is_valid_coordinates(10 ** 400, 0) is False
+    assert userprovided.geo.is_valid_coordinates(0, -10 ** 400) is False

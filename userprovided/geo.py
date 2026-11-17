@@ -42,7 +42,8 @@ def is_valid_coordinates(latitude: float | int | str,
     try:
         lat = float(latitude)
         lng = float(longitude)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, OverflowError):
+        # OverflowError: an int beyond the float range.
         logger.debug("Invalid coordinate format provided: lat=%r, lng=%r",
                      latitude, longitude)
         return False

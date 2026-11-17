@@ -360,8 +360,10 @@ def numeric_in_range(parameter_name: str,
 
     # NaN compares False to everything, so it would defeat the sanity
     # checks below and slip through the range check as "in range".
+    # Only a float can be NaN; math.isnan() converts an int to a float
+    # and raised OverflowError above 1e308.
     for param in (minimum_value, maximum_value, fallback_value):
-        if math.isnan(param):
+        if isinstance(param, float) and math.isnan(param):
             raise ValueError(
                 'Minimum, maximum, and fallback must not be NaN.')
 
@@ -373,7 +375,7 @@ def numeric_in_range(parameter_name: str,
         raise err.ContradictoryParameters(
             "Fallback value outside the allowed range.")
 
-    if math.isnan(given_value):
+    if isinstance(given_value, float) and math.isnan(given_value):
         logger.debug("Value of %r is NaN. Falling back to %r.",
                      parameter_name, fallback_value)
         return fallback_value
@@ -668,7 +670,12 @@ def _validation_message(value: object,
     Returns:
         The formatted message, ending with a period.
     """
-    message = f"Invalid value {value!r}"
+    try:
+        rendered = repr(value)
+    except ValueError:
+        # Python refuses to render an int of more than 4300 digits.
+        rendered = f"<{type(value).__name__} too large to display>"
+    message = f"Invalid value {rendered}"
     if name:
         message += f" for {name}"
     if source:
@@ -933,7 +940,8 @@ def strict_numeric(value: str | int | float,
 
     Raises:
         ValidationError: If value is a string that is not a number, if it is
-            NaN or infinite, or if it is outside the bounds.
+            NaN or infinite, if it is an int too large for a float, or if it
+            is outside the bounds.
         TypeError: If value is neither a number nor a string, or is a bool.
         ValueError: If a bound is NaN.
         ContradictoryParameters: If minimum is larger than maximum.
@@ -943,7 +951,12 @@ def strict_numeric(value: str | int | float,
             'strict_numeric expects a number or a string, not a bool.')
 
     if isinstance(value, (int, float)):
-        result = float(value)
+        try:
+            result = float(value)
+        except OverflowError:
+            raise err.ValidationError(
+                _validation_message(value, 'must fit into a float',
+                                    name=name, source=source)) from None
     elif isinstance(value, str):
         try:
             result = float(value.strip())

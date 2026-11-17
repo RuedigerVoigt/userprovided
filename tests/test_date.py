@@ -22,6 +22,16 @@ def test_date_exists_non_numeric():
     assert userprovided.date.date_exists('a', '01', '01') is False
 
 
+@pytest.mark.parametrize("year,month,day", [
+    (10 ** 30, 1, 1),
+    (2021, -10 ** 30, 1),
+    (2021, 1, 10 ** 30),
+    (str(10 ** 30), '01', '01'),
+])
+def test_date_exists_huge_numbers(year, month, day):
+    assert userprovided.date.date_exists(year, month, day) is False
+
+
 def test_date_exists_string_input():
     # Strings (incl. zero-padded) are accepted and converted, matching the
     # int | str type hint.

@@ -68,7 +68,8 @@ def date_exists(year: int | str,
 
     try:
         datetime.datetime(year, month, day)
-    except ValueError:
+    except (ValueError, OverflowError):
+        # OverflowError: a part beyond the range of a C long.
         logger.debug('Provided date does not exist in the calendar.')
         return False
     return True
