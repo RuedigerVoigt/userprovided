@@ -226,7 +226,8 @@ def is_url(url: str,
 
 
 def _normalize_query_part(query: str,
-                          drop_keys: list | tuple | set | None = None) -> str:
+                          drop_keys: list | tuple | set | str | None = None
+                          ) -> str:
     """Normalizes URL query parameters for consistent formatting.
 
     Processes query parameters by removing empty values, sorting alphabetically,
@@ -236,7 +237,8 @@ def _normalize_query_part(query: str,
     Args:
         query: Query string to normalize (without leading '?').
         drop_keys: Collection of parameter keys to remove from the query.
-            Can be list, tuple, or set. Defaults to None.
+            Can be list, tuple, or set. A plain string is treated as a
+            single key. Defaults to None.
 
     Returns:
         Normalized query string with parameters sorted alphabetically.
@@ -247,6 +249,11 @@ def _normalize_query_part(query: str,
     """
     if is_url(query):
         raise ValueError('Provide only the query part to normalize_query_part')
+
+    if isinstance(drop_keys, str):
+        # A bare string would be checked with substring matching: ('utm') —
+        # a string, not a tuple — would also drop the keys 'u', 't' and 'm'.
+        drop_keys = (drop_keys,)
 
     if '=' not in query:
         # RFC 3986 prescribes a key=value syntax, but some old implementations
@@ -284,7 +291,7 @@ def _normalize_query_part(query: str,
 
 
 def normalize_url(url: str,
-                  drop_keys: list | tuple | set | None = None,
+                  drop_keys: list | tuple | set | str | None = None,
                   do_not_change_query_part: bool = False) -> str:
     """Normalizes a URL to a canonical format.
 
@@ -302,7 +309,8 @@ def normalize_url(url: str,
     Args:
         url: The URL to normalize.
         drop_keys: Collection of query parameter keys to remove.
-            Can be list, tuple, or set. Defaults to None.
+            Can be list, tuple, or set. A plain string is treated as a
+            single key. Defaults to None.
         do_not_change_query_part: If True, preserves original query format
             to avoid issues with legacy systems using duplicate keys.
             Defaults to False.

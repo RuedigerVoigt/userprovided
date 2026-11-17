@@ -81,7 +81,12 @@ def test_normalize_query_part():
     assert userprovided.url._normalize_query_part('missingequalsign&foo=bar') == 'foo=bar'
     assert userprovided.url._normalize_query_part('foo=bar&missingequalsign&') == 'foo=bar'
     # Drop specific key (with tuple, list and set):
-    assert userprovided.url._normalize_query_part('foo=1&bar=2&', drop_keys=('bar')) == 'foo=1'
+    assert userprovided.url._normalize_query_part('foo=1&bar=2&', drop_keys=('bar',)) == 'foo=1'
+    # A plain string is one key, not a set of substrings:
+    assert userprovided.url._normalize_query_part('foo=1&bar=2&', drop_keys='bar') == 'foo=1'
+    assert userprovided.url._normalize_query_part('b=1&ar=2&bar=3', drop_keys='bar') == 'ar=2&b=1'
+    assert userprovided.url.normalize_url(
+        'https://www.example.com/?u=1&utm=2', drop_keys='utm') == 'https://www.example.com/?u=1'
     assert userprovided.url._normalize_query_part('foo=1&bar=2&', drop_keys=['bar']) == 'foo=1'
     assert userprovided.url._normalize_query_part('foo=1&bar=2&', drop_keys={'bar'}) == 'foo=1'
     # Try to drop non-existent key:
