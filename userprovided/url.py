@@ -31,7 +31,8 @@ _TRAILING_DOTS_AND_SPACE = re.compile(r'[\s.]+\Z')
 _FORBIDDEN_HOST_CHAR = re.compile(r'[\s\x00-\x1f\x7f<>\\^|]')
 # WHATWG "special" schemes: their parser reads '\' as '/' and percent-decodes
 # the host.
-_SPECIAL_SCHEMES = frozenset({'ftp', 'file', 'http', 'https', 'ws', 'wss'})
+_COMPRESSION_SUFFIXES = frozenset({'.gz', '.z', '.bz2', '.xz', '.br'})
+_SPECIAL_SCHEMES =frozenset({'ftp', 'file', 'http', 'https', 'ws', 'wss'})
 
 # Known 2-part TLDs (country code second-level domains).
 # This is a hand-maintained subset of the most common ones, because full
@@ -500,7 +501,8 @@ def determine_file_extension(url: str,
     and optionally using a provided MIME type as fallback. Handles cases
     where URLs lack extensions or have ambiguous formats. An extension in
     the URL that ``mimetypes`` recognizes is returned in lowercase,
-    including a compression suffix (``.tar.gz``); ``.htm`` becomes ``.html``.
+    including a compression suffix (``.tar.gz``, or ``.gz`` alone if nothing
+    recognized precedes it); ``.htm`` becomes ``.html``.
 
     Args:
         url: The URL to analyze for file extension hints.
@@ -533,27 +535,32 @@ def determine_file_extension(url: str,
     if provided_mime_type == '':
         provided_mime_type = None
 
-    type_by_url: str | None = None
-    encoding: str | None = None
+    # Taken from the URL itself, not mapped back from the mime type:
+    # that lost the compression suffix ('.tar.gz' -> '.tar') and
+    # returned whatever extension the platform lists first for the type
+    # (on Windows '.csv' -> '.xls').
+    # Lowercased before any lookup: mimetypes matches compression suffixes
+    # case-sensitively, so 'a.TAR.GZ' lost its '.tar'.
     parsed_url = urllib.parse.urlparse(url)
-    if parsed_url.path not in ('', '/'):
-        type_by_url, encoding = mimetypes.guess_type(parsed_url.path)
+    base, extension = posixpath.splitext(parsed_url.path)
+    extension = extension.lower()
+    if extension in _COMPRESSION_SUFFIXES:
+        # '.gz' and the like only name the compression.
+        inner = posixpath.splitext(base)[1].lower()
+        if mimetypes.guess_type('x' + inner)[0] is not None:
+            extension = inner + extension
+    elif (extension not in mimetypes.suffix_map
+          and mimetypes.guess_type('x' + extension)[0] is None):
+        extension = ''
 
-    if type_by_url is not None:
-        if provided_mime_type not in (None, type_by_url):
+    if extension:
+        type_by_url = mimetypes.guess_type('x' + extension)[0]
+        if (type_by_url is not None
+                and provided_mime_type not in (None, type_by_url)):
             logger.debug('The mime type %r suggested by the URL %r does not '
                          'match the mime type supplied by the server (%r). '
                          'Using the extension in the URL.',
                          type_by_url, url, provided_mime_type)
-        # Taken from the URL itself, not mapped back from the mime type:
-        # that lost the compression suffix ('.tar.gz' -> '.tar') and
-        # returned whatever extension the platform lists first for the type
-        # (on Windows '.csv' -> '.xls').
-        base, extension = posixpath.splitext(parsed_url.path)
-        if encoding and extension.lower() not in mimetypes.suffix_map:
-            # '.gz' and the like only name the compression.
-            extension = posixpath.splitext(base)[1] + extension
-        extension = extension.lower()
     elif provided_mime_type is not None:
         # The URL does not contain an usable extension, but
         # the server provides a mime type.

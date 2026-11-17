@@ -288,6 +288,16 @@ def test_determine_file_extension_version_inconsistencies():
     ('a.txt.gz', '.txt.gz'),
     ('a.tgz', '.tgz'),
     ('a.svgz', '.svgz'),
+    # ... in any case:
+    ('a.TAR.GZ', '.tar.gz'),
+    ('a.tar.Z', '.tar.z'),
+    ('a.TGZ', '.tgz'),
+    ('a.SVGZ', '.svgz'),
+    # ... and stands alone if nothing recognized precedes it:
+    ('a.gz', '.gz'),
+    ('a.GZ', '.gz'),
+    ('a.bz2', '.bz2'),
+    ('a.nonexistent.xz', '.xz'),
     # extensions the platform may list behind another one for their type:
     ('a.csv', '.csv'),
     ('a.zip', '.zip'),

@@ -8,6 +8,7 @@
   * `date`: `date_en_long_to_iso` and `date_de_long_to_iso` no longer read a date out of longer numbers. `123. Oktober 1990` returned `1990-10-23`.
   * `date`: `date_de_long_to_iso` accepts the abbreviations `Mär.` and `Mrz.` for March.
   * `url`: `determine_file_extension` keeps a recognized extension from the URL, so `a.jpeg` yields `.jpeg` instead of `.jpg`. `a.tar.gz` yielded `.tar`, and on Windows `a.csv` yielded `.xls`.
+  * `url`: `determine_file_extension` yields `.gz` for `a.gz` instead of `.unknown`, and `.tar.gz` for `a.TAR.GZ`.
   * `finance`: `is_iban` and `is_isin` reject non-ASCII letters that uppercase to ASCII, like `ſ`, `ß` and `ﬁ`.
 
 ## Version 3.0.1 (2026-09-28)
