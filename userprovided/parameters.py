@@ -120,7 +120,8 @@ def separated_string_to_set(
         Order not preserved, duplicates collapsed.
 
     Raises:
-        TypeError: If sep or quote_char is not a string.
+        TypeError: If raw_string is neither a string nor None, or if sep
+            or quote_char is not a string.
         ValueError: If sep or quote_char is not a single character,
             if sep or quote_char is the backslash, if quote_char equals
             sep, or if quotes are unclosed.
@@ -149,6 +150,9 @@ def separated_string_to_set(
     """
     if raw_string is None:
         return None
+    if not isinstance(raw_string, str):
+        # Iterating a list joined its items: ['a', 'b'] -> {'ab'}.
+        raise TypeError("raw_string must be a string or None.")
 
     _check_separator_args(sep, allow_quotes, quote_char)
 

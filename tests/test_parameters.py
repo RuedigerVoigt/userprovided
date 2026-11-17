@@ -181,6 +181,12 @@ def test_separated_string_to_set_basic():
     assert userprovided.parameters.separated_string_to_set(',,a,,') == {'a'}
 
 
+@pytest.mark.parametrize('raw', [['a', 'b'], ('a', 'b'), {'a'}, b'a,b', 1])
+def test_separated_string_to_set_rejects_non_string(raw):
+    with pytest.raises(TypeError):
+        userprovided.parameters.separated_string_to_set(raw)
+
+
 def test_separated_string_to_set_quotes():
     # Quoted field with separator inside
     assert userprovided.parameters.separated_string_to_set(

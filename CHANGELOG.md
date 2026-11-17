@@ -11,6 +11,7 @@
   * `url`: `determine_file_extension` keeps a recognized extension from the URL, so `a.jpeg` yields `.jpeg` instead of `.jpg`. `a.tar.gz` yielded `.tar`, and on Windows `a.csv` yielded `.xls`.
   * `url`: `determine_file_extension` yields `.gz` for `a.gz` instead of `.unknown`, and `.tar.gz` for `a.TAR.GZ`.
   * `url`: `normalize_url` treats a plain string as `drop_keys` as one key. `drop_keys='utm'` also dropped the keys `u`, `t` and `m`.
+  * `parameters`: `separated_string_to_set` raises `TypeError` for anything but a string or `None`. A list `['a', 'b']` returned `{'ab'}`.
   * `finance`: `is_iban` rejects the check digits `00`, `01` and `99`, which are never issued.
   * `finance`: `is_iban` and `is_isin` reject non-ASCII letters that uppercase to ASCII, like `ſ`, `ß` and `ﬁ`.
 
