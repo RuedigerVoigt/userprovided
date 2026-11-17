@@ -53,6 +53,8 @@ def hash_available(hash_method: str,
 
     Returns:
         True if the hash method is available and allowed, False otherwise.
+        False for ``shake_128`` and ``shake_256``, which have no fixed
+        digest length.
 
     Raises:
         TypeError: If hash_method is not a string. ``None`` counts as a
@@ -75,6 +77,12 @@ def hash_available(hash_method: str,
         if _hash_is_deprecated(hash_method):
             raise err.DeprecatedHashAlgorithm(
                 f'The supplied hash method {hash_method!r} is deprecated!')
+
+    if hash_method.startswith('shake_'):
+        # SHAKE has no fixed digest length: hexdigest() needs one, so both
+        # hash functions crashed with a TypeError.
+        logger.debug('Hash method %r has no fixed length.', hash_method)
+        return False
 
     # Compared lowercased on both sides: 'SHA256' is the same algorithm, and
     # hashlib.new() is not case-insensitive for all of them ('SHA3_256').
@@ -147,7 +155,7 @@ def calculate_file_hash(file_path: pathlib.Path | str,
         file_path: Path to the file to hash. Can be string or Path object.
         hash_method: Hash algorithm to use. Supports all algorithms available
             in hashlib (sha224, sha256, sha384, sha512, sha3_*, blake2*, etc.)
-            excluding deprecated algorithms (MD4, MD5, SHA1). Case and
+            excluding deprecated algorithms (MD4, MD5, SHA1) and SHAKE. Case and
             surrounding whitespace are ignored. Defaults to 'sha256'.
         expected_hash: Expected hash value for verification. Compared
             case-insensitively and in constant time, ignoring surrounding
@@ -233,7 +241,7 @@ def calculate_string_hash(data: str,
         data: String data to hash.
         hash_method: Hash algorithm to use. Supports algorithms available in
             `hashlib` (sha224, sha256, sha384, sha512, sha3_*, blake2*, etc.)
-            excluding deprecated algorithms (MD4, MD5, SHA1). Case and
+            excluding deprecated algorithms (MD4, MD5, SHA1) and SHAKE. Case and
             surrounding whitespace are ignored. Defaults to 'sha256'.
         encoding: Text encoding to use when converting string to bytes
             (for this helper we only accept text input). Defaults to 'utf-8'.

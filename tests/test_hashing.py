@@ -47,6 +47,18 @@ def test_hash_available():
     # Deprecated algorithm with fail_on_deprecated=False: available but not rejected
     assert userprovided.hashing.hash_available('md5', False) is True
 
+
+@pytest.mark.parametrize('name', ['shake_128', 'shake_256', ' SHAKE_256 '])
+def test_shake_is_not_offered(name, tmp_path):
+    # hashlib lists SHAKE, but it has no fixed digest length.
+    assert userprovided.hashing.hash_available(name) is False
+    with pytest.raises(ValueError):
+        userprovided.hashing.calculate_string_hash('abc', name)
+    file = tmp_path / 'f.txt'
+    file.write_text('abc')
+    with pytest.raises(ValueError):
+        userprovided.hashing.calculate_file_hash(file, name)
+
 testfile_sha224 = '0808f64e60d58979fcb676c96ec938270dea42445aeefcd3a4e6f8db'
 testfile_sha256 = '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'
 testfile_sha512 = 'f7fbba6e0636f890e56fbbf3283e524c6fa3204ae298382d624741d0dc6638326e282c41be5e4254d8820772c5518a2c5a8c0c7f7eda19594a7eb539453e1ed7'
