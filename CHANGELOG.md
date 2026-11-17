@@ -13,6 +13,7 @@
   * `url`: `normalize_url` treats a plain string as `drop_keys` as one key. `drop_keys='utm'` also dropped the keys `u`, `t` and `m`.
   * `parameters`: `separated_string_to_set` raises `TypeError` for anything but a string or `None`. A list `['a', 'b']` returned `{'ab'}`.
   * `parameters`, `geo`, `date`: Very large ints no longer raise `OverflowError` (`int_in_range('x', 10**400, 0, 10, 5)`).
+  * `url`: `normalize_url` accepts a URL as the query (`https://example.com/r?https://other.example/`) instead of raising `ValueError`.
   * `finance`: `is_iban` rejects the check digits `00`, `01` and `99`, which are never issued.
   * `finance`: `is_iban` and `is_isin` reject non-ASCII letters that uppercase to ASCII, like `ſ`, `ß` and `ﬁ`.
 

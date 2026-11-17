@@ -69,9 +69,11 @@ def test_url_length_limits():
 
 
 def test_normalize_query_part():
-    # By mistake a full URL is provided instead of only the query part:
-    with pytest.raises(ValueError):
-        userprovided.url._normalize_query_part('https://www.example.com/index.php?foo=foo&foo=bar')
+    # A query may itself be a URL (redirect targets):
+    assert userprovided.url.normalize_url(
+        'https://www.example.com/r?https://other.example/') == 'https://www.example.com/r?https://other.example/'
+    assert userprovided.url.normalize_url(
+        'https://www.example.com/r?http://other.example/a=b') == 'https://www.example.com/r?http://other.example/a=b'
     # Duplicate key in query part of URL query with conflicting values:
     with pytest.raises(userprovided.err.QueryKeyConflict):
         userprovided.url._normalize_query_part('foo=foo&foo=bar')

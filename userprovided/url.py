@@ -244,12 +244,8 @@ def _normalize_query_part(query: str,
         Normalized query string with parameters sorted alphabetically.
 
     Raises:
-        ValueError: If a full URL is provided instead of just the query part.
         QueryKeyConflict: If duplicate keys have conflicting values.
     """
-    if is_url(query):
-        raise ValueError('Provide only the query part to normalize_query_part')
-
     if isinstance(drop_keys, str):
         # A bare string would be checked with substring matching: ('utm') —
         # a string, not a tuple — would also drop the keys 'u', 't' and 'm'.
