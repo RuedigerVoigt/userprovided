@@ -17,6 +17,10 @@ logger = logging.getLogger(__name__)
 
 # Compiled regex patterns for performance optimization
 _AWS_S3_BUCKET_CHARS = re.compile(r"[a-z0-9\-\.]*")
+# '<prefix>-<12-digit account ID>-<region>-an', e.g.
+# 'my-bucket-111122223333-us-west-2-an'.
+_AWS_S3_ACCOUNT_REGIONAL = re.compile(
+    r".+-[0-9]{12}-[a-z]+(?:-[a-z]+)+-[0-9]+-an")
 _AWS_S3_BUCKET_IPV4 = re.compile(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
 
 # Boolean spellings accepted by parse_boolean (lowercased keys). Mirrors
@@ -530,6 +534,8 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
     Note:
         Applies the general purpose bucket rules from:
         https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
+        A name ending in ``-an`` is valid only in the account regional
+        namespace format (``my-bucket-111122223333-us-west-2-an``).
     """
     if not isinstance(bucket_name, str):
         raise TypeError('Bucket name must be a string.')
@@ -576,6 +582,12 @@ def is_aws_s3_bucket_name(bucket_name: str) -> bool:
     if bucket_name.endswith(forbidden_suffixes):
         logger.debug('AWS bucket name cannot end with reserved suffixes: %r',
                      ', '.join(forbidden_suffixes))
+        return False
+    # '-an' is reserved for the account regional namespace.
+    if (bucket_name.endswith('-an')
+            and not _AWS_S3_ACCOUNT_REGIONAL.fullmatch(bucket_name)):
+        logger.debug('AWS bucket name can only end with -an in the account '
+                     'regional namespace format.')
         return False
 
     # Only two adjacent periods are forbidden. A hyphen next to a period

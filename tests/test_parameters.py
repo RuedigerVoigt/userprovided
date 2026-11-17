@@ -81,6 +81,17 @@ import userprovided
     ('test--x-s3', False),
     ('bucket--table-s3', False),
     ('test--table-s3', False),
+    # '-an' only in the account regional namespace format:
+    ('abc-an', False),
+    ('my-bucket-an', False),
+    ('my-bucket-us-west-2-an', False),
+    ('my-bucket-111122223333-an', False),
+    ('111122223333-us-west-2-an', False),
+    ('my-bucket-111122223333-us-west-2-an', True),
+    ('my-bucket-012345678910-ap-southeast-2-an', True),
+    ('my-bucket-012345678910-us-gov-west-1-an', True),
+    ('my-bucket-an1', True),
+    ('an-bucket', True),
     # valid names that contain but don't end with forbidden suffixes:
     ('s3alias-bucket', True),
     ('ol-s3-test', True),
