@@ -560,8 +560,14 @@ def determine_file_extension(url: str,
     # (on Windows '.csv' -> '.xls').
     # Lowercased before any lookup: mimetypes matches compression suffixes
     # case-sensitively, so 'a.TAR.GZ' lost its '.tar'.
-    parsed_url = urllib.parse.urlparse(url)
-    base, extension = posixpath.splitext(parsed_url.path)
+    try:
+        path = urllib.parse.urlparse(url).path
+    except ValueError:
+        # Unparseable, like an unclosed IPv6 literal ('http://[::1/x.pdf'):
+        # the URL gives no hint, so the mime type decides.
+        logger.debug('URL %r could not be parsed.', url)
+        path = ''
+    base, extension = posixpath.splitext(path)
     extension = extension.lower()
     if extension in _COMPRESSION_SUFFIXES:
         # '.gz' and the like only name the compression.

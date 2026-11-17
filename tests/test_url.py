@@ -318,6 +318,12 @@ def test_determine_file_extension_keeps_extension_in_url(path, expected):
         url, 'text/html') == expected
 
 
+def test_determine_file_extension_unparseable_url():
+    url = 'http://[::1/x.pdf'
+    assert userprovided.url.determine_file_extension(url) == '.unknown'
+    assert userprovided.url.determine_file_extension(url, 'text/html') == '.html'
+
+
 @pytest.mark.parametrize("test_url,expected_domain", [
     # Basic domain extraction without port
     ('https://www.example.com/path', 'www.example.com'),

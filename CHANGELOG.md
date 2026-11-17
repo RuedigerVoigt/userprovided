@@ -15,6 +15,7 @@
   * `parameters`, `geo`, `date`: Very large ints no longer raise `OverflowError` (`int_in_range('x', 10**400, 0, 10, 5)`).
   * `url`: `normalize_url` accepts a URL as the query (`https://example.com/r?https://other.example/`) instead of raising `ValueError`.
   * `hashing`: `hash_available` reports SHAKE as unavailable, and both hash functions raise `ValueError` for it instead of crashing with `TypeError`.
+  * `url`: `determine_file_extension` falls back to the mime type for an unparseable URL (`http://[::1/x.pdf`) instead of raising `ValueError`.
   * `parameters`: `is_aws_s3_bucket_name` accepts the suffix `-an` only in the account regional namespace format (`my-bucket-111122223333-us-west-2-an`).
   * `finance`: `is_iban` rejects the check digits `00`, `01` and `99`, which are never issued.
   * `finance`: `is_iban` and `is_isin` reject non-ASCII letters that uppercase to ASCII, like `ſ`, `ß` and `ﬁ`.
