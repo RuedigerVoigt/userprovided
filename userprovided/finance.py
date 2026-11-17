@@ -62,7 +62,7 @@ def is_iban(iban_candidate: str) -> bool:
 
     An IBAN consists of:
     - Positions 1-2: two letters (ISO 3166-1 alpha-2 country code)
-    - Positions 3-4: two check digits
+    - Positions 3-4: two check digits, from 02 to 98
     - Remainder: the BBAN, up to 30 alphanumeric characters.
 
     Accepts both upper and lowercase input as well as the printed format
@@ -106,6 +106,11 @@ def is_iban(iban_candidate: str) -> bool:
     # Positions 3-4: two check digits.
     if not iban[2:4].isdigit():
         logger.debug('IBAN check digits must be numeric.')
+        return False
+    # ISO 13616 computes check digits from 02 to 98. 00, 01 and 99 are the
+    # same remainders written differently (97, 98, 02), so they pass mod-97.
+    if iban[2:4] in ('00', '01', '99'):
+        logger.debug('IBAN check digits must be between 02 and 98.')
         return False
 
     # The whole IBAN must be ASCII alphanumeric (guards the BBAN).

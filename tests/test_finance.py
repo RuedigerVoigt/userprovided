@@ -138,6 +138,13 @@ def test_finance_luhn_check_isin_invalid_char():
     # A ligature that upper() turns into the ASCII country code 'FI':
     ('FI2112345600000785', True),
     ('\N{LATIN SMALL LIGATURE FI}2112345600000785', False),
+    # Check digits 00, 01 and 99 pass mod-97, but are never issued:
+    ('DE02000000001000000093', True),
+    ('DE99000000001000000093', False),
+    ('DE97000000001000000032', True),
+    ('DE00000000001000000032', False),
+    ('DE98000000001000000014', True),
+    ('DE01000000001000000014', False),
     # Check digit positions are not numeric:
     ('DEAB370400440532013000', False),
     # Non-alphanumeric character in the BBAN:
