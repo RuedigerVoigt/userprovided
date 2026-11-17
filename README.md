@@ -450,6 +450,7 @@ AWS S3 bucket name requirements enforced:
 - Cannot contain consecutive dots (..)
 - Cannot start with reserved prefixes: `xn--`, `sthree-`, `amzn-s3-demo-`
 - Cannot end with reserved suffixes: `-s3alias`, `--ol-s3`, `.mrap`, `--x-s3`, `--table-s3`
+- Can end with `-an` only in the account regional namespace format (`my-bucket-111122223333-us-west-2-an`)
 
 
 ## Handle URLs
