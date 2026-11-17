@@ -577,6 +577,11 @@ def test_extract_tld_whitespace():
     ('https://sub.example.co.uk.', 'example.co.uk', True),
     # ... and still fail to match an unrelated domain:
     ('https://evil.com.', 'example.com', False),
+    # ... and the same for a trailing dot in the domain argument:
+    ('https://example.com', 'example.com.', True),
+    ('https://www.example.com.', 'example.com.', True),
+    ('https://evil.com', 'example.com.', False),
+    ('https://example.com', '.', False),
     # Domain with whitespace:
     ('https://example.com', '  example.com  ', True),
     # Non-matching domains:

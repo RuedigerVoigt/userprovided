@@ -958,7 +958,8 @@ def url_matches_domain(url: str, domain: str) -> bool:
         url: The URL to check. Must be a valid URL with a scheme and
             network location.
         domain: The domain to match against (e.g., ``'wikipedia.org'``).
-            Should not include a scheme or path. Compared case-insensitively.
+            Should not include a scheme or path. Compared case-insensitively,
+            ignoring a trailing dot.
 
     Returns:
         True if the URL's registrable domain matches, False otherwise.
@@ -972,7 +973,9 @@ def url_matches_domain(url: str, domain: str) -> bool:
     if not isinstance(domain, str):
         raise TypeError('Domain must be a string.')
 
-    domain = domain.strip().lower()
+    # Trailing dots stripped as extract_domain strips them from the URL,
+    # or 'example.com.' never matched.
+    domain = _TRAILING_DOTS_AND_SPACE.sub('', domain.strip().lower())
 
     try:
         url_domain = extract_domain(url, drop_subdomain=True)
