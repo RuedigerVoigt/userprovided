@@ -499,6 +499,10 @@ userprovided.url.normalize_hostname('[0:0:0:0:0:0:0:1]')
 
 userprovided.url.normalize_hostname('2001:DB8::1')
 # => '2001:db8::1'
+
+# IPv4 in the short forms browsers accept:
+userprovided.url.normalize_hostname('127.1')
+# => '127.0.0.1'
 ```
 
 A non-string raises `TypeError`; empty input and input longer than 2048 characters raise `ValueError`. Everything else is normalized best-effort — this is a normalizer, not a validator.

@@ -88,6 +88,108 @@ TWO_PART_TLDS = {
 }
 
 
+_DIGITS = {8: '01234567',
+           10: '0123456789',
+           16: '0123456789abcdefABCDEF'}
+
+
+def _parse_ipv4_part(part: str) -> int | None:
+    """Parse one dot-separated part of an IPv4 address the way inet_aton does.
+
+    The base is taken from the prefix: ``0x`` means hexadecimal, a leading
+    zero means octal, anything else is decimal.
+
+    Returns the value, or None if the part is not a number in that base.
+    """
+    if part[:2].lower() == '0x':
+        digits, base = part[2:], 16
+    elif len(part) > 1 and part[0] == '0':
+        digits, base = part[1:], 8
+    else:
+        digits, base = part, 10
+    # int() would also accept underscores, signs and surrounding whitespace,
+    # none of which inet_aton allows.
+    if not digits or not all(c in _DIGITS[base] for c in digits):
+        return None
+    return int(digits, base)
+
+
+def _parse_ipv4(host: str) -> ipaddress.IPv4Address | None:
+    """Parse an IPv4 address in any of the encodings inet_aton accepts.
+
+    ``ipaddress.ip_address()`` only accepts four dotted decimal octets, but
+    the C library parser behind most HTTP clients and OS network stacks is
+    far more permissive: it takes one to four parts, each in decimal, octal
+    or hexadecimal, where the final part fills every octet the earlier parts
+    left over. All of the following therefore reach 127.0.0.1:
+
+    * ``2130706433``, ``0x7f000001``, ``017700000001`` (one part)
+    * ``127.1`` (two parts), ``127.0.1`` (three parts)
+    * ``0177.0.0.1``, ``0x7f.0.0.1`` (mixed per-part bases)
+
+    A guard that only calls ``ipaddress.ip_address(host)`` treats every one
+    of them as a hostname rather than an address, and so reports an internal
+    target as safe.
+
+    Returns an IPv4Address on success, None if the host is not an IPv4
+    address in any of these encodings.
+    """
+    parts = host.split('.')
+    if len(parts) > 4:
+        return None
+    values: list[int] = []
+    for part in parts:
+        value = _parse_ipv4_part(part)
+        if value is None:
+            return None
+        values.append(value)
+    # Every part but the last is a single octet; the last one covers the rest.
+    if any(value > 255 for value in values[:-1]):
+        return None
+    if values[-1] >= 1 << (8 * (5 - len(parts))):
+        return None
+    packed = values[-1]
+    for index, value in enumerate(values[:-1]):
+        packed |= value << (8 * (3 - index))
+    return ipaddress.IPv4Address(packed)
+
+
+def _is_ip_address(host: str) -> bool:
+    """True if host is an IP address, including the IPv4 forms of inet_aton."""
+    try:
+        ipaddress.ip_address(host)
+    except ValueError:
+        return _parse_ipv4(host) is not None
+    return True
+
+
+def _map_to_ascii(host: str) -> str | None:
+    """Map a non-ASCII host to the lowercase ASCII form clients resolve.
+
+    Returns None if the host cannot be mapped.
+    """
+    # NFKC first, as the codec only knows the mappings of Unicode 3.2.
+    try:
+        return unicodedata.normalize('NFKC', host).encode('idna').decode('ascii').lower()
+    except UnicodeError:
+        return None
+
+
+def _ends_in_number(host: str) -> bool:
+    """True if the WHATWG URL Standard must parse host as IPv4.
+
+    That is the case if the last label, ignoring a trailing dot, is a
+    decimal number or ``0x`` followed by hexadecimal digits.
+    """
+    labels = host.split('.')
+    if labels[-1] == '' and len(labels) > 1:
+        labels.pop()
+    last = labels[-1]
+    if last[:2] == '0x':
+        return all(c in _DIGITS[16] for c in last[2:])
+    return last != '' and all(c in _DIGITS[10] for c in last)
+
+
 def _bracketed_host_is_not_ipv6(parsed: urllib.parse.ParseResult) -> bool:
     """True if the host is in square brackets but is no IPv6 address."""
     # urlparse strips the brackets and accepts the IPvFuture form: '[v1.x]'
@@ -101,17 +203,31 @@ def _bracketed_host_is_not_ipv6(parsed: urllib.parse.ParseResult) -> bool:
     return False
 
 
-def _browser_reads_other_host(parsed: urllib.parse.ParseResult) -> bool:
-    """True if browsers would read a different host than urlparse, or none."""
+def _browser_host_problem(parsed: urllib.parse.ParseResult) -> str | None:
+    """Why browsers would read a different host than urlparse, or none.
+
+    Returns None if they read the same host.
+    """
     if _bracketed_host_is_not_ipv6(parsed):
-        return True
+        return 'URL host in brackets is no IPv6 address.'
     if parsed.scheme not in _SPECIAL_SCHEMES:
-        return False
+        return None
     # Browsers end the authority at the backslash, urlparse does not:
     # 'http://evil.com\@good.com' goes to evil.com, urlparse says good.com.
+    if '\\' in parsed.netloc:
+        return 'URL has a backslash in the authority.'
+    host = parsed.hostname or ''
     # Browsers also percent-decode the host: 'http://%31%32%37.0.0.1' goes
     # to 127.0.0.1, urlparse keeps the escapes.
-    return '\\' in parsed.netloc or '%' in (parsed.hostname or '')
+    if '%' in host:
+        return 'URL host is percent-encoded.'
+    if not host.isascii():
+        # Browsers map the host to ASCII before they look for a number.
+        host = _map_to_ascii(host) or ''
+    # Browsers read such a host as IPv4 or reject it: 'http://1.2.3.999/'.
+    if _ends_in_number(host) and _parse_ipv4(host.removesuffix('.')) is None:
+        return 'URL host ends in a number but is no IPv4 address.'
+    return None
 
 
 def _host_from_url(url: str) -> str | None:
@@ -134,22 +250,19 @@ def _host_from_url(url: str) -> str | None:
     if not host or _FORBIDDEN_HOST_CHAR.search(host):
         return None
     if parsed.scheme in _SPECIAL_SCHEMES and '\\' in parsed.netloc:
-        # See _browser_reads_other_host.
+        # See _browser_host_problem.
         return None
     if _bracketed_host_is_not_ipv6(parsed):
         return None
     if not host.isascii():
         # Clients map such a host to ASCII before they resolve it:
         # '１２７.0.0.1', '127。0。0。1' and 'local\xadhost' all reach loopback.
-        # NFKC first, as the codec only knows the mappings of Unicode 3.2.
-        try:
-            host = unicodedata.normalize('NFKC', host).encode('idna').decode('ascii').lower()
-        except UnicodeError:
-            return None
+        mapped = _map_to_ascii(host)
         # A mapping can produce delimiters ('＋' -> '+') that clients treat
         # differently, so the target cannot be told.
-        if not _MAPPED_HOST.fullmatch(host):
+        if mapped is None or not _MAPPED_HOST.fullmatch(mapped):
             return None
+        host = mapped
     if '%' in host and ':' not in host:
         # Browsers percent-decode the host, other clients may too, so the
         # SSRF guard cannot tell the target. This applies to any scheme.
@@ -172,8 +285,9 @@ def is_url(url: str,
     A host containing whitespace, control characters or one of
     ``< > \\ ^ |`` is invalid, and so is anything but an IPv6 address in
     square brackets. In an http(s), ws(s), ftp or file URL, so is a
-    backslash in the authority or a ``%`` in the host. Surrounding
-    whitespace is ignored.
+    backslash in the authority, a ``%`` in the host, and a host whose last
+    label is a number but that is no IPv4 address (``1.2.3.999``).
+    Surrounding whitespace is ignored.
 
     Args:
         url: The URL string to validate.
@@ -226,9 +340,9 @@ def is_url(url: str,
     if _FORBIDDEN_HOST_CHAR.search(parsed.hostname):
         logger.debug('URL host contains a forbidden character.')
         return False
-    if _browser_reads_other_host(parsed):
-        logger.debug('URL has a backslash in the authority, a '
-                     'percent-encoded host or no IPv6 address in brackets.')
+    problem = _browser_host_problem(parsed)
+    if problem:
+        logger.debug(problem)
         return False
 
     try:
@@ -422,7 +536,9 @@ def normalize_hostname(host: str) -> str:
     - IP literals (IPv6 with or without square brackets, IPv4) are
       canonicalized via the ipaddress module: '[::1]', '::1', and
       '0:0:0:0:0:0:0:1' all become '::1'. The returned form carries
-      no brackets.
+      no brackets. The short, octal and hexadecimal IPv4 forms that
+      browsers accept ('127.1', '0x7f.0.0.1', '2130706433') become
+      dotted decimal ('127.0.0.1').
     - Non-ASCII hostnames are canonicalized to punycode via the stdlib
       IDNA codec ('münchen.example' -> 'xn--mnchen-3ya.example'). The
       stdlib codec implements IDNA 2003, so a handful of newer scripts
@@ -471,6 +587,10 @@ def normalize_hostname(host: str) -> str:
     except ValueError:
         # Not an IP literal, continue with hostname handling
         pass
+
+    ipv4 = _parse_ipv4(unbracketed)
+    if ipv4 is not None:
+        return str(ipv4)
 
     if not candidate.isascii():
         try:
@@ -737,8 +857,9 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
         ValueError: If url is empty, its host contains whitespace, control
             characters or one of ``< > \\ ^ |``, its host is in square
             brackets but no IPv6 address, an http(s), ws(s), ftp or file URL
-            has a backslash in the authority or a ``%`` in the host, or
-            domain extraction fails.
+            has a backslash in the authority, a ``%`` in the host or a host
+            that ends in a number but is no IPv4 address, or domain
+            extraction fails.
 
     Examples:
         >>> extract_domain('https://www.example.com:8080/path')
@@ -780,10 +901,9 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
         # A host of spaces only was stripped to '' and returned as a domain.
         raise ValueError("URL host contains a forbidden character.")
 
-    if _browser_reads_other_host(parsed):
-        raise ValueError("URL has a backslash in the authority, a "
-                         "percent-encoded host or no IPv6 address in "
-                         "brackets.")
+    problem = _browser_host_problem(parsed)
+    if problem:
+        raise ValueError(problem)
 
     domain = domain.lower()
 
@@ -848,7 +968,7 @@ def extract_tld(url: str) -> str:
     domain = parsed.hostname
 
     if (not domain or _FORBIDDEN_HOST_CHAR.search(domain)
-            or _browser_reads_other_host(parsed)):
+            or _browser_host_problem(parsed)):
         # netloc is deliberately not used as a fallback -- see extract_domain.
         return ''
 
@@ -861,14 +981,9 @@ def extract_tld(url: str) -> str:
         # The host consisted of dots only.
         return ''
 
-    # Check if it's an IP address (IPv4 or IPv6)
-    try:
-        ipaddress.ip_address(domain)
-        # It's an IP address, no TLD
+    # An IP address has no TLD. Its short forms count too: '127.1' has no TLD '.1'.
+    if _is_ip_address(domain):
         return ''
-    except ValueError:
-        # Not an IP address, continue
-        pass
 
     parts = domain.split('.')
 
@@ -929,14 +1044,10 @@ def _extract_registrable_domain(domain: str, two_part_tlds: set) -> str:
     # registrable domain. Strip the dots before splitting into labels.
     domain = domain.rstrip('.')
 
-    # Check if the domain is an IP address (IPv4 or IPv6)
-    try:
-        ipaddress.ip_address(domain)
-        # It's a valid IP address, return as-is
+    # An IP address is returned as-is. Its short forms count too: '10.0.1'
+    # is 10.0.0.1, not a subdomain of '0.1'.
+    if _is_ip_address(domain):
         return domain
-    except ValueError:
-        # Not an IP address, continue with normal processing
-        pass
 
     parts = domain.split('.')
 

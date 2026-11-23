@@ -10,7 +10,7 @@ Released under the Apache License 2.0
 import ipaddress
 import logging
 
-from userprovided.url import _host_from_url
+from userprovided.url import _host_from_url, _parse_ipv4
 
 
 logger = logging.getLogger(__name__)
@@ -20,72 +20,6 @@ logger = logging.getLogger(__name__)
 # routinely used inside cloud and carrier networks, so it is a realistic
 # internal target for SSRF. The guard below therefore treats it as unsafe.
 _CGNAT_NETWORK = ipaddress.ip_network('100.64.0.0/10')
-
-
-_DIGITS = {8: '01234567',
-           10: '0123456789',
-           16: '0123456789abcdefABCDEF'}
-
-
-def _parse_ipv4_part(part: str) -> int | None:
-    """Parse one dot-separated part of an IPv4 address the way inet_aton does.
-
-    The base is taken from the prefix: ``0x`` means hexadecimal, a leading
-    zero means octal, anything else is decimal.
-
-    Returns the value, or None if the part is not a number in that base.
-    """
-    if part[:2].lower() == '0x':
-        digits, base = part[2:], 16
-    elif len(part) > 1 and part[0] == '0':
-        digits, base = part[1:], 8
-    else:
-        digits, base = part, 10
-    # int() would also accept underscores, signs and surrounding whitespace,
-    # none of which inet_aton allows.
-    if not digits or not all(c in _DIGITS[base] for c in digits):
-        return None
-    return int(digits, base)
-
-
-def _parse_ipv4(host: str) -> ipaddress.IPv4Address | None:
-    """Parse an IPv4 address in any of the encodings inet_aton accepts.
-
-    ``ipaddress.ip_address()`` only accepts four dotted decimal octets, but
-    the C library parser behind most HTTP clients and OS network stacks is
-    far more permissive: it takes one to four parts, each in decimal, octal
-    or hexadecimal, where the final part fills every octet the earlier parts
-    left over. All of the following therefore reach 127.0.0.1:
-
-    * ``2130706433``, ``0x7f000001``, ``017700000001`` (one part)
-    * ``127.1`` (two parts), ``127.0.1`` (three parts)
-    * ``0177.0.0.1``, ``0x7f.0.0.1`` (mixed per-part bases)
-
-    A guard that only calls ``ipaddress.ip_address(host)`` treats every one
-    of them as a hostname rather than an address, and so reports an internal
-    target as safe.
-
-    Returns an IPv4Address on success, None if the host is not an IPv4
-    address in any of these encodings.
-    """
-    parts = host.split('.')
-    if len(parts) > 4:
-        return None
-    values: list[int] = []
-    for part in parts:
-        value = _parse_ipv4_part(part)
-        if value is None:
-            return None
-        values.append(value)
-    # Every part but the last is a single octet; the last one covers the rest.
-    if any(value > 255 for value in values[:-1]):
-        return None
-    if values[-1] >= 1 << (8 * (5 - len(parts))):
-        return None
-    packed = values[-1]
-    for index, value in enumerate(values[:-1]):
-        packed |= value << (8 * (3 - index))
-    return ipaddress.IPv4Address(packed)
 
 
 def _parse_ip(host: str) -> ipaddress.IPv4Address | ipaddress.IPv6Address | None:

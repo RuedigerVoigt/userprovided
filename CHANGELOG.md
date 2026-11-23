@@ -18,6 +18,8 @@
   * `hashing`: `hash_available` reports SHAKE as unavailable, and both hash functions raise `ValueError` for it instead of crashing with `TypeError`.
   * `url`: `determine_file_extension` falls back to the mime type for an unparseable URL (`http://[::1/x.pdf`) instead of raising `ValueError`.
   * `url`: `url_matches_domain` ignores a trailing dot in the domain, as it already did in the URL.
+  * `url`: `normalize_hostname` writes the IPv4 forms browsers accept (`127.1`, `0x7f.0.0.1`, `2130706433`) in dotted decimal, and `extract_tld` and `extract_domain` treat them as IP addresses. `extract_tld('http://127.1/')` returned `.1`.
+  * `url`: `is_url` rejects an http(s), ws(s), ftp or file URL whose host ends in a number but is no IPv4 address (`http://1.2.3.999/`), as browsers do.
   * `parameters`: `is_aws_s3_bucket_name` accepts the suffix `-an` only in the account regional namespace format (`my-bucket-111122223333-us-west-2-an`).
   * `finance`: `is_iban` rejects the check digits `00`, `01` and `99`, which are never issued.
   * `finance`: `is_iban` and `is_isin` reject non-ASCII letters that uppercase to ASCII, like `ſ`, `ß` and `ﬁ`.

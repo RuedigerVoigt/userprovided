@@ -7,6 +7,7 @@ Released under the Apache License 2.0
 
 # ruff: noqa
 
+import ipaddress
 from unittest.mock import patch
 
 from hypothesis import given, assume, strategies as st
@@ -652,6 +653,18 @@ def test_host_from_url_exception():
     ('2001:DB8::1', '2001:db8::1'),
     # IPv4 unchanged:
     ('192.168.1.1', '192.168.1.1'),
+    # IPv4 forms browsers accept become dotted decimal:
+    ('127.1', '127.0.0.1'),
+    ('2130706433', '127.0.0.1'),
+    ('0x7F.0.0.1', '127.0.0.1'),
+    ('0177.0.0.1', '127.0.0.1'),
+    ('010.0.0.1', '8.0.0.1'),
+    ('127.1.', '127.0.0.1'),
+    ('[127.1]', '127.0.0.1'),
+    ('１２７.1', '127.0.0.1'),
+    # no IPv4 address, so left as it is:
+    ('1.2.3.999', '1.2.3.999'),
+    ('example.123', 'example.123'),
     # ASCII hostnames pass through — normalizer, not validator:
     ('localhost', 'localhost'),
 ])
@@ -694,7 +707,7 @@ def test_normalize_hostname_idempotent(host):
 
 @pytest.mark.parametrize('host, expected', [
     # whitespace in front of a trailing dot:
-    ('0 .', '0'),
+    ('0 .', '0.0.0.0'),
     ('example.com .', 'example.com'),
     ('example.com\t. .', 'example.com'),
     ('[::1] .', '::1'),
@@ -1043,3 +1056,58 @@ def test_bracketed_host_that_is_no_ipv6_is_rejected(scheme, version, rest):
         userprovided.url.extract_domain(url)
     assert userprovided.url.extract_tld(url) == ''
     assert userprovided.url.url_matches_domain(url, f'v{version}.{rest}') is False
+
+
+@pytest.mark.parametrize('url', [
+    'http://1.2.3.999/',
+    'https://example.123/',
+    'http://127..1/',
+    'ftp://0x/',
+    'ws://1.2.3.4.5/',
+    'http://1.2.3.999./',
+    'http://１.2.3.999/',   # mapped to ASCII first
+])
+def test_host_ending_in_number_must_be_ipv4(url):
+    # Browsers read such a host as IPv4 and reject it if it is none.
+    assert userprovided.url.is_url(url) is False
+    with pytest.raises(ValueError):
+        userprovided.url.normalize_url(url)
+    with pytest.raises(ValueError, match='number'):
+        userprovided.url.extract_domain(url)
+    assert userprovided.url.extract_tld(url) == ''
+
+
+@pytest.mark.parametrize('url', [
+    'http://127.1/',
+    'http://127.0.0.1./',
+    'http://example.0x1g/',     # no hexadecimal number
+    'http://1a.com/',
+    'foo://1.2.3.999/',         # no special scheme
+])
+def test_host_ending_in_other_than_a_number_stays_valid(url):
+    assert userprovided.url.is_url(url) is True
+
+
+@given(address=st.integers(min_value=0, max_value=2**32 - 1),
+       form=st.sampled_from(['{:d}', '0x{:x}', '0{:o}']))
+def test_ipv4_written_as_one_number_is_an_ip_address(address, form):
+    host = form.format(address)
+    assert userprovided.url.normalize_hostname(host) == str(
+        ipaddress.IPv4Address(address))
+    url = f'http://{host}/'
+    assert userprovided.url.is_url(url) is True
+    assert userprovided.url.extract_tld(url) == ''
+    # extract_domain does not canonicalize, but sees no subdomain either.
+    assert userprovided.url.extract_domain(url, drop_subdomain=True) == host
+
+
+@pytest.mark.parametrize('url', ['http://127.1/', 'foo://127.1/',
+                                 'http://10.0.1/', 'http://0x7f.0.0.1/'])
+def test_short_ipv4_forms_have_no_tld_or_subdomain(url):
+    # extract_tld returned '.1' for 'http://127.1/', and extract_domain
+    # read '10.0.1' as a subdomain of '0.1'.
+    host = url.split('/')[2]
+    assert userprovided.url.extract_tld(url) == ''
+    assert userprovided.url.extract_domain(url, drop_subdomain=True) == host
+    assert userprovided.url.extract_domain_from_host(
+        host, drop_subdomain=True) == userprovided.url.normalize_hostname(host)
