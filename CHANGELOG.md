@@ -20,6 +20,7 @@
   * `parameters`: `is_aws_s3_bucket_name` accepts the suffix `-an` only in the account regional namespace format (`my-bucket-111122223333-us-west-2-an`).
   * `finance`: `is_iban` rejects the check digits `00`, `01` and `99`, which are never issued.
   * `finance`: `is_iban` and `is_isin` reject non-ASCII letters that uppercase to ASCII, like `ſ`, `ß` and `ﬁ`.
+  * Docs: `normalize_url` documents `QueryKeyConflict`, and `calculate_string_hash` documents `LookupError` for an unknown encoding.
 
 ## Version 3.0.1 (2026-09-28)
 

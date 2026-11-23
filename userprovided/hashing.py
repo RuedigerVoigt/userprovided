@@ -254,6 +254,7 @@ def calculate_string_hash(data: str,
         ValueError: If hash method is not supported or data is empty.
         TypeError: If data or hash_method is not a string.
         UnicodeEncodeError: If data cannot be encoded with specified encoding.
+        LookupError: If encoding is not a known text encoding.
     """
     if not isinstance(data, str):
         raise TypeError('Data must be a string')

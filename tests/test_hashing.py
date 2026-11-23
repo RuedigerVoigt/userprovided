@@ -282,6 +282,11 @@ def test_calculate_string_hash_encoding():
     # Test invalid encoding
     with pytest.raises(UnicodeEncodeError):
         userprovided.hashing.calculate_string_hash("héllo", encoding='ascii')
+    # Unknown encoding, and a codec that is not a text encoding:
+    with pytest.raises(LookupError):
+        userprovided.hashing.calculate_string_hash("hello", encoding='no-such-codec')
+    with pytest.raises(LookupError):
+        userprovided.hashing.calculate_string_hash("hello", encoding='rot13')
 
 
 def test_calculate_string_hash_alias_bypass():

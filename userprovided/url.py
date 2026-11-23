@@ -319,6 +319,8 @@ def normalize_url(url: str,
         ValueError: If the URL is malformed.
         ContradictoryParameters: If both drop_keys and do_not_change_query_part
             are specified.
+        QueryKeyConflict: If the query repeats a key with conflicting values
+            and do_not_change_query_part is False.
     """
     if not isinstance(url, str):
         raise TypeError('URL must be a string.')

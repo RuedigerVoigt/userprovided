@@ -77,6 +77,12 @@ def test_normalize_query_part():
     # Duplicate key in query part of URL query with conflicting values:
     with pytest.raises(userprovided.err.QueryKeyConflict):
         userprovided.url._normalize_query_part('foo=foo&foo=bar')
+    with pytest.raises(userprovided.err.QueryKeyConflict):
+        userprovided.url.normalize_url('https://www.example.com/?a=1&a=2')
+    # Left alone, a conflicting query is no error:
+    assert userprovided.url.normalize_url(
+        'https://www.example.com/?a=1&a=2',
+        do_not_change_query_part=True) == 'https://www.example.com/?a=1&a=2'
     # Duplicate key in query part of URL with the same value:
     assert userprovided.url._normalize_query_part('foo=bar&foo=bar') == 'foo=bar'
     # Chunk of query is malformed: the = is missing:
