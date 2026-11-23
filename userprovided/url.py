@@ -286,8 +286,9 @@ def is_url(url: str,
     ``< > \\ ^ |`` is invalid, and so is anything but an IPv6 address in
     square brackets. In an http(s), ws(s), ftp or file URL, so is a
     backslash in the authority, a ``%`` in the host, and a host whose last
-    label is a number but that is no IPv4 address (``1.2.3.999``).
-    Surrounding whitespace is ignored.
+    label is a number but that is no IPv4 address (``1.2.3.999``). The
+    ``%`` rule includes IPv6 zone IDs (``http://[fe80::1%25eth0]/``), which
+    browsers reject. Surrounding whitespace is ignored.
 
     Args:
         url: The URL string to validate.

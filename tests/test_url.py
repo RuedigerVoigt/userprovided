@@ -1043,6 +1043,14 @@ def test_percent_in_host_of_other_scheme_stays_valid():
     assert userprovided.url.is_url('foo://ex%61mple/') is True
 
 
+@pytest.mark.parametrize('scheme, expected', [('http', False), ('https', False),
+                                              ('foo', True)])
+def test_ipv6_zone_id_follows_the_percent_rule(scheme, expected):
+    # Browsers reject zone IDs; other schemes keep them.
+    url = f'{scheme}://[fe80::1%25eth0]:8080/'
+    assert userprovided.url.is_url(url) is expected
+
+
 @given(scheme=st.sampled_from(['http', 'https', 'ftp', 'foo']),
        version=st.from_regex(r'[0-9a-f]{1,4}', fullmatch=True),
        rest=_LABEL)

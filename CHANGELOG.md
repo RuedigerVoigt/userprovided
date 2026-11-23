@@ -24,6 +24,7 @@
   * `finance`: `is_iban` rejects the check digits `00`, `01` and `99`, which are never issued.
   * `finance`: `is_iban` and `is_isin` reject non-ASCII letters that uppercase to ASCII, like `ſ`, `ß` and `ﬁ`.
   * Docs: `normalize_url` documents `QueryKeyConflict`, and `calculate_string_hash` documents `LookupError` for an unknown encoding.
+  * Docs: `is_url` documents that it rejects IPv6 zone IDs in http(s), ws(s), ftp and file URLs, as browsers do.
 
 ## Version 3.0.1 (2026-09-28)
 
