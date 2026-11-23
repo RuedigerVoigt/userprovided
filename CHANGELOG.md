@@ -5,6 +5,7 @@
 * Security:
   * `ip`: `is_potential_ssrf_target`, `is_loopback`, `is_private` and `is_link_local` recognize internal hosts written with non-ASCII characters (`http://１２７.0.0.1/`).
   * `url`: `is_shortened_url` recognizes a shortener behind a trailing dot or fullwidth characters (`https://bit.ly./x`).
+  * `url`, `ip`: a host in square brackets that is no IPv6 address makes a URL invalid, and the SSRF guard treats it as a target. `urlparse` turned `http://[v1.x]/` into the different host `v1.x`.
 * Bug fixes:
   * `date`: `date_en_long_to_iso` and `date_de_long_to_iso` no longer read a date out of longer numbers. `123. Oktober 1990` returned `1990-10-23`.
   * `date`: `date_de_long_to_iso` accepts the abbreviations `Mär.` and `Mrz.` for March.

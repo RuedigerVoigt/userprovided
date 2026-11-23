@@ -88,8 +88,23 @@ TWO_PART_TLDS = {
 }
 
 
+def _bracketed_host_is_not_ipv6(parsed: urllib.parse.ParseResult) -> bool:
+    """True if the host is in square brackets but is no IPv6 address."""
+    # urlparse strips the brackets and accepts the IPvFuture form: '[v1.x]'
+    # becomes 'v1.x', a different host. Browsers only accept IPv6 there.
+    if '[' not in parsed.netloc.rpartition('@')[2]:
+        return False
+    try:
+        ipaddress.IPv6Address(parsed.hostname or '')
+    except ValueError:
+        return True
+    return False
+
+
 def _browser_reads_other_host(parsed: urllib.parse.ParseResult) -> bool:
-    """True if browsers would read a different host than urlparse."""
+    """True if browsers would read a different host than urlparse, or none."""
+    if _bracketed_host_is_not_ipv6(parsed):
+        return True
     if parsed.scheme not in _SPECIAL_SCHEMES:
         return False
     # Browsers end the authority at the backslash, urlparse does not:
@@ -120,6 +135,8 @@ def _host_from_url(url: str) -> str | None:
         return None
     if parsed.scheme in _SPECIAL_SCHEMES and '\\' in parsed.netloc:
         # See _browser_reads_other_host.
+        return None
+    if _bracketed_host_is_not_ipv6(parsed):
         return None
     if not host.isascii():
         # Clients map such a host to ASCII before they resolve it:
@@ -153,8 +170,9 @@ def is_url(url: str,
     Performs basic structural validation of a URL including scheme and
     network location presence. Optionally restricts to specific schemes.
     A host containing whitespace, control characters or one of
-    ``< > \\ ^ |`` is invalid. In an http(s), ws(s), ftp or file URL, so is
-    a backslash in the authority or a ``%`` in the host. Surrounding
+    ``< > \\ ^ |`` is invalid, and so is anything but an IPv6 address in
+    square brackets. In an http(s), ws(s), ftp or file URL, so is a
+    backslash in the authority or a ``%`` in the host. Surrounding
     whitespace is ignored.
 
     Args:
@@ -209,8 +227,8 @@ def is_url(url: str,
         logger.debug('URL host contains a forbidden character.')
         return False
     if _browser_reads_other_host(parsed):
-        logger.debug('URL has a backslash in the authority or a '
-                     'percent-encoded host.')
+        logger.debug('URL has a backslash in the authority, a '
+                     'percent-encoded host or no IPv6 address in brackets.')
         return False
 
     try:
@@ -717,9 +735,10 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
     Raises:
         TypeError: If url is not a string.
         ValueError: If url is empty, its host contains whitespace, control
-            characters or one of ``< > \\ ^ |``, an http(s), ws(s), ftp or
-            file URL has a backslash in the authority or a ``%`` in the
-            host, or domain extraction fails.
+            characters or one of ``< > \\ ^ |``, its host is in square
+            brackets but no IPv6 address, an http(s), ws(s), ftp or file URL
+            has a backslash in the authority or a ``%`` in the host, or
+            domain extraction fails.
 
     Examples:
         >>> extract_domain('https://www.example.com:8080/path')
@@ -762,8 +781,9 @@ def extract_domain(url: str, drop_subdomain: bool = False) -> str:
         raise ValueError("URL host contains a forbidden character.")
 
     if _browser_reads_other_host(parsed):
-        raise ValueError("URL has a backslash in the authority or a "
-                         "percent-encoded host.")
+        raise ValueError("URL has a backslash in the authority, a "
+                         "percent-encoded host or no IPv6 address in "
+                         "brackets.")
 
     domain = domain.lower()
 

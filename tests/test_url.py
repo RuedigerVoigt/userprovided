@@ -1028,3 +1028,18 @@ def test_percent_encoded_host_is_rejected(scheme, before, encoded, after):
 def test_percent_in_host_of_other_scheme_stays_valid():
     # Only special schemes percent-decode the host.
     assert userprovided.url.is_url('foo://ex%61mple/') is True
+
+
+@given(scheme=st.sampled_from(['http', 'https', 'ftp', 'foo']),
+       version=st.from_regex(r'[0-9a-f]{1,4}', fullmatch=True),
+       rest=_LABEL)
+def test_bracketed_host_that_is_no_ipv6_is_rejected(scheme, version, rest):
+    # urlparse turns the IPvFuture host '[v1.x]' into 'v1.x', another host.
+    url = f'{scheme}://[v{version}.{rest}]/'
+    assert userprovided.url.is_url(url) is False
+    with pytest.raises(ValueError):
+        userprovided.url.normalize_url(url)
+    with pytest.raises(ValueError, match='brackets'):
+        userprovided.url.extract_domain(url)
+    assert userprovided.url.extract_tld(url) == ''
+    assert userprovided.url.url_matches_domain(url, f'v{version}.{rest}') is False

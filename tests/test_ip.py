@@ -232,7 +232,9 @@ def test_ip_long_url_does_not_hide_the_host():
     'http://%31%32%37.0.0.1/', 'http://%31%36%39.254.169.254/',
     'http://loc%61lhost/', 'http://127.0.0.1%2e/', 'http://%5b::1%5d/',
     # Other clients may decode too.
-    'gopher://%31%32%37.0.0.1/'])
+    'gopher://%31%32%37.0.0.1/',
+    # No IPv6 address in brackets: urlparse drops them and reads 'v1.x'.
+    'http://[v1.x]/'])
 def test_ip_forbidden_host_character_is_ssrf_target(url):
     # The host cannot be determined, so the guard must not call it safe.
     assert userprovided.ip.is_potential_ssrf_target(url) is True
