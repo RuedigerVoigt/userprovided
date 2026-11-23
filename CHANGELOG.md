@@ -1,6 +1,6 @@
 # Changelog / History
 
-## Version 3.1.0 (upcoming)
+## Version 3.1.0 (2026-11-23)
 
 * New features:
   * `url`: added `extract_host`, which returns the canonical host of a URL of any length, optionally with its port, and raises `ValueError` for a host browsers might read differently.
