@@ -1098,6 +1098,19 @@ def test_host_ending_in_other_than_a_number_stays_valid(url):
     assert userprovided.url.is_url(url) is True
 
 
+@pytest.mark.parametrize('url, equivalent', [
+    ('https://[::ffff:192.0.2.1]/', 'https://[::ffff:c000:201]/'),
+    ('https://[64:ff9b::1.2.3.4]/', 'https://[64:ff9b::102:304]/'),
+])
+def test_ipv6_with_ipv4_tail_is_no_numeric_host(url, equivalent):
+    # The dotted tail of an IPv6 address is no IPv4 hostname.
+    assert userprovided.url.is_url(url) is True
+    assert userprovided.url.extract_domain(url) == url.split('[')[1].split(']')[0]
+    assert userprovided.url.normalize_url(url) == url
+    assert (userprovided.url.extract_host(url, with_port=True)
+            == userprovided.url.extract_host(equivalent, with_port=True))
+
+
 @given(address=st.integers(min_value=0, max_value=2**32 - 1),
        form=st.sampled_from(['{:d}', '0x{:x}', '0{:o}']))
 def test_ipv4_written_as_one_number_is_an_ip_address(address, form):

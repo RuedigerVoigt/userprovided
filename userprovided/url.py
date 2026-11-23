@@ -230,7 +230,9 @@ def _browser_host_problem(parsed: urllib.parse.ParseResult) -> str | None:
         # Browsers map the host to ASCII before they look for a number.
         host = _map_to_ascii(host) or ''
     # Browsers read such a host as IPv4 or reject it: 'http://1.2.3.999/'.
-    if _ends_in_number(host) and _parse_ipv4(host.removesuffix('.')) is None:
+    # Not an IPv6 literal, though: '::ffff:192.0.2.1' ends in a number too.
+    if (':' not in host and _ends_in_number(host)
+            and _parse_ipv4(host.removesuffix('.')) is None):
         return 'URL host ends in a number but is no IPv4 address.'
     return None
 
