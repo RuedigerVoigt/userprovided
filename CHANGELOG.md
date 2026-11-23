@@ -2,6 +2,8 @@
 
 ## Version 3.1.0 (upcoming)
 
+* New features:
+  * `url`: added `extract_host`, which returns the canonical host of a URL of any length, optionally with its port, and raises `ValueError` for a host browsers might read differently.
 * Security:
   * `ip`: `is_potential_ssrf_target`, `is_loopback`, `is_private` and `is_link_local` recognize internal hosts written with non-ASCII characters (`http://１２７.0.0.1/`).
   * `url`: `is_shortened_url` recognizes a shortener behind a trailing dot or fullwidth characters (`https://bit.ly./x`).

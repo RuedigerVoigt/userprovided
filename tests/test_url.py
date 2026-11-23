@@ -1121,3 +1121,115 @@ def test_short_ipv4_forms_have_no_tld_or_subdomain(url):
     assert userprovided.url.extract_domain(url, drop_subdomain=True) == host
     assert userprovided.url.extract_domain_from_host(
         host, drop_subdomain=True) == userprovided.url.normalize_hostname(host)
+
+
+@pytest.mark.parametrize('url, expected', [
+    ('https://WWW.Example.com./path?q=1', 'www.example.com'),
+    ('https://example.com:8443/', 'example.com'),
+    ('http://[::1]/', '::1'),
+    ('http://[0:0:0:0:0:0:0:1]:8080/', '::1'),
+    ('https://münchen.example/', 'xn--mnchen-3ya.example'),
+    ('https://user:pw@example.com/', 'example.com'),
+    ('https://example.com/?q=' + 'x' * 5000, 'example.com'),
+    ('  https://example.com/  ', 'example.com'),
+    ('http://exa\tmple.com/', 'example.com'),    # urlparse drops it, as browsers do
+    ('http://exa\nmple.com/', 'example.com'),
+    ('http://127.1/', '127.0.0.1'),
+    ('http://0x7f.0.0.1/', '127.0.0.1'),
+    ('http://１２７.0.0.1/', '127.0.0.1'),
+    ('file://server/share', 'server'),
+    ('custom://Host.example:9/', 'host.example'),
+    ('foo://[fe80::1%25eth0]:8080/', 'fe80::1%25eth0'),
+])
+def test_extract_host(url, expected):
+    assert userprovided.url.extract_host(url) == expected
+
+
+@pytest.mark.parametrize('url, expected', [
+    ('https://example.com:8443/', 'example.com:8443'),
+    ('https://Example.COM.:443/x', 'example.com:443'),
+    ('https://example.com/', 'example.com:443'),
+    ('http://example.com:443/', 'example.com:443'),
+    ('http://example.com/', 'example.com:80'),
+    ('ws://example.com/', 'example.com:80'),
+    ('wss://example.com/', 'example.com:443'),
+    ('ftp://example.com/', 'example.com:21'),
+    ('http://example.com:0/', 'example.com:0'),
+    ('http://[0:0:0:0:0:0:0:1]:8080/', '[::1]:8080'),
+    ('http://[::1]/', '[::1]:80'),
+    ('custom://Host.example:9/', 'host.example:9'),
+    ('custom://Host.example/', 'host.example'),     # no default port
+    ('file://server/share', 'server'),
+    ('foo://[::1]/', '[::1]'),
+    ('foo://[fe80::1%25eth0]:8080/', '[fe80::1%25eth0]:8080'),
+])
+def test_extract_host_with_port(url, expected):
+    assert userprovided.url.extract_host(url, with_port=True) == expected
+
+
+@pytest.mark.parametrize('url, message', [
+    ('http://[::1', 'parsed'),
+    ('example.com/path', 'no scheme'),
+    ('http:///path', 'no host'),
+    ('http://:8080/', 'no host'),
+    ('http://user@/', 'no host'),
+    ('mailto:a@example.com', 'no host'),
+    ('http://exa mple.com/', 'forbidden character'),
+    ('foo://a<b/', 'forbidden character'),
+    ('https://127.0.0.1\\@example.com/', 'backslash'),
+    ('http://%31%32%37.0.0.1/', 'percent-encoded'),
+    ('http://[fe80::1%25eth0]/', 'percent-encoded'),   # zone IDs: see is_url
+    ('foo://ex%61mple/', 'percent-encoded'),           # any scheme
+    ('http://[v1.x]/', 'brackets'),
+    ('http://1.2.3.999/', 'number'),
+    ('https://example.com:notaport/', 'port'),
+    ('https://example.com:99999/', 'port'),
+    ('https://ex＋ample.com/', 'ASCII'),           # maps to 'ex+ample.com'
+    ('https://' + '\xfc' * 64 + '.example/', 'ASCII'),  # label too long for IDNA
+    ('foo://\xfc' + 'x' * 2048 + '/', 'length'),
+    ('http://./', 'empty'),
+])
+def test_extract_host_rejects(url, message):
+    with pytest.raises(ValueError, match=message):
+        userprovided.url.extract_host(url)
+    with pytest.raises(ValueError, match=message):
+        userprovided.url.extract_host(url, with_port=True)
+
+
+@pytest.mark.parametrize('not_a_string', [None, 1, b'https://example.com/'])
+def test_extract_host_type_error(not_a_string):
+    with pytest.raises(TypeError):
+        userprovided.url.extract_host(not_a_string)
+
+
+_URL_SCHEMES = st.sampled_from(['http', 'https', 'ws', 'wss', 'ftp', 'file', 'foo'])
+
+
+@given(scheme=_URL_SCHEMES, authority=st.text(max_size=40))
+def test_extract_host_is_stricter_than_is_url(scheme, authority):
+    url = f'{scheme}://{authority}/'
+    try:
+        userprovided.url.extract_host(url)
+    except ValueError:
+        return
+    assert userprovided.url.is_url(url) is True
+
+
+@given(scheme=_URL_SCHEMES, authority=st.text(max_size=40))
+def test_extract_host_is_idempotent(scheme, authority):
+    try:
+        key = userprovided.url.extract_host(f'{scheme}://{authority}/',
+                                            with_port=True)
+    except ValueError:
+        assume(False)
+    assert userprovided.url.extract_host(f'{scheme}://{key}/',
+                                         with_port=True) == key
+
+
+@given(base=st.sampled_from(['https://example.com', 'http://[::1]:8080/a',
+                             'foo://Host.example', 'https://u@xn--mnchen-3ya.example./']),
+       query=st.text())
+def test_extract_host_ignores_the_query(base, query):
+    for with_port in (False, True):
+        assert (userprovided.url.extract_host(f'{base}?{query}', with_port=with_port)
+                == userprovided.url.extract_host(base, with_port=with_port))

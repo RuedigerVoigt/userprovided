@@ -36,6 +36,8 @@ _COMPRESSION_SUFFIXES = frozenset({'.gz', '.z', '.bz2', '.xz', '.br'})
 # WHATWG "special" schemes: their parser reads '\' as '/' and percent-decodes
 # the host.
 _SPECIAL_SCHEMES = frozenset({'ftp', 'file', 'http', 'https', 'ws', 'wss'})
+# The WHATWG default ports. 'file' has none.
+_DEFAULT_PORTS = {'ftp': 21, 'http': 80, 'https': 443, 'ws': 80, 'wss': 443}
 
 # Known 2-part TLDs (country code second-level domains).
 # This is a hand-maintained subset of the most common ones, because full
@@ -658,6 +660,97 @@ def extract_domain_from_host(host: str, drop_subdomain: bool = False) -> str:
         return _extract_registrable_domain(normalized, TWO_PART_TLDS)
 
     return normalized
+
+
+def extract_host(url: str, *, with_port: bool = False) -> str:
+    """Extract the canonical host of a URL, optionally with its port.
+
+    Meant as an identity key (rate limiting, deduplication, per-host
+    accounting): every spelling of a host yields the same key, and a URL
+    whose host cannot be told unambiguously raises instead of being keyed
+    under the wrong host. Unlike ``extract_domain``, which deliberately
+    does not canonicalize, the host is normalized the way
+    ``normalize_hostname`` does it (lowercase, trailing dots, punycode, IP
+    addresses in canonical form). Userinfo is ignored.
+
+    The URL may be of any length: unlike ``is_url``, a long path or query
+    does not make it invalid. The host is rejected for everything
+    ``is_url`` rejects, and in addition for a ``%`` in the host of any
+    scheme (outside an IPv6 zone ID), and for a non-ASCII host that has no
+    ASCII form or whose ASCII form contains other characters than letters,
+    digits, ``.``, ``-`` and ``_``.
+
+    Args:
+        url: The URL. It needs a scheme and a host.
+        with_port: If True, return ``host:port`` with the port the URL
+            addresses: the one given, or else the default of the scheme
+            (http and ws 80, https and wss 443, ftp 21). A scheme without
+            a default and without a port yields the host alone. IPv6
+            addresses are put in square brackets. Defaults to False.
+
+    Returns:
+        The canonical host, or ``host:port`` if with_port is True. An IPv6
+        address carries no brackets unless with_port is True.
+
+    Raises:
+        TypeError: If url is not a string.
+        ValueError: If the URL cannot be parsed, has no scheme or no host,
+            has an invalid port, or its host cannot be told unambiguously.
+
+    Examples:
+        >>> extract_host('https://WWW.Example.com./path?q=1')
+        'www.example.com'
+        >>> extract_host('https://example.com/', with_port=True)
+        'example.com:443'
+        >>> extract_host('http://[0:0:0:0:0:0:0:1]:8080/', with_port=True)
+        '[::1]:8080'
+        >>> extract_host('https://münchen.example/')
+        'xn--mnchen-3ya.example'
+        >>> extract_host('http://127.1/')
+        '127.0.0.1'
+    """
+    if not isinstance(url, str):
+        raise TypeError('URL must be a string.')
+
+    # No length limit: padding the path or query must not hide the host.
+    try:
+        parsed = urllib.parse.urlparse(url.strip())
+    except ValueError as e:
+        raise ValueError('URL could not be parsed.') from e
+
+    if not parsed.scheme:
+        raise ValueError('URL has no scheme.')
+    raw_host = parsed.hostname
+    if not raw_host:
+        raise ValueError('URL has no host.')
+    if _FORBIDDEN_HOST_CHAR.search(raw_host):
+        raise ValueError('URL host contains a forbidden character.')
+    problem = _browser_host_problem(parsed)
+    if problem:
+        raise ValueError(problem)
+    if '%' in raw_host and ':' not in raw_host:
+        # is_url allows this outside the special schemes, but a client may
+        # still decode it, so 'foo://ex%61mple/' could be 'foo://example/'.
+        raise ValueError('URL host is percent-encoded.')
+
+    try:
+        port = parsed.port
+    except ValueError as e:
+        raise ValueError('URL has an invalid port.') from e
+
+    host = normalize_hostname(raw_host)
+    if not raw_host.isascii() and not _MAPPED_HOST.fullmatch(host):
+        # Either the IDNA codec failed and the host stayed non-ASCII, or the
+        # mapping produced a delimiter ('＋' -> '+') clients treat differently.
+        raise ValueError('URL host has no unambiguous ASCII form.')
+
+    if not with_port:
+        return host
+    if ':' in host:
+        host = f'[{host}]'
+    if port is None:
+        port = _DEFAULT_PORTS.get(parsed.scheme)
+    return host if port is None else f'{host}:{port}'
 
 
 def determine_file_extension(url: str,

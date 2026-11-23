@@ -39,6 +39,7 @@ Userprovided has functionality for the following inputs:
   * [Determine a file extension](#determine-a-file-extension) from a URL and the MIME-type sent by the server.
   * [Extract domain from URL](#extract-domain-from-url) with optional subdomain removal, supporting 2-part TLDs.
   * [Extract domain from a hostname](#extract-domain-from-a-hostname) for callers that already hold a bare hostname instead of a URL.
+  * [Extract the host of a URL](#extract-the-host-of-a-url) in canonical form, optionally with its port, as an identity key.
   * [Extract TLD from URL](#extract-tld-from-url) correctly identifying both standard and 2-part TLDs.
   * [Check if a URL belongs to a domain](#check-url-domain) with subdomain matching.
   * [Limits of the two-part TLD list](#limits-of-the-two-part-tld-list) and when to reach for a dedicated package.
@@ -628,6 +629,25 @@ userprovided.url.extract_domain_from_host('MÜNCHEN.example.')
 # returned in canonical form regardless of drop_subdomain:
 userprovided.url.extract_domain_from_host('[::1]', drop_subdomain=True)
 # => '::1'
+```
+
+### Extract the Host of a URL
+
+`extract_host` returns the canonical host of a URL, as `normalize_hostname` would, for use as an identity key in rate limiting, deduplication or per-host accounting. Unlike `is_url`, it accepts URLs of any length. A URL whose host browsers might read differently raises `ValueError` instead of being counted under the wrong host.
+
+```python
+userprovided.url.extract_host('https://WWW.Example.com./path?q=1')
+# => 'www.example.com'
+
+# With the port the URL addresses, the scheme's default if none is given:
+userprovided.url.extract_host('https://example.com/', with_port=True)
+# => 'example.com:443'
+
+userprovided.url.extract_host('http://[0:0:0:0:0:0:0:1]:8080/', with_port=True)
+# => '[::1]:8080'
+
+userprovided.url.extract_host('https://127.0.0.1\\@example.com/')
+# => ValueError: URL has a backslash in the authority.
 ```
 
 ### Extract TLD from URL
