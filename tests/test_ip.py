@@ -42,7 +42,9 @@ def test_parse_ip():
     # An empty part
     assert userprovided.ip._parse_ip('127..0.1') is None
     assert userprovided.ip._parse_ip('127.0.0.') is None
-    assert userprovided.ip._parse_ip('0x') is None
+    # '0x' alone is zero, as in browsers and glibc
+    assert userprovided.ip._parse_ip('0x') == ipaddress.ip_address('0.0.0.0')
+    assert userprovided.ip._parse_ip('0x.0x.0x.0x') == ipaddress.ip_address('0.0.0.0')
     # Digits outside the base the prefix announces
     assert userprovided.ip._parse_ip('0199.0.0.1') is None
     assert userprovided.ip._parse_ip('0xzz.0.0.1') is None
@@ -178,8 +180,9 @@ def test_ip_is_potential_ssrf_target():
     assert userprovided.ip.is_potential_ssrf_target('http://3232235777/') is True
     # Decimal integer encoding of 169.254.169.254 (link-local / cloud metadata)
     assert userprovided.ip.is_potential_ssrf_target('http://2852039166/') is True
-    # A large integer that is not a valid IP address
-    assert userprovided.ip.is_potential_ssrf_target('http://99999999999999/') is False
+    # A large integer that is not a valid IP address: browsers reject it, a
+    # client that truncates it reaches some address, so it cannot be told.
+    assert userprovided.ip.is_potential_ssrf_target('http://99999999999999/') is True
     # Short dotted forms the C library parser expands to a loopback address
     assert userprovided.ip.is_potential_ssrf_target('http://127.1/') is True
     assert userprovided.ip.is_potential_ssrf_target('http://127.0.1/') is True
@@ -239,6 +242,23 @@ def test_ip_forbidden_host_character_is_ssrf_target(url):
     # The host cannot be determined, so the guard must not call it safe.
     assert userprovided.ip.is_potential_ssrf_target(url) is True
     assert userprovided.ip.is_loopback(url) is False
+
+
+@pytest.mark.parametrize('url', [
+    # browsers go to 0.0.0.0, which reaches the local host
+    'http://0x/', 'http://0x.0x.0x.0x/',
+    # ends in a number, but is no IPv4 address: the target cannot be told
+    'http://1.2.3.999/', 'http://example.123/', 'gopher://127..1/',
+    'http://127.1../', 'http://0x100000000/'])
+def test_ip_host_ending_in_number_is_ssrf_target(url):
+    assert userprovided.ip.is_potential_ssrf_target(url) is True
+
+
+@pytest.mark.parametrize('url', [
+    'http://8.8.8.8/', 'http://8.8.8.8./', 'http://[::ffff:8.8.8.8]/',
+    'http://example.com/', 'http://example.0x1g/'])
+def test_ip_public_host_is_no_ssrf_target(url):
+    assert userprovided.ip.is_potential_ssrf_target(url) is False
 
 
 def test_ip_zone_id_stays_link_local():

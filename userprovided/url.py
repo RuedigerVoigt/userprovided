@@ -97,12 +97,15 @@ def _parse_ipv4_part(part: str) -> int | None:
     """Parse one dot-separated part of an IPv4 address the way inet_aton does.
 
     The base is taken from the prefix: ``0x`` means hexadecimal, a leading
-    zero means octal, anything else is decimal.
+    zero means octal, anything else is decimal. ``0x`` alone is zero.
 
     Returns the value, or None if the part is not a number in that base.
     """
     if part[:2].lower() == '0x':
         digits, base = part[2:], 16
+        if not digits:
+            # Browsers and glibc read it as 0, so 'http://0x/' is 0.0.0.0.
+            return 0
     elif len(part) > 1 and part[0] == '0':
         digits, base = part[1:], 8
     else:
@@ -273,6 +276,10 @@ def _host_from_url(url: str) -> str | None:
     # "localhost." reaches the same host as "localhost". Without this the
     # SSRF guard in ip.py would not recognise the dotted form.
     host = host.removesuffix('.')
+    if ':' not in host and _ends_in_number(host) and _parse_ipv4(host) is None:
+        # Browsers read such a host as IPv4. If the parser here cannot, a
+        # client may still reach some address, so the target cannot be told.
+        return None
     return host.lower() if host else None
 
 

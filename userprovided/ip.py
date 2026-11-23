@@ -133,7 +133,9 @@ def is_potential_ssrf_target(url: str) -> bool:
 
     IPv4 hosts are recognised in every encoding the C library parser
     accepts, so ``127.1``, ``0x7f000001`` and ``0177.0.0.1`` are flagged
-    just like ``127.0.0.1``. A non-ASCII host is checked in the ASCII form
+    just like ``127.0.0.1``. A host whose last label is a number but that
+    is no IPv4 address in any of these encodings (``1.2.3.999``) is
+    reported as a potential target. A non-ASCII host is checked in the ASCII form
     clients map it to, so ``１２７.0.0.1`` is flagged as well; if it cannot
     be mapped to a hostname, the URL is reported as a potential target.
 

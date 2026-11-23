@@ -659,6 +659,7 @@ def test_host_from_url_exception():
     ('0x7F.0.0.1', '127.0.0.1'),
     ('0177.0.0.1', '127.0.0.1'),
     ('010.0.0.1', '8.0.0.1'),
+    ('0x', '0.0.0.0'),
     ('127.1.', '127.0.0.1'),
     ('[127.1]', '127.0.0.1'),
     ('１２７.1', '127.0.0.1'),
@@ -1070,7 +1071,7 @@ def test_bracketed_host_that_is_no_ipv6_is_rejected(scheme, version, rest):
     'http://1.2.3.999/',
     'https://example.123/',
     'http://127..1/',
-    'ftp://0x/',
+    'ftp://0x100000000/',
     'ws://1.2.3.4.5/',
     'http://1.2.3.999./',
     'http://１.2.3.999/',   # mapped to ASCII first
@@ -1088,6 +1089,7 @@ def test_host_ending_in_number_must_be_ipv4(url):
 @pytest.mark.parametrize('url', [
     'http://127.1/',
     'http://127.0.0.1./',
+    'http://0x/',               # 0.0.0.0
     'http://example.0x1g/',     # no hexadecimal number
     'http://1a.com/',
     'foo://1.2.3.999/',         # no special scheme
