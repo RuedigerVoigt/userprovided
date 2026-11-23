@@ -32,6 +32,9 @@ _TRAILING_DOTS_AND_SPACE = re.compile(r'[\s.]+\Z')
 _FORBIDDEN_HOST_CHAR = re.compile(r'[\s\x00-\x1f\x7f<>\\^|]')
 # What a non-ASCII host may consist of after it was mapped to ASCII.
 _MAPPED_HOST = re.compile(r'[a-z0-9._-]+')
+# The deviation characters of UTS #46: the stdlib codec (IDNA 2003) maps them
+# away, browsers keep them, so 'straße' and 'strasse' are two hosts.
+_IDNA_DEVIATIONS = frozenset('ßς‌‍')
 _COMPRESSION_SUFFIXES = frozenset({'.gz', '.z', '.bz2', '.xz', '.br'})
 # WHATWG "special" schemes: their parser reads '\' as '/' and percent-decodes
 # the host.
@@ -678,9 +681,11 @@ def extract_host(url: str, *, with_port: bool = False) -> str:
     The URL may be of any length: unlike ``is_url``, a long path or query
     does not make it invalid. The host is rejected for everything
     ``is_url`` rejects, and in addition for a ``%`` in the host of any
-    scheme (outside an IPv6 zone ID), and for a non-ASCII host that has no
+    scheme (outside an IPv6 zone ID), for a non-ASCII host that has no
     ASCII form or whose ASCII form contains other characters than letters,
-    digits, ``.``, ``-`` and ``_``.
+    digits, ``.``, ``-`` and ``_``, and for a host containing ``ß``, ``ς``
+    or a zero-width (non-)joiner, which browsers keep but the stdlib IDNA
+    codec maps away (``straße`` would become ``strasse``).
 
     Args:
         url: The URL. It needs a scheme and a host.
@@ -734,6 +739,9 @@ def extract_host(url: str, *, with_port: bool = False) -> str:
         # is_url allows this outside the special schemes, but a client may
         # still decode it, so 'foo://ex%61mple/' could be 'foo://example/'.
         raise ValueError('URL host is percent-encoded.')
+    if _IDNA_DEVIATIONS.intersection(raw_host):
+        raise ValueError('URL host contains a character that IDNA versions '
+                         'map differently.')
 
     try:
         port = parsed.port

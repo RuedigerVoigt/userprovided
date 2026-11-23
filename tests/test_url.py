@@ -1209,6 +1209,26 @@ def test_extract_host_rejects(url, message):
         userprovided.url.extract_host(url, with_port=True)
 
 
+@pytest.mark.parametrize('host', [
+    'straße.example',          # IDNA 2003: 'strasse.example'
+    'STRAẞE.example',          # lowercased to 'ß' by urlparse
+    'ς.example',               # final sigma, IDNA 2003: 'σ'
+    'a‍b.example',             # zero width joiner, IDNA 2003: dropped
+    'a‌b.example',             # zero width non-joiner
+])
+def test_extract_host_rejects_idna_deviations(host):
+    # Browsers keep these characters, so mapping them merges two hosts.
+    with pytest.raises(ValueError, match='IDNA'):
+        userprovided.url.extract_host(f'https://{host}/')
+
+
+def test_extract_host_keeps_strasse_and_its_sharp_s_spelling_apart():
+    assert userprovided.url.extract_host('https://strasse.example/') == 'strasse.example'
+    # The punycode browsers produce for 'straße.example':
+    assert (userprovided.url.extract_host('https://xn--strae-oqa.example/')
+            == 'xn--strae-oqa.example')
+
+
 @pytest.mark.parametrize('not_a_string', [None, 1, b'https://example.com/'])
 def test_extract_host_type_error(not_a_string):
     with pytest.raises(TypeError):
